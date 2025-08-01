@@ -1,6 +1,5 @@
 package org.example.project.member.service;
 
-import io.jsonwebtoken.Jwt;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.project.member.dto.JwtToken;
@@ -78,4 +77,5 @@ public class MemberService {
 
         return "Logout successful";
     }
+
 }
