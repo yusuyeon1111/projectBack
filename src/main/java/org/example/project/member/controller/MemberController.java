@@ -2,12 +2,11 @@ package org.example.project.member.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.example.project.member.dto.JwtToken;
-import org.example.project.member.dto.SignInDto;
-import org.example.project.member.dto.SignUpDto;
+import org.example.project.member.dto.*;
 import org.example.project.member.entity.Member;
 import org.example.project.member.service.MemberService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
@@ -36,10 +35,31 @@ public class MemberController {
         return ResponseEntity.ok(memberService.logout(accessToken));
     }
 
+    @GetMapping("/idCheck")
+    public ResponseEntity<String> idCheck(@RequestParam String username) {
+       return ResponseEntity.ok(memberService.idChek(username));
+    }
+
+    @PostMapping("/update")
+    public ResponseEntity<MemberResponseDto> update(@Valid @RequestBody UpdateMemberDto updateMemberDto) {
+       return ResponseEntity.ok(memberService.updateInfo(updateMemberDto));
+    }
+
+    @GetMapping("/myPage")
+    public ResponseEntity<MemberResponseDto> myPage(@RequestParam String username) {
+        return ResponseEntity.ok(memberService.selectMypageById(username));
+    }
+
     private String resolveToken(String token) {
         if (StringUtils.hasText(token) && token.startsWith("Bearer")) {
             return token.substring(7);
         }
         return null;
     }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
+        return ResponseEntity.badRequest().body(ex.getMessage());
+    }
+
 }

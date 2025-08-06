@@ -38,7 +38,7 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests((auth)->auth
-                .requestMatchers("/api/member/signup","/","/api/member/signin","/oauth2/**").permitAll()
+                .requestMatchers("/","/api/member/**","/oauth2/**").permitAll()
                 .anyRequest().authenticated());
         http.sessionManagement((session)->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션정책설정
                 .oauth2Login(oauth2 -> oauth2

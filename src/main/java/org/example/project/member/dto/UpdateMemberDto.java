@@ -1,6 +1,5 @@
 package org.example.project.member.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -10,25 +9,21 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
+public class UpdateMemberDto {
 
-public class SignUpDto {
-    @NotBlank
     private String username;
 
-    @NotBlank
     private String password;
 
-    @NotBlank
     private String nickname;
 
-    @NotBlank
     private String email;
 
-    @NotBlank
     private String name;
 
     private String preferredPosition;
 
     private List<String> preferredTechStacks;
 
+    private String introduce;
 }

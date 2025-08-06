@@ -2,6 +2,7 @@ package org.example.project.member.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.project.post.entity.PostPositionMember;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Getter
+@Setter
 @Builder
 @Entity
 @ToString
@@ -22,6 +24,7 @@ public class Member implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_id")
     private Long id;
 
     @Column( length = 100)
@@ -37,11 +40,20 @@ public class Member implements UserDetails {
     private String nickname;
 
     @Column
+    private String name;
+
+    @Column
     private String provider;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "member_roles",
+            joinColumns = @JoinColumn(name = "member_id")
+    )
+    @Column(name = "role")
     @Builder.Default
     private List<String> roles = new ArrayList<>();
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -69,4 +81,12 @@ public class Member implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JoinColumn(name = "profile_id", nullable = true)
+    private MemberProfile memberProfile;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostPositionMember> positionMemberList = new ArrayList<>();
+
 }

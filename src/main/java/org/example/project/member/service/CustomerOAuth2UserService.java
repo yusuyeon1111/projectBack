@@ -34,23 +34,23 @@ public class CustomerOAuth2UserService implements OAuth2UserService<OAuth2UserRe
         OAuth2User oAuth2User = delegate.loadUser(userRequest);
         Map<String, Object> attributes = oAuth2User.getAttributes();
         String email;
-        String nickname;
+        String name;
         String userNameAttributeName = "id";
 
         if ("kakao".equals(registeredId)) {
             Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             email = (String) kakaoAccount.get("email");
-            nickname = (String) profile.get("nickname");
+            name = (String) profile.get("nickname");
             userNameAttributeName = "id";
         } else if ("naver".equals(registeredId)) {
             Map<String, Object> response = (Map<String, Object>) attributes.get("response");
             email = (String) response.get("email");
-            nickname = (String) response.get("name");
+            name = (String) response.get("name");
             attributes = response;
             userNameAttributeName = "id";
         } else {
-            nickname = "";
+            name = "";
             email = "";
         }
 
@@ -61,7 +61,7 @@ public class CustomerOAuth2UserService implements OAuth2UserService<OAuth2UserRe
         memberRepository.findByEmail(email).orElseGet(() -> {
             Member member = Member.builder()
                     .email(email)
-                    .nickname(nickname)
+                    .name(name)
                     .username(email)
                     .password(bCryptPasswordEncoder.encode(UUID.randomUUID().toString()))
                     .roles(List.of("ROLE_USER"))

@@ -59,6 +59,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 .fromUriString("http://localhost:3000/oauth2/success")
                 .queryParam("accessToken", token.getAccessToken())
                 .queryParam("refreshToken", token.getRefreshToken())
+                .queryParam("username", member.getUsername())
                 .build()
                 .toUriString();
 
