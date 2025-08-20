@@ -20,7 +20,15 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String token = resolveToken((HttpServletRequest) request);
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        String path = httpRequest.getRequestURI();
+
+        if(path.startsWith("/api/post/list")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        String token = resolveToken(httpRequest);
         // 토큰 유효성 검사
         if (token != null && jwtTokenProvider.validateToken(token)) {
             // 로그아웃 여부 확인

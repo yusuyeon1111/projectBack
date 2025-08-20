@@ -8,6 +8,7 @@ import org.example.project.security.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -37,8 +38,9 @@ public class SecurityConfig {
         http.formLogin(AbstractHttpConfigurer::disable);
         http.csrf(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
+        http.cors(Customizer.withDefaults());
         http.authorizeHttpRequests((auth)->auth
-                .requestMatchers("/","/api/member/**","/oauth2/**").permitAll()
+                .requestMatchers("/","/api/**","/oauth2/**").permitAll()
                 .anyRequest().authenticated());
         http.sessionManagement((session)->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션정책설정
                 .oauth2Login(oauth2 -> oauth2
