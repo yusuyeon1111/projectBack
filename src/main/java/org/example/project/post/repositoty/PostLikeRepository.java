@@ -18,6 +18,7 @@ public interface PostLikeRepository extends JpaRepository<PostLike, Long> {
             JOIN pl.post p
             JOIN pl.member m
         WHERE m.username = :username
+        ORDER BY p.id DESC
     """
     )
     List<PostResponseDto> findAllByUsername(String username);

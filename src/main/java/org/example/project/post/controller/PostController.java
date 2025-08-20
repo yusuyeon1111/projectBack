@@ -2,10 +2,7 @@ package org.example.project.post.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.project.post.dto.ApplyPositionRequestDto;
-import org.example.project.post.dto.ApplyResponseDto;
-import org.example.project.post.dto.PostRequestDto;
-import org.example.project.post.dto.PostResponseDto;
+import org.example.project.post.dto.*;
 import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
 import org.springframework.data.domain.Page;
@@ -84,8 +81,13 @@ public class PostController {
     }
 
     @PostMapping("/accept")
-    public void acceptPost(@RequestBody ApplyPositionRequestDto dto) {
-        positionService.acceptPosition(dto);
+    public List<ApplyMemeberDto> acceptPost(@RequestBody ApplyPositionRequestDto dto) {
+        return positionService.acceptPosition(dto);
+    }
+
+    @PostMapping("/reject")
+    public List<ApplyMemeberDto> rejectPost(@RequestBody ApplyPositionRequestDto dto) {
+        return positionService.rejectPosition(dto);
     }
 
     @GetMapping("/applyList/{postId}")
@@ -101,5 +103,10 @@ public class PostController {
     @DeleteMapping("/unLike")
     public ResponseEntity<String> unLikePost(@RequestParam Long id, @RequestParam String username) {
         return postService.unLikePost(id, username);
+    }
+
+    @GetMapping("/postMember/{postId}")
+    public List<ApplyMemeberDto> postMember(@PathVariable Long postId) {
+        return postService.getPostApplyMember(postId);
     }
 }

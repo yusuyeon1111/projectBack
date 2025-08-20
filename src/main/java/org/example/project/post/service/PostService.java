@@ -16,6 +16,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -54,7 +55,7 @@ public class PostService {
         post.setCategory(dto.getCategory());
         post.setStartDate(dto.getStartDate());
         post.setEndDate(dto.getEndDate());
-        post.setPostStatus("SCHEDULED");
+        post.setPostStatus(dto.getPostStatus());
         if(dto.getPositions() != null) {
             for(PostRequestDto.PostPositionDto positionDto : dto.getPositions()) {
                 PostPosition position = new PostPosition();
@@ -158,9 +159,12 @@ public class PostService {
 
     // 게시글 전체 리스트 조회
     public Page<PostResponseDto> getPostList(PostRequestDto dto) {
-        Sort sort = "popular".equalsIgnoreCase(dto.getSortType())
-                ? Sort.by(Sort.Direction.DESC, "likeCount")
-                : Sort.by(Sort.Direction.DESC, "updated", "created");
+        Sort sort;
+        if ("popular".equalsIgnoreCase(dto.getSortType())) {
+            sort = Sort.by(Sort.Direction.DESC, "likeCount");
+        } else {
+            sort = JpaSort.unsafe(Sort.Direction.DESC, "COALESCE(p.updated, p.created)");
+        }
 
         Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize(), sort);
 
@@ -180,7 +184,7 @@ public class PostService {
     }
 
     public List<PostResponseDto> findMyPosts(String username) {
-        List<Post> post = postRepository.findByAuthor(username);
+        List<Post> post = postRepository.findByAuthorOrderByUpdatedOrCreatedDesc(username);
         if(post.isEmpty()) {
             return new ArrayList<>();
         }
@@ -228,4 +232,8 @@ public class PostService {
     }
 
 
+    public List<ApplyMemeberDto> getPostApplyMember(Long postId) {
+       List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(postId);
+        return list;
+    }
 }
