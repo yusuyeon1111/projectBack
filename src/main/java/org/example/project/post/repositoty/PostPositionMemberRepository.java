@@ -3,6 +3,7 @@ package org.example.project.post.repositoty;
 import io.lettuce.core.dynamic.annotation.Param;
 import jakarta.persistence.Column;
 import org.example.project.member.entity.Member;
+import org.example.project.post.dto.ApplyMemeberDto;
 import org.example.project.post.dto.ApplyResponseDto;
 import org.example.project.post.dto.PostAcceptDto;
 import org.example.project.post.entity.PostPosition;
@@ -57,6 +58,7 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
             JOIN ppm.postPosition pp
             JOIN pp.post p
         WHERE ppm.member.username = :username
+        ORDER BY ppm.id DESC
     """)
     List<ApplyResponseDto> findAllByMemberUsername(@Param("username") String username);
 
@@ -77,4 +79,27 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
     AND ppm.status = 'ACCEPT'
 """)
     List<PostAcceptDto> findAcceptedPostsByUsername(@Param("username") String username);
+
+    @Query("""
+        SELECT new org.example.project.post.dto.ApplyMemeberDto (
+        m.nickname,
+        m.id,
+        p.id,
+        pp.id,
+        ppm.id,
+        p.category,
+        pp.role,
+        ppm.status,
+        ppm.appliedAt,
+        ppm.acceptedAt,
+        ppm.rejectedAt
+        )
+        FROM PostPositionMember ppm
+            JOIN ppm.member m
+            JOIN ppm.postPosition pp
+            JOIN pp.post p
+        WHERE p.id = :postId
+        ORDER BY ppm.acceptedAt DESC
+""")
+    List<ApplyMemeberDto> findPostPositionMemberByPostId(@Param("postId") Long postId);
 }

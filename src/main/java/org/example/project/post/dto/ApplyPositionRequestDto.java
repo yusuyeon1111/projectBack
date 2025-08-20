@@ -10,4 +10,5 @@ public class ApplyPositionRequestDto {
     private Long positionId;
     private Long memberId;
     private String username;
+    private Long postPositionId;
 }

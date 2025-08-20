@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
+import org.example.project.post.dto.ApplyMemeberDto;
 import org.example.project.post.dto.ApplyPositionRequestDto;
 import org.example.project.post.dto.ApplyResponseDto;
 import org.example.project.post.dto.PostAcceptDto;
@@ -64,14 +65,15 @@ public class PositionService {
     }
 
     // 포지션 수락
-    public void acceptPosition(ApplyPositionRequestDto dto) {
-        PostPositionMember position = postPositionMemberRepository.findById(dto.getMemberId())
+    public List<ApplyMemeberDto> acceptPosition(ApplyPositionRequestDto dto) {
+        PostPositionMember position = postPositionMemberRepository.findById(dto.getPostPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
         PostPosition postPosition = postPositionRepository.findById(dto.getPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
 
         position.setStatus("ACCEPT");
-
+        postPosition.setCount(postPosition.getCount() - 1);
+        postPositionRepository.save(postPosition);
         Post post = postRepository.findById(dto.getPostId())
                 .orElseThrow(() -> new RuntimeException("모집글이 존재하지 않습니다."));
         int positionCount = postPosition.getCount();
@@ -89,11 +91,14 @@ public class PositionService {
         }
         position.setAcceptedAt(LocalDateTime.now());
         postPositionMemberRepository.save(position);
+
+        List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(dto.getPostId());
+        return list;
     }
 
     // 포지션 거절
-    public void rejectPosition(ApplyPositionRequestDto dto) {
-        PostPositionMember position = postPositionMemberRepository.findById(dto.getMemberId())
+    public List<ApplyMemeberDto>  rejectPosition(ApplyPositionRequestDto dto) {
+        PostPositionMember position = postPositionMemberRepository.findById(dto.getPostPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
         PostPosition postPosition = postPositionRepository.findById(dto.getPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
@@ -101,6 +106,8 @@ public class PositionService {
         position.setStatus("REJECT");
         position.setRejectedAt(LocalDateTime.now());
         postPositionMemberRepository.save(position);
+        List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(dto.getPostId());
+        return list;
     }
 
     // username으로 신청한 포지션 리스트 조회
