@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @Builder
 @Entity
 @Table(name = "post_position")
@@ -29,6 +30,10 @@ public class PostPosition {
     @Column
     private int count;
 
-    @OneToMany(mappedBy = "postPostion", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Column
+    private String status;
+
+    @OneToMany(mappedBy = "postPosition", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostPositionMember> positionMemberList = new ArrayList<>();
+
 }

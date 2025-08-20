@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.project.member.entity.Member;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "post_position_member")
 @Getter
@@ -28,5 +30,15 @@ public class PostPositionMember {
     private Member member;
 
     @Column
-    private String status;
+    private String status; // 신청 중 apply 수락 accept 거절 reject
+
+    @Column(name = "applied_at")
+    private LocalDateTime appliedAt; // 신청 일자
+
+    @Column(name = "accepted_at")
+    private LocalDateTime acceptedAt; //수락 일자
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt; // 거절 일자
+
 }
