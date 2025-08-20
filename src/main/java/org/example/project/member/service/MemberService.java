@@ -40,6 +40,9 @@ public class MemberService {
         if (memberRepository.existsByUsername(signUpDto.getUsername())) {
             throw new RuntimeException("The user already exists");
         }
+        if(memberRepository.existsByEmail(signUpDto.getEmail())) {
+            throw new RuntimeException("The user already exists");
+        }
         String encodedPassword = passwordEncoder.encode(signUpDto.getPassword());
 
         List<String> roles = new ArrayList<>();
@@ -116,7 +119,6 @@ public class MemberService {
         if (dto.getName() != null) {
             member.setName(dto.getName());
         }
-
         // MemberProfile 업데이트 (없으면 새로 생성)
         MemberProfile profile = member.getMemberProfile();
         if (profile == null) {
@@ -138,8 +140,17 @@ public class MemberService {
     }
 
     public MemberResponseDto selectMypageById(String username) {
-      Member member = memberRepository.findWithProfileAndStacksByUsername(username)
-              .orElseThrow(()-> new RuntimeException("해당 유저를 찾을 수 없습니다."));
-      return new MemberResponseDto(member);
+        Member member = memberRepository.findWithProfileAndStacksByUsername(username)
+                .orElseThrow(() -> new RuntimeException("해당 유저를 찾을 수 없습니다."));
+
+        return new MemberResponseDto(member);
+    }
+
+    public String emlCheck(String email) {
+        if (memberRepository.existsByEmail(email)) {
+            throw new RuntimeException("중복된 이메일입니다.");
+        } else {
+            return "사용가능한 이메일 입니다.";
+        }
     }
 }

@@ -2,6 +2,7 @@ package org.example.project.member.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.example.project.post.entity.PostLike;
 import org.example.project.post.entity.PostPositionMember;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -30,7 +31,7 @@ public class Member implements UserDetails {
     @Column( length = 100)
     private String password;
 
-    @Column(nullable = false, length = 20, unique = true)
+    @Column(nullable = false, length = 50, unique = true)
     private String username;
 
     @Column(nullable = false, length = 50)
@@ -88,5 +89,8 @@ public class Member implements UserDetails {
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostPositionMember> positionMemberList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PostLike> postLikeList = new ArrayList<>();
 
 }

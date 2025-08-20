@@ -5,12 +5,14 @@ import lombok.RequiredArgsConstructor;
 import org.example.project.member.dto.*;
 import org.example.project.member.entity.Member;
 import org.example.project.member.service.MemberService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import org.example.project.post.dto.*;
+import org.example.project.post.service.PositionService;
+import org.example.project.post.service.PostService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,8 +20,9 @@ import org.springframework.web.bind.annotation.*;
 public class MemberController {
 
    private final MemberService memberService;
-
-   @PostMapping("/signup")
+   private final PostService postService;
+   private final PositionService positionService;
+    @PostMapping("/signup")
     public ResponseEntity<Member> signUp(@Valid @RequestBody SignUpDto signUpDto) {
        return ResponseEntity.ok(memberService.signUp(signUpDto));
    }
@@ -40,14 +43,31 @@ public class MemberController {
        return ResponseEntity.ok(memberService.idChek(username));
     }
 
+    @GetMapping("/emlCheck")
+    public ResponseEntity<String> emlCheck(@RequestParam String email) {
+        return ResponseEntity.ok(memberService.emlCheck(email));
+    }
+
     @PostMapping("/update")
     public ResponseEntity<MemberResponseDto> update(@Valid @RequestBody UpdateMemberDto updateMemberDto) {
        return ResponseEntity.ok(memberService.updateInfo(updateMemberDto));
     }
 
     @GetMapping("/myPage")
-    public ResponseEntity<MemberResponseDto> myPage(@RequestParam String username) {
-        return ResponseEntity.ok(memberService.selectMypageById(username));
+    public MyPageResponseDto myPage(@RequestParam String username) {
+       MemberResponseDto member = memberService.selectMypageById(username);
+       List<PostResponseDto> posts = postService.findMyPosts(username);
+       List<ApplyResponseDto> apply = positionService.findApplyPost(username);
+       List<PostAcceptDto> accept = positionService.findAcceptPost(username);
+       List<PostResponseDto> like = postService.findLikePost(username);
+
+       return MyPageResponseDto.builder()
+               .member(member)
+               .posts(posts)
+               .applyPosts(apply)
+               .acceptPosts(accept)
+               .likePosts(like)
+               .build();
     }
 
     private String resolveToken(String token) {
