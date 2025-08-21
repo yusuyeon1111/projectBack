@@ -20,4 +20,4 @@
 - 회원가입/로그인/마이페이지
 - 비밀번호 암호화
 - 소셜 로그인(네이버/카카오)
-- 회원가입/로그인 시연 영상 https://youtu.be/a6qJKUhoMys
+- [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
