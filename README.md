@@ -30,8 +30,7 @@
   - 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장할 수 있는 로직을 구현함.
 
 #### 1-1. 회원관리 다이어그램
-
-![제목을-입력해주세요_-001 (1)](https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2)
+<img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2" />
 
 #### 1-2. 회원 erd
 <img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
@@ -40,8 +39,7 @@
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
 ### 2. 프로젝트/스터디 모집 흐름도
-![제목을-입력해주세요_-001 (3)](https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751)
-
+<img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
 
 ### 3. 마이 페이지
 - 작성글 / 찜한 글 / 신청 내역 / 참여 중인 프로젝트 조회 기능
