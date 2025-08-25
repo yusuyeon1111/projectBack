@@ -57,5 +57,9 @@
 #### 3-4. 마이페이지 시연 영상
  [![마이페이지 시연 영상](https://img.youtube.com/vi/kaPWQzD3w8M/0.jpg)](https://www.youtube.com/watch?v=kaPWQzD3w8M)
  
-### 3. 모집글 작성/조회/수정/삭제
+### 4. 모집글 작성/조회/수정/삭제
+#### 4-1. 게시글 erd
+<img width="2046" height="1324" alt="post" src="https://github.com/user-attachments/assets/bcfb1d8b-1019-4ade-b092-114e81d82f24" />
+
+
  [![프로젝트 시연 영상](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
