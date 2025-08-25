@@ -60,6 +60,6 @@
  
 ### 4. 모집글 작성/조회/수정/삭제
 #### 4-1. 게시글 erd
-<img width="700" height="600" alt="post" src="https://github.com/user-attachments/assets/bcfb1d8b-1019-4ade-b092-114e81d82f24" />
+<img width="700" height="600" alt="post" src="https://github.com/user-attachments/assets/9be2438b-87bc-4dae-96c7-a11dbf708999" />
 
  [![프로젝트 시연 영상](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
