@@ -39,9 +39,11 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.cors(Customizer.withDefaults());
-        http.authorizeHttpRequests((auth)->auth
-                .requestMatchers("/","/api/**","/oauth2/**").permitAll()
-                .anyRequest().authenticated());
+        http.authorizeHttpRequests(auth -> auth
+                .requestMatchers("/", "/api/post/**","/api/member/**", "/oauth2/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated()
+        );
         http.sessionManagement((session)->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션정책설정
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(info -> info.userService(customerOAuth2UserService))
