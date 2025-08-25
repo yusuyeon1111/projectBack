@@ -29,13 +29,31 @@
 - JWT 인증을 통한 세션 관리
   - 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장할 수 있는 로직을 구현함.
 
-- 회원관리 다이어그램
-![제목을-입력해주세요_-001 (1)](https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2)
+#### 1-1. 회원관리 다이어그램
 
+![제목을-입력해주세요_-001 (1)](https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2)
+ 
+#### 1-2. 회원가입 / 로그인 시연 영상
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
-### 2. 마이 페이지
-- 
+### 2. 프로젝트/스터디 모집 흐름도
+![제목을-입력해주세요_-001 (3)](https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751)
+
+
+### 3. 마이 페이지
+- 작성글 / 찜한 글 / 신청 내역 / 참여 중인 프로젝트 조회 기능
+
+#### 3-1. 작성글 조회 기능
+- 사용자가 작성한 모집글 목록 확인
+- 신청자 수락 / 거절 가능
+
+#### 3-2. 신청 내역 조회 기능
+- 사용자가 신청한 모집글 목록 확인
+- 각 신청 상태 확인 가능
+
+#### 3-3. 참여 중인 프로젝트 조회 기능
+- 사용자의 신청이 승인되어 참여 중인 프로젝트 목록 확인
+
  [![마이페이지 시연 영상](https://img.youtube.com/vi/kaPWQzD3w8M/0.jpg)](https://www.youtube.com/watch?v=kaPWQzD3w8M)
  
 ### 3. 모집글 작성/조회/수정/삭제
