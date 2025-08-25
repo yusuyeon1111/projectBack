@@ -18,19 +18,24 @@
 - **Frontend:** React, MUI, JavaScript, HTML/CSS
 - **Backend:** Spring Boot, Spring Security, JPA
 - **DB:** MariaDB, Redis
-- **Deployment / DevOps:** AWS, Docker
+- **Deployment / DevOps:** Docker
 - **기타:** Axios, JWT
 
 ## 📖 기능 소개
 ### 1. 회원 관리
-- 회원가입/로그인/마이페이지
-- 비밀번호 암호화
-- 소셜 로그인(네이버/카카오)
-  
+- 회원가입 / 로그인 / 로그아웃 기능
+- 비밀번호 암호화(Bcrypt)로 안전하게 저장
+- 소셜 로그인(Naver / Kakao) 기능
+- JWT 인증을 통한 세션 관리
+  - 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장할 수 있는 로직을 구현함.
+
+- 회원관리 다이어그램
+![제목을-입력해주세요_-001 (1)](https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2)
+
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
 ### 2. 마이 페이지
-
+- 
  [![마이페이지 시연 영상](https://img.youtube.com/vi/kaPWQzD3w8M/0.jpg)](https://www.youtube.com/watch?v=kaPWQzD3w8M)
  
 ### 3. 모집글 작성/조회/수정/삭제
