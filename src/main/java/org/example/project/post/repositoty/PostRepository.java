@@ -1,19 +1,15 @@
 package org.example.project.post.repositoty;
 
 import io.lettuce.core.dynamic.annotation.Param;
-import org.example.project.post.dto.PostResponseDto;
 import org.example.project.post.entity.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Range;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -58,7 +54,29 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 """)
     List<Post> findByAuthorOrderByUpdatedOrCreatedDesc(@Param("username") String username);
 
+    @Query("""
+        SELECT FUNCTION('MONTH', p.created) as month, COUNT(p) as count
+        FROM Post p
+        WHERE FUNCTION('YEAR', p.created) = :year
+        GROUP BY FUNCTION('MONTH', p.created)
+        ORDER BY FUNCTION('MONTH', p.created)
+    """)
+    List<Object[]> countPostPerMonth(@Param("year") int year);
 
+    @Query("""
+        SELECT p.postStatus as status, COUNT(p) as count
+        FROM Post p
+        WHERE FUNCTION('YEAR', p.created) = :year
+        GROUP BY p.postStatus
+    """)
+    List<Object[]> countPostGroupByStatus(@Param("year") int year);
 
-
+    @Query("""
+        SELECT FUNCTION('MONTH', p.created), p.category as category, COUNT(p) as count
+        FROM Post p
+        WHERE FUNCTION('YEAR', p.created) = :year
+        GROUP BY FUNCTION('MONTH', p.created), p.category
+        ORDER BY FUNCTION('MONTH', p.created)
+    """)
+    List<Object[]> countPostGroupByCategory(int year);
 }

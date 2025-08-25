@@ -4,6 +4,9 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.project.admin.dto.MonthlyPostDto;
+import org.example.project.admin.dto.MonthlyStatsDto;
+import org.example.project.admin.dto.PostChartResponse;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
 import org.example.project.post.dto.*;
@@ -21,10 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -235,5 +235,72 @@ public class PostService {
     public List<ApplyMemeberDto> getPostApplyMember(Long postId) {
        List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(postId);
         return list;
+    }
+
+    public List<MonthlyStatsDto> getMonthlyStats(int year) {
+        List<Object[]> result = postRepository.countPostPerMonth(year);
+        return result.stream()
+                .map(obj ->
+                        new MonthlyStatsDto(
+                                String.format("%d월", ((Number)obj[0]).intValue()), // name
+                                ((Number)obj[1]).intValue() // count
+                        )
+                )
+                .toList();
+    }
+
+    public List<MonthlyStatsDto> getPostStauts(int year) {
+        List<Object[]> result = postRepository.countPostGroupByStatus(year);
+        return result.stream()
+                .map(obj ->
+                        new MonthlyStatsDto(
+                                ((String) obj[0]), // name
+                                ((Number)obj[1]).intValue() // count
+                        )
+                )
+                .toList();
+    }
+
+    public List<MonthlyPostDto> getTotalPositionStats(int year) {
+        List<Object[]> result = postPositionRepository.sumPostPositionCountPerMonth(year);
+        List<Object[]> result2 = postPositionMemberRepository.countApplyMonth(year);
+        List<Object[]> result3 = postPositionMemberRepository.countAcceptMonth(year);
+        List<Object[]> result4 = postPositionMemberRepository.countRejectMonth(year);
+        Map<Integer, MonthlyPostDto> monthMap = new HashMap<>();
+
+        for (Object[] row : result) {
+            int month = ((Number) row[0]).intValue();
+            int total = ((Number) row[1]).intValue();
+            monthMap.put(month, new MonthlyPostDto(month,String.format("%d월", (month)), total, 0, 0));
+        }
+        for (Object[] row : result2) {
+            int month = ((Number) row[0]).intValue();
+            int apply = ((Number) row[1]).intValue();
+            monthMap.computeIfAbsent(month, m -> new MonthlyPostDto(m, String.format("%d월", m), 0, 0, 0))
+                    .setApplyCount(apply);
+        }
+        for (Object[] row : result3) {
+            int month = ((Number) row[0]).intValue();
+            int accept = ((Number) row[1]).intValue();
+            monthMap.computeIfAbsent(month, m -> new MonthlyPostDto(m, String.format("%d월", m), 0, 0, 0))
+                    .setAcceptCount(accept);
+        }
+
+        List<MonthlyPostDto> mergedList = new ArrayList<>(monthMap.values());
+        mergedList.sort(Comparator.comparingInt(MonthlyPostDto::getMonth));
+        return mergedList;
+    }
+
+    public List<PostChartResponse> getPostCategory(int year) {
+        List<Object[]> result = postRepository.countPostGroupByCategory(year);
+        return result.stream()
+                .map(obj ->
+                        new PostChartResponse(
+                                String.format("%d월", ((Number)obj[0]).intValue()),
+                                ((String) obj[1]), // name
+                                ((Number)obj[2]).intValue() // count
+                        )
+                )
+                .toList();
     }
 }

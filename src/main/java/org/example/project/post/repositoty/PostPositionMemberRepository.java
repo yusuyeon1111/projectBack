@@ -102,4 +102,40 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
         ORDER BY ppm.acceptedAt DESC
 """)
     List<ApplyMemeberDto> findPostPositionMemberByPostId(@Param("postId") Long postId);
+
+    @Query("""
+        SELECT FUNCTION('MONTH', ppm.acceptedAt) as month, COUNT(p) as count
+        FROM PostPositionMember ppm
+        JOIN ppm.postPosition pp
+        JOIN pp.post p
+        WHERE FUNCTION('YEAR', ppm.acceptedAt) = :year
+        AND ppm.status = 'ACCEPT'
+        GROUP BY FUNCTION('MONTH', ppm.acceptedAt)
+        ORDER BY FUNCTION('MONTH', ppm.acceptedAt)
+    """)
+    List<Object[]> countAcceptMonth(@Param("year") int year);
+
+    @Query("""
+        SELECT FUNCTION('MONTH', ppm.appliedAt) as month, COUNT(p) as count
+        FROM PostPositionMember ppm
+        JOIN ppm.postPosition pp
+        JOIN pp.post p
+        WHERE FUNCTION('YEAR', ppm.appliedAt) = :year
+        AND ppm.status = 'APPLY'
+        GROUP BY FUNCTION('MONTH', ppm.appliedAt)
+        ORDER BY FUNCTION('MONTH', ppm.appliedAt)
+    """)
+    List<Object[]> countApplyMonth(@Param("year") int year);
+
+    @Query("""
+        SELECT FUNCTION('MONTH', ppm.rejectedAt) as month, COUNT(p) as count
+        FROM PostPositionMember ppm
+        JOIN ppm.postPosition pp
+        JOIN pp.post p
+        WHERE FUNCTION('YEAR', ppm.rejectedAt) = :year
+        AND ppm.status = 'REJECT'
+        GROUP BY FUNCTION('MONTH', ppm.rejectedAt)
+        ORDER BY FUNCTION('MONTH', ppm.rejectedAt)
+    """)
+    List<Object[]> countRejectMonth(int year);
 }

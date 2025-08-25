@@ -72,7 +72,6 @@ public class PositionService {
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
 
         position.setStatus("ACCEPT");
-        postPosition.setCount(postPosition.getCount() - 1);
         postPositionRepository.save(postPosition);
         Post post = postRepository.findById(dto.getPostId())
                 .orElseThrow(() -> new RuntimeException("모집글이 존재하지 않습니다."));
@@ -80,7 +79,7 @@ public class PositionService {
         long temp = postPositionMemberRepository.findCountByPostPositionId(postPosition.getId());
         int memberPositionCount = (int)temp;
         if(positionCount == memberPositionCount) {
-            position.setStatus("END");
+            postPosition.setStatus("END");
             postPositionRepository.save(postPosition);
         }
         long endCount = postPositionRepository.countByPostIdAndStatus(dto.getPostId(), "END");
