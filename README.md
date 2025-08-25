@@ -32,8 +32,11 @@
 #### 1-1. 회원관리 다이어그램
 
 ![제목을-입력해주세요_-001 (1)](https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2)
- 
-#### 1-2. 회원가입 / 로그인 시연 영상
+
+#### 1-2. 회원 erd
+<img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
+
+#### 1-3. 회원가입 / 로그인 시연 영상
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
 ### 2. 프로젝트/스터디 모집 흐름도
@@ -60,6 +63,5 @@
 ### 4. 모집글 작성/조회/수정/삭제
 #### 4-1. 게시글 erd
 <img width="700" height="600" alt="post" src="https://github.com/user-attachments/assets/bcfb1d8b-1019-4ade-b092-114e81d82f24" />
-
 
  [![프로젝트 시연 영상](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
