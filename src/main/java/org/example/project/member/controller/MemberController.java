@@ -39,13 +39,13 @@ public class MemberController {
     }
 
     @GetMapping("/idCheck")
-    public ResponseEntity<String> idCheck(@RequestParam String username) {
-       return ResponseEntity.ok(memberService.idChek(username));
+    public ResponseEntity<String> idCheck(@RequestParam("username") String username) {
+       return memberService.idChek(username);
     }
 
     @GetMapping("/emlCheck")
-    public ResponseEntity<String> emlCheck(@RequestParam String email) {
-        return ResponseEntity.ok(memberService.emlCheck(email));
+    public ResponseEntity<String> emlCheck(@RequestParam("email") String email) {
+        return memberService.emlCheck(email);
     }
 
     @PostMapping("/update")

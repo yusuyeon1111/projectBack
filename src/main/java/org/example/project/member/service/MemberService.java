@@ -3,6 +3,8 @@ package org.example.project.member.service;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.project.admin.dto.MonthlyStatsDto;
+import org.example.project.admin.dto.PostChartResponse;
 import org.example.project.member.dto.JwtToken;
 import org.example.project.member.dto.MemberResponseDto;
 import org.example.project.member.dto.SignUpDto;
@@ -12,17 +14,14 @@ import org.example.project.member.entity.MemberProfile;
 import org.example.project.member.repository.MemberRepository;
 import org.example.project.security.JwtTokenProvider;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -34,7 +33,7 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
-
+    Date date = new Date();
     @Transactional
     public Member signUp(SignUpDto signUpDto) {
         if (memberRepository.existsByUsername(signUpDto.getUsername())) {
@@ -57,6 +56,7 @@ public class MemberService {
                 .nickname(signUpDto.getNickname())
                 .name(signUpDto.getName())
                 .email(signUpDto.getEmail())
+                .createdAt(new Date())
                 .roles(roles)
                 .memberProfile(memberProfile)
                 .build();
@@ -93,11 +93,12 @@ public class MemberService {
         return "Logout successful";
     }
 
-    public String idChek(String username) {
-        if (memberRepository.existsByUsername(username)) {
-            throw new RuntimeException("중복된 아이디입니다.");
+    public ResponseEntity<String> idChek(String username) {
+        boolean exists = memberRepository.existsByUsername(username);
+        if (exists) {
+            return ResponseEntity.ok("중복된 아이디입니다.");
         } else {
-            return "사용가능한 아이디 입니다.";
+            return ResponseEntity.ok("사용가능한 아이디 입니다.");
         }
     }
 
@@ -146,11 +147,36 @@ public class MemberService {
         return new MemberResponseDto(member);
     }
 
-    public String emlCheck(String email) {
+    public ResponseEntity<String> emlCheck(String email) {
         if (memberRepository.existsByEmail(email)) {
-            throw new RuntimeException("중복된 이메일입니다.");
+            return ResponseEntity.ok("중복된 이메일입니다.");
         } else {
-            return "사용가능한 이메일 입니다.";
+            return ResponseEntity.ok("사용가능한 이메일 입니다.");
         }
+    }
+
+    public List<MonthlyStatsDto> getMonthlyStats(int year) {
+        List<Object[]> result = memberRepository.countMemberPerMonth(year);
+        return result.stream()
+                .map(obj ->
+                        new MonthlyStatsDto(
+                                String.format("%d월", ((Number)obj[0]).intValue()), // name
+                                ((Number)obj[1]).intValue() // count
+                        )
+                )
+                .toList();
+    }
+
+    public List<PostChartResponse> getPositionStatus(int year){
+        List<Object[]> result = memberRepository.countMemberByPosition(year);
+        return result.stream()
+                .map(obj ->
+                        new PostChartResponse(
+                                String.format("%d월", ((Number)obj[0]).intValue()),
+                                ((String) obj[1]), // name
+                                ((Number)obj[2]).intValue() // count
+                        )
+                )
+                .toList();
     }
 }

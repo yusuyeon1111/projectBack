@@ -8,8 +8,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +47,9 @@ public class Member implements UserDetails {
 
     @Column
     private String provider;
+
+    @Column
+    private Date createdAt;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
