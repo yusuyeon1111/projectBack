@@ -46,8 +46,7 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
     // HTTP 요청 헤더에서 JWT를 꺼내 반환
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-
-        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer")) {
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);  // "Bearer " 제거 실제 토큰만 추출
         }
         return null;
