@@ -262,17 +262,11 @@ public class PostService {
     }
 
     public List<MonthlyPostDto> getTotalPositionStats(int year) {
-        List<Object[]> result = postPositionRepository.sumPostPositionCountPerMonth(year);
         List<Object[]> result2 = postPositionMemberRepository.countApplyMonth(year);
         List<Object[]> result3 = postPositionMemberRepository.countAcceptMonth(year);
         List<Object[]> result4 = postPositionMemberRepository.countRejectMonth(year);
         Map<Integer, MonthlyPostDto> monthMap = new HashMap<>();
 
-        for (Object[] row : result) {
-            int month = ((Number) row[0]).intValue();
-            int total = ((Number) row[1]).intValue();
-            monthMap.put(month, new MonthlyPostDto(month,String.format("%d월", (month)), total, 0, 0));
-        }
         for (Object[] row : result2) {
             int month = ((Number) row[0]).intValue();
             int apply = ((Number) row[1]).intValue();
@@ -284,6 +278,12 @@ public class PostService {
             int accept = ((Number) row[1]).intValue();
             monthMap.computeIfAbsent(month, m -> new MonthlyPostDto(m, String.format("%d월", m), 0, 0, 0))
                     .setAcceptCount(accept);
+        }
+        for (Object[] row : result4) {
+            int month = ((Number) row[0]).intValue();
+            int accept = ((Number) row[1]).intValue();
+            monthMap.computeIfAbsent(month, m -> new MonthlyPostDto(m, String.format("%d월", m), 0, 0, 0))
+                    .setRejectCount(accept);
         }
 
         List<MonthlyPostDto> mergedList = new ArrayList<>(monthMap.values());
@@ -302,5 +302,20 @@ public class PostService {
                         )
                 )
                 .toList();
+    }
+
+    public String updateDelYn(PostRequestDto dto) {
+        Post post = postRepository.findById(dto.getId())
+                .orElseThrow(()-> new RuntimeException("해당 게시글을 찾을 수 없습니다."));
+        post.setDelYn(dto.getDelYn());
+        postRepository.save(post);
+
+        String msg = "";
+        if(dto.getDelYn().equals("Y")){
+            msg = "게시글이 비공개 되었습니다.";
+        } else {
+            msg = "게시글이 공개 되었습니다.";
+        }
+        return msg;
     }
 }

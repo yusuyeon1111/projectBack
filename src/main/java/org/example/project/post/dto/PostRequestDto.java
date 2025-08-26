@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 
 @Getter
+@Setter
 public class PostRequestDto {
 
     private Long id;
@@ -26,7 +27,7 @@ public class PostRequestDto {
     private Date startDate;
     private String postStatus;
     private String username;
-
+    private String delYn;
     // 조회용 필드
     private Integer page = 0;
     private Integer size = 10;

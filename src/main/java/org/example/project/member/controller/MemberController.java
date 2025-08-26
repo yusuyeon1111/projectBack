@@ -70,6 +70,12 @@ public class MemberController {
                .build();
     }
 
+    @GetMapping("/getUserInfo/{memberId}")
+    public ResponseEntity<MemberResponseDto> getUserInfo(@PathVariable Long memberId) {
+        MemberResponseDto member = memberService.selectById(memberId);
+        return ResponseEntity.ok(member);
+    }
+
     private String resolveToken(String token) {
         if (StringUtils.hasText(token) && token.startsWith("Bearer")) {
             return token.substring(7);
@@ -81,5 +87,6 @@ public class MemberController {
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
 
 }

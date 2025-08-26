@@ -11,6 +11,8 @@ import java.util.List;
 @NoArgsConstructor
 public class UpdateMemberDto {
 
+    private Long memberId;
+
     private String username;
 
     private String password;

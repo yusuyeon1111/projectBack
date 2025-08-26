@@ -1,16 +1,21 @@
 package org.example.project.admin.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.example.project.admin.dto.AdminChartResponse;
-import org.example.project.admin.dto.MonthlyPostDto;
-import org.example.project.admin.dto.PostChartResponse;
+import org.example.project.admin.dto.*;
+import org.example.project.member.dto.UpdateMemberDto;
+import org.example.project.member.entity.Member;
 import org.example.project.member.service.MemberService;
+import org.example.project.post.dto.PostRequestDto;
+import org.example.project.post.entity.Post;
 import org.example.project.post.service.PostService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -44,4 +49,24 @@ public class AdminController {
         return memberService.getPositionStatus(year);
     }
 
+    @GetMapping("/memberAll")
+    public MemberPageResponse memberAll(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return memberService.getMemberAllList(pageable);
+    }
+
+    @PostMapping("/acceptUser")
+    public ResponseEntity<String> acceptUser(@RequestBody UpdateMemberDto dto) {
+        return ResponseEntity.ok(memberService.acceptUser(dto));
+    }
+
+    @PostMapping("/banUser")
+    public ResponseEntity<String> banUser(@RequestBody UpdateMemberDto dto) {
+        return ResponseEntity.ok(memberService.banUser(dto));
+    }
+
+    @PostMapping("/changePostStatus")
+    public ResponseEntity<String> changePostStatus(@RequestBody PostRequestDto dto) {
+        return ResponseEntity.ok(postService.updateDelYn(dto));
+    }
 }

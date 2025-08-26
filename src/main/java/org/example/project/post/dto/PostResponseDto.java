@@ -24,6 +24,7 @@ public class PostResponseDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private Date updated;
     private String status;
+    private String delYn;
     private List<String> techStacks;
     private List<PostPositionDto> positions;
     private String category;
@@ -46,6 +47,7 @@ public class PostResponseDto {
         this.created = post.getCreated();
         this.updated = post.getUpdated();
         this.status = post.getStatus();
+        this.delYn = post.getDelYn();
         this.category = post.getCategory();
         this.nickname = post.getNickname();
         this.likeCount = post.getLikeCount();

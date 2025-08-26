@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.project.member.dto.JwtToken;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -41,22 +42,25 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String email = "";
         String name = "";
 
+        // OAuth2 provider별 이메일/이름 추출
         if ("kakao".equals(registrationId)) {
             Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttributes().get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             email = (String) kakaoAccount.get("email");
+            System.out.println("실행"+email);
             name = (String) profile.get("nickname");
         } else if ("naver".equals(registrationId)) {
             email = (String) oAuth2User.getAttributes().get("email");
             name = (String) oAuth2User.getAttributes().get("name");
         }
 
-        boolean isNewUser = false;
-        Optional<Member> memberOpt = memberRepository.findByEmail(email);
-
         Member member;
-        if (memberOpt.isPresent()) {
-            member = memberOpt.get();
+        boolean isNewUser = false;
+
+        Optional<Member> optionalMember = memberRepository.findByEmail(email);
+
+        if(optionalMember.isPresent()) {
+            member = optionalMember.get();
         } else {
             isNewUser = true;
             member = Member.builder()
@@ -64,16 +68,25 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .name(name)
                     .username(email)
                     .password(new BCryptPasswordEncoder().encode(UUID.randomUUID().toString()))
+                    .delYn("N")
                     .roles(List.of("ROLE_USER"))
                     .provider(registrationId)
                     .build();
-            memberRepository.save(member);
+            try {
+                memberRepository.save(member);
+            } catch (DataIntegrityViolationException e) {
+                // 이미 존재하면 기존 회원 가져오기
+                member = memberRepository.findByEmail(email)
+                        .orElseThrow(() -> new IllegalStateException("회원 생성 실패"));
+                isNewUser = false;
+            }
         }
 
-        // 토큰 생성
+        // JWT 토큰 생성 및 Redis 저장
         JwtToken token = jwtTokenProvider.generateToken(authentication);
         redisTemplate.opsForValue().set("RT:" + authentication.getName(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
 
+        // 리다이렉트 URL 생성
         String redirectUri = UriComponentsBuilder
                 .fromUriString("http://localhost:3000/oauth2/success")
                 .queryParam("accessToken", token.getAccessToken())
@@ -86,5 +99,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         response.sendRedirect(redirectUri);
     }
+
 
 }

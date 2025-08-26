@@ -121,7 +121,6 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
         JOIN ppm.postPosition pp
         JOIN pp.post p
         WHERE FUNCTION('YEAR', ppm.appliedAt) = :year
-        AND ppm.status = 'APPLY'
         GROUP BY FUNCTION('MONTH', ppm.appliedAt)
         ORDER BY FUNCTION('MONTH', ppm.appliedAt)
     """)

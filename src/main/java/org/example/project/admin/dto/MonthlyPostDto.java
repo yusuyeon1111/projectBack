@@ -10,7 +10,7 @@ import lombok.Setter;
 public class MonthlyPostDto {
     private int month;
     private String name;
-    private int totalPositions;
     private int applyCount;
     private int acceptCount;
+    private int rejectCount;
 }

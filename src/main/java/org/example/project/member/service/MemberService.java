@@ -3,6 +3,8 @@ package org.example.project.member.service;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.project.admin.dto.MemberPageResponse;
+import org.example.project.admin.dto.MemberResponse;
 import org.example.project.admin.dto.MonthlyStatsDto;
 import org.example.project.admin.dto.PostChartResponse;
 import org.example.project.member.dto.JwtToken;
@@ -13,6 +15,8 @@ import org.example.project.member.entity.Member;
 import org.example.project.member.entity.MemberProfile;
 import org.example.project.member.repository.MemberRepository;
 import org.example.project.security.JwtTokenProvider;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -178,5 +183,38 @@ public class MemberService {
                         )
                 )
                 .toList();
+    }
+
+    public MemberPageResponse getMemberAllList(Pageable pageable) {
+        Page<Member> page = memberRepository.findAll(pageable);
+        List<MemberResponse> content = page.stream()
+                .map(MemberResponse::new)
+                .collect(Collectors.toList());
+        return new MemberPageResponse(content, page.getTotalPages(), page.getTotalElements(), page.getNumber());
+    }
+
+    public String acceptUser(UpdateMemberDto dto) {
+        Long id = dto.getMemberId();
+        Member member = memberRepository.findById(id)
+                .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
+        member.setDelYn("N");
+        memberRepository.save(member);
+
+        return "계정이 활성화 되었습니다.";
+    }
+
+    public String banUser(UpdateMemberDto dto) {
+        Long id = dto.getMemberId();
+        Member member = memberRepository.findById(id)
+                .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
+        member.setDelYn("Y");
+        memberRepository.save(member);
+        return "계정이 비활성화 되었습니다.";
+    }
+
+    public MemberResponseDto selectById(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
+        return new MemberResponseDto(member);
     }
 }

@@ -67,6 +67,9 @@ public class Post {
     @Column
     private String postStatus;
 
+    @Column(nullable = false, columnDefinition = "char(1) default 'N'")
+    private String delYn = "N";
+
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostPosition> positions = new ArrayList<>();
 

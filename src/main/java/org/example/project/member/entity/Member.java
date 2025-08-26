@@ -51,6 +51,9 @@ public class Member implements UserDetails {
     @Column
     private Date createdAt;
 
+    @Column(nullable = false, columnDefinition = "char(1) default 'N'")
+    private String delYn = "N";
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "member_roles",
