@@ -41,6 +41,7 @@
 
 #### 1-2. 회원 erd
 <img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
+
 - 사용자가 회원가입하면 **member** 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보가 저장됩니다.
 - 마이페이지에서 사용자는 **member_profile** 테이블에 선호 포지션(preferred_position)과 자기소개(introduce)를 작성할 수 있습니다.
 - 또한, **member_stack** 테이블을 통해 해당 프로필과 연결된 기술 스택들을 저장합니다. (1명의 프로필이 여러 기술 스택을 가질 수 있음)
