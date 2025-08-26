@@ -14,20 +14,22 @@
   - 회원 ERD
   <img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
 
-- 회원 가입
-  -  member 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보 저장
-- 마이페이지
-  - member_profile 테이블: 선호 포지션(preferred_position)과 자기소개(introduce) 작성 가능
-  - member_stack 테이블: 프로필과 연결된 기술 스택 저장 (1명의 프로필이 여러 기술 스택 보유 가능)
- - 모집 신청
-   - 사용자가 모집 글의 포지션에 신청하면 post_position_member 테이블에 기록
- - 좋아요 기능
-   - post_like 테이블: 사용자가 게시글을 좋아요 한 기록 관리 (member_id와 post_id 연결)
-  - 로그인한 사용자는 프로젝트/스터디 모집글 작성 가능
-  - 로그인하지 않아도 모집글 조회 가능
+ - 회원 가입
+   -  member 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보 저장
+ - 마이페이지
+   - member_profile 테이블: 선호 포지션(preferred_position)과 자기소개(introduce) 작성 가능
+   - member_stack 테이블: 프로필과 연결된 기술 스택 저장 (1명의 프로필이 여러 기술 스택 보유 가능)
+  - 모집 신청
+    - 사용자가 모집 글의 포지션에 신청하면 post_position_member 테이블에 기록
+  - 좋아요 기능
+    - post_like 테이블: 사용자가 게시글을 좋아요 한 기록 관리 (member_id와 post_id 연결)
+   - 로그인한 사용자는 프로젝트/스터디 모집글 작성 가능
+   - 로그인하지 않아도 모집글 조회 가능
+ 
 - 📌 **모집/참여 기능**
   - 사용자는 프로젝트/스터디에 **참여 신청** 가능
   - 프로젝트/스터디장은 신청을 **수락/거절** 가능
+ 
 - 📌 **관리자 기능**
   - 대시보드 기능
   - 게시글 관리
