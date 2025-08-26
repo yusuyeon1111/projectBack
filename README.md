@@ -8,11 +8,11 @@
 
 ### 주요 기능
 - 프로세스 흐름도
- <img width="500" height="300" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
+ <img width="600" height="300" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
 
 - 🔐 **회원 관리**
   - 회원 ERD
-  <img width="500" height="300" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
+  <img width="600" height="300" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
 
   - 회원 가입
     -  member 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보 저장
