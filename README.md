@@ -11,6 +11,18 @@
  <img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
 
 - 🔐 **회원 관리**
+  - 회원 ERD
+  <img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
+
+- 회원 가입
+  -  member 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보 저장
+- 마이페이지
+  - member_profile 테이블: 선호 포지션(preferred_position)과 자기소개(introduce) 작성 가능
+  - member_stack 테이블: 프로필과 연결된 기술 스택 저장 (1명의 프로필이 여러 기술 스택 보유 가능)
+ - 모집 신청
+   - 사용자가 모집 글의 포지션에 신청하면 post_position_member 테이블에 기록
+ - 좋아요 기능
+   - post_like 테이블: 사용자가 게시글을 좋아요 한 기록 관리 (member_id와 post_id 연결)
   - 로그인한 사용자는 프로젝트/스터디 모집글 작성 가능
   - 로그인하지 않아도 모집글 조회 가능
 - 📌 **모집/참여 기능**
@@ -39,19 +51,7 @@
 #### 1-1. 회원관리 JWT 인증 흐름도
 <img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2" />
 
-#### 1-2. 회원 erd
-<img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
-
-- 회원 가입
-  -  member 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보 저장
-- 마이페이지
-  - member_profile 테이블: 선호 포지션(preferred_position)과 자기소개(introduce) 작성 가능
-  - member_stack 테이블: 프로필과 연결된 기술 스택 저장 (1명의 프로필이 여러 기술 스택 보유 가능)
- - 모집 신청
-   - 사용자가 모집 글의 포지션에 신청하면 post_position_member 테이블에 기록
- - 좋아요 기능
-   - post_like 테이블: 사용자가 게시글을 좋아요 한 기록 관리 (member_id와 post_id 연결)
-#### 1-3. 회원가입 / 로그인 시연 영상
+#### 1-2. 회원가입 / 로그인 시연 영상
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
 ### 2. 프로젝트/스터디 모집 흐름도
