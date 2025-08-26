@@ -11,9 +11,16 @@
   - 로그인한 사용자는 프로젝트/스터디 모집글 작성 가능
   - 로그인하지 않아도 모집글 조회 가능
 - 📌 **모집/참여 기능**
+  
+  <img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
+  
   - 사용자는 프로젝트/스터디에 **참여 신청** 가능
   - 프로젝트/스터디장은 신청을 **수락/거절** 가능
-
+- 📌 **관리자 기능**
+  - 대시보드 기능
+  - 게시글 관리
+  - 사용자 관리
+  
 ## 🛠 기술 스택 (Tech Stack)
 - **Frontend:** React, MUI, JavaScript, HTML/CSS
 - **Backend:** Spring Boot, Spring Security, JPA
@@ -29,7 +36,7 @@
 - JWT 인증을 통한 세션 관리
   - 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장할 수 있는 로직을 구현함.
 
-#### 1-1. 회원관리 다이어그램
+#### 1-1. 회원관리 JWT 인증 흐름도
 <img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/a908e37e-8336-4f0d-913b-f0ad69a4e8d2" />
 
 #### 1-2. 회원 erd
@@ -39,10 +46,12 @@
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
 ### 2. 프로젝트/스터디 모집 흐름도
-<img width="700" height="600" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
+
 
 ### 3. 마이 페이지
 - 작성글 / 찜한 글 / 신청 내역 / 참여 중인 프로젝트 조회 기능
+- 회원 정보 수정
+  - 자기소개글, 선호하는 포지션, 사용가능한 스택
 
 #### 3-1. 작성글 조회 기능
 - 사용자가 작성한 모집글 목록 확인
