@@ -42,11 +42,15 @@
 #### 1-2. 회원 erd
 <img width="700" height="600" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
 
-- 사용자가 회원가입하면 **member** 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보가 저장됩니다.
-- 마이페이지에서 사용자는 **member_profile** 테이블에 선호 포지션(preferred_position)과 자기소개(introduce)를 작성할 수 있습니다.
-- 또한, **member_stack** 테이블을 통해 해당 프로필과 연결된 기술 스택들을 저장합니다. (1명의 프로필이 여러 기술 스택을 가질 수 있음)
-- 사용자가 모집 글의 포지션에 신청하면 **post_position_member** 테이블에 신청자가 저장됩니다.
--  **post_like** 테이블은 사용자가 게시글을 좋아요 한 기록을 관리합니다.(member_id와 post_id로 연결) 
+- 회원 가입
+  -  member 테이블에 이메일, 닉네임, 비밀번호 등 기본 정보 저장
+- 마이페이지
+  - member_profile 테이블: 선호 포지션(preferred_position)과 자기소개(introduce) 작성 가능
+  - member_stack 테이블: 프로필과 연결된 기술 스택 저장 (1명의 프로필이 여러 기술 스택 보유 가능)
+ - 모집 신청
+   - 사용자가 모집 글의 포지션에 신청하면 post_position_member 테이블에 기록
+ - 좋아요 기능
+   - post_like 테이블: 사용자가 게시글을 좋아요 한 기록 관리 (member_id와 post_id 연결)
 #### 1-3. 회원가입 / 로그인 시연 영상
  [![회원가입/로그인 시연 영상](https://img.youtube.com/vi/a6qJKUhoMys/0.jpg)](https://www.youtube.com/watch?v=a6qJKUhoMys)
 
