@@ -25,6 +25,15 @@
 
  
 ## 1-3. 📌 **모집/참여 기능**
+ - 게시글 ERD
+<img width="600" height="300" alt="post" src="https://github.com/user-attachments/assets/9be2438b-87bc-4dae-96c7-a11dbf708999" />
+
+ -  **post** 테이블 : 게시글 작성 시 작성자, 제목, 내용 등 기본 정보를 저장합니다.
+ -  **post_stack** 테이블 : 프로젝트에서 사용되는 기술 스택을 저장합니다. 하나의 게시글에 여러 기술 스택을 연결할 수 있습니다.
+ -  **post_position** 테이블 : 게시글별로 모집하는 포지션 정보를 저장하며, 한 게시글에 여러 포지션을 등록할 수 있습니다.
+ -  **post_position** 테이블 : 포지션별로 신청한 사용자 정보를 관리합니다. 각 사용자는 member_id로 식별되며, position_id로 특정 포지션에 연결됩니다.
+ -   **post_like** 테이블 : 게시글에 대한 좋아요 정보를 저장합니다. post_id와 member_id를 기준으로 사용자가 한 게시글에 한 번만 좋아요를 누를 수 있도록 관리합니다.
+  
   - 로그인한 사용자는 프로젝트/스터디 모집글 작성 가능
   - 로그인하지 않아도 모집글 조회 가능
   - 사용자는 프로젝트/스터디에 **참여 신청** 가능
@@ -80,6 +89,23 @@
  
 ### 4. 모집글 작성/조회/수정/삭제
 #### 4-1. 게시글 erd
-<img width="700" height="600" alt="post" src="https://github.com/user-attachments/assets/9be2438b-87bc-4dae-96c7-a11dbf708999" />
+
 
  [![프로젝트 시연 영상](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
+
+# 👤 팀해요
+이 프로젝트는 **Spring Boot + React + DB** 를 활용하여  
+풀스택 개발 전 과정을 경험하기 위해 진행한 개인 프로젝트입니다.
+## 🚀 1. 프로젝트 소개 (About)
+혼자서 프로젝트하거나 공부할 때 누군가와 같이 하고싶다고 생각해본적이 있나요? 그럴 때 필용한 서비스입니다!
+## 🛠️ 사용 언어 / 기술 스택 (Languages & Tech Stack)
+| 분야 | 기술 |
+|------|------|
+| **Backend** | ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) |
+| **Frontend** | ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB) ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white) ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white) ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black) |
+| **Database / Cache** | ![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) |
+| **DevOps / Infra** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white) |
+| **Tools** | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) |
+## 3. 프로세스 흐름도
+<img width="700" height="400" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
+- 사용자 가입 -> 로그인 -> 팀원 모집글 작성 
