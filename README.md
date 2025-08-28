@@ -7,7 +7,7 @@
 풀스택 개발 전 과정을 경험하기 위해 진행한 개인 프로젝트입니다.
 
 ## 1-1. 프로세스 흐름도
-<img width="700" height="400" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
+<img width="800" height="500" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
 
 ## 1-2. 🔐 **회원 관련 기능**
   - 회원 ERD
