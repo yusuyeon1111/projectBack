@@ -9,6 +9,9 @@
 ## 1-1. 프로세스 흐름도
 <img width="800" height="500" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
 
+## 1-2. ERD
+<img width="800" height="500" alt="project@localhost" src="https://github.com/user-attachments/assets/5f531f3d-9519-4b3a-8944-74e5e43520a5" />
+
 ## 1-2. 🔐 **회원 관련 기능**
   - 회원 ERD
   <img width="600" height="300" alt="project" src="https://github.com/user-attachments/assets/afe117b1-97a4-4386-9d9c-6a8cf36027eb" />
@@ -106,6 +109,31 @@
 | **Database / Cache** | ![MariaDB](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white) ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white) |
 | **DevOps / Infra** | ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white) |
 | **Tools** | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) |
+
 ## 3. 프로세스 흐름도
-<img width="700" height="400" alt="diagram" src="https://github.com/user-attachments/assets/bbf3f5d7-3681-4a3c-85a0-137871968751" />
-- 사용자 가입 -> 로그인 -> 팀원 모집글 작성 
+<img width="800" height="500" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
+
+## 4. ERD
+아래 ERD는 스터디/프로젝트 매칭 플랫폼의 데이터베이스 구조를 나타냅니다.
+회원(Member), 모집글(Post), 지원(Application) 등을 중심으로 설계되었으며, 각 테이블은 다음과 같은 역할을 합니다.
+<img width="800" height="500" alt="project@localhost" src="https://github.com/user-attachments/assets/5f531f3d-9519-4b3a-8944-74e5e43520a5" />
+### 주요 테이블 설명
+- **member**  
+  사용자 계정을 관리하는 테이블입니다.  
+  - 이메일, 비밀번호, 닉네임, 소셜 로그인 제공자 등의 정보를 저장합니다.  
+  - `member_profile`과 연결되어 사용자의 자기소개 및 선호 포지션을 관리합니다.  
+  - `member_roles`를 통해 권한(관리자, 일반 사용자 등)을 부여합니다.  
+
+- **post**  
+  프로젝트/스터디 모집 글을 관리합니다.  
+  - 작성자(author), 제목, 내용, 모집 분야, 모집 인원, 지역, 모집 상태 등을 저장합니다.  
+  - `post_stack`으로 필요한 기술 스택을, `post_position`으로 모집 포지션을 정의합니다.  
+
+- **application**  
+  사용자가 모집글에 지원한 내역을 관리합니다.  
+  - 지원한 회원, 지원한 모집글, 지원 상태, 지원 날짜를 기록합니다.  
+
+- **post_position_member**  
+  특정 포지션에 지원한 멤버와 그 상태(대기/승인/거절)를 관리합니다.  
+- **post_like**  
+  게시글에 달린 좋아요 정보를 관리합니다. 
