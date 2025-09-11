@@ -10,7 +10,7 @@
 <img width="800" height="500" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
 
 ## 1-2. ERD
-<img width="800" height="500" alt="project@localhost" src="https://github.com/user-attachments/assets/5f531f3d-9519-4b3a-8944-74e5e43520a5" />
+<img width="800" height="500" alt="project" src="https://github.com/user-attachments/assets/1538af30-461f-416a-a56b-b59a8e337ced" />
 
 ## 1-2. 🔐 **회원 관련 기능**
   - 회원 ERD
