@@ -7,10 +7,7 @@ import org.example.project.admin.dto.MemberPageResponse;
 import org.example.project.admin.dto.MemberResponse;
 import org.example.project.admin.dto.MonthlyStatsDto;
 import org.example.project.admin.dto.PostChartResponse;
-import org.example.project.member.dto.JwtToken;
-import org.example.project.member.dto.MemberResponseDto;
-import org.example.project.member.dto.SignUpDto;
-import org.example.project.member.dto.UpdateMemberDto;
+import org.example.project.member.dto.*;
 import org.example.project.member.entity.Member;
 import org.example.project.member.entity.MemberProfile;
 import org.example.project.member.repository.MemberRepository;
@@ -66,18 +63,6 @@ public class MemberService {
                 .memberProfile(memberProfile)
                 .build();
         return memberRepository.save(member);
-    }
-
-    @Transactional
-    public JwtToken signIn(String username, String password) {
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-
-        JwtToken token = jwtTokenProvider.generateToken(authentication);
-
-        redisTemplate.opsForValue().set("RT:"+authentication.getName(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
-
-        return token;
     }
 
     @Transactional
@@ -216,5 +201,22 @@ public class MemberService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
         return new MemberResponseDto(member);
+    }
+
+    public JwtToken signIn(@Valid SignInDto signInDto) {
+        Member member = memberRepository.findByUsernameAndDelYn(signInDto.getUsername(), "N")
+                .orElseThrow(()-> new RuntimeException("비활성화된 계정입니다."));
+        if (!passwordEncoder.matches(signInDto.getPassword(), member.getPassword())) {
+            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+        }
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword());
+
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+        JwtToken token = jwtTokenProvider.generateToken(authentication);
+
+        redisTemplate.opsForValue().set("RT:"+authentication.getName(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
+
+        return token;
     }
 }

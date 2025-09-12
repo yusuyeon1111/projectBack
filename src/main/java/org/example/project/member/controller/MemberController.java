@@ -8,11 +8,13 @@ import org.example.project.member.service.MemberService;
 import org.example.project.post.dto.*;
 import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,10 +29,17 @@ public class MemberController {
        return ResponseEntity.ok(memberService.signUp(signUpDto));
    }
 
-   @PostMapping("/signin")
-    public ResponseEntity<JwtToken> signIn(@Valid @RequestBody SignInDto signInDto) {
-       return ResponseEntity.ok(memberService.signIn(signInDto.getUsername(), signInDto.getPassword()));
-   }
+    @PostMapping("/signin")
+    public ResponseEntity<?> signIn(@Valid @RequestBody SignInDto signInDto) {
+        try {
+            JwtToken token = memberService.signIn(signInDto);
+            return ResponseEntity.ok(token);
+        } catch (RuntimeException ex) {
+            // 로그인 실패 시 메시지 반환
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", ex.getMessage()));
+        }
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestHeader("Authorization") String token) {

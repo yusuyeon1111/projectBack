@@ -51,4 +51,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     ORDER BY FUNCTION('MONTH', m.createdAt)
     """)
     List<Object[]> countMemberByPosition(@Param("year") int year);
+
+    Optional<Member> findByUsernameAndDelYn(@NotBlank String username, String n);
 }

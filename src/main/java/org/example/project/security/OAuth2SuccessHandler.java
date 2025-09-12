@@ -21,6 +21,8 @@ import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -81,6 +83,17 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 isNewUser = false;
             }
         }
+        if ("Y".equals(member.getDelYn())) {
+            response.setContentType("text/html;charset=UTF-8");
+            response.getWriter().write(
+                    "<script>" +
+                            "alert('비활성화된 사용자입니다.');" +
+                            "window.location.href='http://localhost:3000/';" +
+                            "</script>"
+            );
+            return;
+        }
+
 
         // JWT 토큰 생성 및 Redis 저장
         JwtToken token = jwtTokenProvider.generateToken(authentication);
