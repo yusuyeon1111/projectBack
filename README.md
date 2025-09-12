@@ -46,6 +46,16 @@
 - 비밀번호 암호화(Bcrypt)로 안전하게 저장
 - 소셜 로그인(Naver / Kakao) 기능
 - JWT 인증을 통한 세션 관리
-  - 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장.
+- 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장.
 
-[![프로젝트 시연](https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
+[![프로젝트 시연](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
+
+### 5-2. 프로젝트/스터디원 모집
+- 프로젝트 제목, 기간(시작일/마감일) 입력
+- 프로젝트 방식 선택: 온라인 / 오프라인 / 혼합
+- 지역 선택 (오프라인인 경우)
+- 모집 포지션 선택 및 인원 수 지정
+- 기술 스택 입력
+- 상세 설명 작성
+  
+[![프로젝트 시연](https://img.youtube.com/vi/P1CJEVxjok4/0.jpg)](https://www.youtube.com/watch?v=P1CJEVxjok4)
