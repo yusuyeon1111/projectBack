@@ -28,4 +28,6 @@ public class UpdateMemberDto {
     private List<String> preferredTechStacks;
 
     private String introduce;
+
+    private String imgUrl;
 }

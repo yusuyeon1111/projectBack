@@ -110,6 +110,7 @@ public class MemberService {
         if (dto.getName() != null) {
             member.setName(dto.getName());
         }
+
         // MemberProfile 업데이트 (없으면 새로 생성)
         MemberProfile profile = member.getMemberProfile();
         if (profile == null) {
@@ -124,6 +125,10 @@ public class MemberService {
         if (dto.getPreferredTechStacks() != null) {
             profile.setPreferredTechStacks(dto.getPreferredTechStacks());
         }
+        if (dto.getImgUrl() != null) {
+            profile.setImgUrl(dto.getImgUrl());
+        }
+
 
         member.setMemberProfile(profile);
 

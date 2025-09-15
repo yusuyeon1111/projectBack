@@ -1,7 +1,12 @@
 package org.example.project.member.controller;
 
+import com.amazonaws.HttpMethod;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.example.project.member.dto.*;
 import org.example.project.member.entity.Member;
 import org.example.project.member.service.MemberService;
@@ -12,7 +17,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
-
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import java.net.URL;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -21,7 +29,17 @@ import java.util.Map;
 @RequestMapping("api/member")
 public class MemberController {
 
-   private final MemberService memberService;
+    @Value("${aws.s3.access-key-id}")
+    private String accessKeyId;
+
+    @Value("${aws.s3.secret-access-key}")
+    private String secretAccessKey;
+
+    @Value("${aws.s3.region}")
+    private String region;
+
+
+    private final MemberService memberService;
    private final PostService postService;
    private final PositionService positionService;
     @PostMapping("/signup")
@@ -83,6 +101,32 @@ public class MemberController {
     public ResponseEntity<MemberResponseDto> getUserInfo(@PathVariable Long memberId) {
         MemberResponseDto member = memberService.selectById(memberId);
         return ResponseEntity.ok(member);
+    }
+
+    @GetMapping("/presigned-url")
+    public Map<String, String> presignedUrl(@RequestParam String filename, @RequestParam String username) {
+        String bucketName = "aws-practice-img-suyeon";
+        String objectKey = "uploads/"+username+"/"+filename;
+
+        BasicAWSCredentials creds = new BasicAWSCredentials(
+                accessKeyId,
+                secretAccessKey
+        );
+
+        AmazonS3 amazonS3 = AmazonS3ClientBuilder.standard()
+                .withRegion(region)
+                .withCredentials(new AWSStaticCredentialsProvider(creds))
+                .build();
+
+        Date expiration = new Date(System.currentTimeMillis()+3600*1000);
+        GeneratePresignedUrlRequest generatePresignedUrlRequest = new GeneratePresignedUrlRequest(bucketName, objectKey)
+                .withExpiration(expiration)
+                .withMethod(HttpMethod.PUT);
+        URL url = amazonS3.generatePresignedUrl(generatePresignedUrlRequest);
+
+
+        String fileUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + objectKey;
+        return Map.of("url", url.toString(), "key", objectKey, "fileUrl", fileUrl );
     }
 
     private String resolveToken(String token) {

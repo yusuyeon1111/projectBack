@@ -27,6 +27,9 @@ public class MemberProfile {
     @Column(name = "introduce")
     private String introduce;
 
+    @Column(name = "imgUrl")
+    private String imgUrl;
+
     @ElementCollection
     @CollectionTable(name = "member_stack", joinColumns = @JoinColumn(name = "profile_id"))
     @Column(name = "tech_stack")

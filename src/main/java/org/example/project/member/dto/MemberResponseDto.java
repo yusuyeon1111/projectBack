@@ -27,6 +27,8 @@ public class MemberResponseDto {
 
     private String introduce;
 
+    private String imgUrl;
+
     public MemberResponseDto(Member member) {
         this.username = member.getUsername();
         this.nickname = member.getNickname();
@@ -38,6 +40,7 @@ public class MemberResponseDto {
             this.introduce = member.getMemberProfile().getIntroduce();
             this.preferredPosition = member.getMemberProfile().getPreferredPosition();
             this.preferredTechStacks = member.getMemberProfile().getPreferredTechStacks();
+            this.imgUrl = member.getMemberProfile().getImgUrl();
         }
     }
 }
