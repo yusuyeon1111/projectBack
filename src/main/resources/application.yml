@@ -60,3 +60,5 @@ logging:
     org.hibernate.type.descriptor.sql: TRACE
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.ValueBinder: trace
+server:
+  forward-headers-strategy: native
