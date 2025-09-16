@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisPassword;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
@@ -21,10 +22,21 @@ public class RedisRepositoryConfig {
     @Value("${spring.redis.port}")
     private int port;
 
+    @Value("${spring.redis.usessl}")
+    private boolean usessl;
+
     @Bean
     // RedisConnectionFactory() Redis 서버와의 연결을 생성하는 빈을 정의
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory(host, port);
+        LettuceClientConfiguration.LettuceClientConfigurationBuilder clientConfigBuilder = LettuceClientConfiguration.builder();
+
+        if (usessl) {
+            clientConfigBuilder.useSsl(); // SSL 사용
+        }
+
+        LettuceClientConfiguration clientConfig = clientConfigBuilder.build();
+
+        return new LettuceConnectionFactory(new RedisStandaloneConfiguration(host, port), clientConfig);
     }
 
     @Bean
