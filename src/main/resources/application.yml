@@ -39,6 +39,9 @@ spring:
     redis:
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
+      lettuce:
+        ssl: true
+      password: ""
 
 # JWT KEY
 jwt:
