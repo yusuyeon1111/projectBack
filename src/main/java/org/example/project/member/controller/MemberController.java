@@ -44,6 +44,7 @@ public class MemberController {
    private final PositionService positionService;
     @PostMapping("/signup")
     public ResponseEntity<Member> signUp(@Valid @RequestBody SignUpDto signUpDto) {
+        System.out.println("실행"+signUpDto);
        return ResponseEntity.ok(memberService.signUp(signUpDto));
    }
 
