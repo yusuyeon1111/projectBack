@@ -60,6 +60,7 @@ public class MemberService {
                 .email(signUpDto.getEmail())
                 .createdAt(new Date())
                 .roles(roles)
+                .delYn("N")
                 .memberProfile(memberProfile)
                 .build();
         return memberRepository.save(member);
