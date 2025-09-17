@@ -22,10 +22,13 @@
 | **DevOps / Infra** | ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white) ![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white) ![S3](https://img.shields.io/badge/S3-569A31?style=for-the-badge&logo=amazon-aws&logoColor=white) ![CloudFront](https://img.shields.io/badge/CloudFront-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white) |
 | **Tools** | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) |
 
-## 4. 프로세스 흐름도
+## 4. 아키텍처 
+<img width="800" height="500" alt="image" src="https://github.com/user-attachments/assets/f203df5a-1ea7-4c99-aae6-62ed986b8087" />
+
+## 5. 프로세스 흐름도
 <img width="800" height="500" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
 
-## 5. ERD
+## 6. ERD
 아래 ERD는 스터디/프로젝트 매칭 플랫폼의 데이터베이스 구조를 나타냅니다.
 회원(Member), 모집글(Post), 지원(Application) 등을 중심으로 설계되었으며, 각 테이블은 다음과 같은 역할을 합니다.
 <img width="800" height="500" alt="project@localhost" src="https://github.com/user-attachments/assets/5f531f3d-9519-4b3a-8944-74e5e43520a5" />
@@ -50,8 +53,8 @@
 - **post_like**  
   게시글에 달린 좋아요 정보를 관리합니다.
   
-## 6. 주요 기능 소개
-### 6-1. 회원가입/로그인
+## 7. 주요 기능 소개
+### 7-1. 회원가입/로그인
 - 회원가입 / 로그인 / 로그아웃 기능
 - 비밀번호 암호화(Bcrypt)로 안전하게 저장
 - 소셜 로그인(Kakao) 기능
@@ -60,7 +63,7 @@
 
 [![프로젝트 시연](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
 
-### 6-2. 프로젝트/스터디원 모집
+### 7-2. 프로젝트/스터디원 모집
 - 프로젝트 제목, 기간(시작일/마감일) 입력
 - 프로젝트 방식 선택: 온라인 / 오프라인 / 혼합
 - 지역 선택 (오프라인인 경우)
@@ -70,8 +73,8 @@
   
 [![프로젝트 시연](https://img.youtube.com/vi/P1CJEVxjok4/0.jpg)](https://www.youtube.com/watch?v=P1CJEVxjok4)
 
-## 6. 트러플 슈팅
-### 6-1. HTTPS + CloudFront + React 배포 문제
+## 8. 트러플 슈팅
+### 8-1. HTTPS + CloudFront + React 배포 문제
 - React 프론트엔드를 S3 + CloudFront로 배포.
 - 백엔드(Spring Boot)는 EC2 또는 RDS 연결
 - React에서 API 요청을 할 때 HTTPS CloudFront 도메인을 사용하려고 함.
