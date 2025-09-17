@@ -87,9 +87,8 @@ public class MemberService {
 
     public ResponseEntity<String> idChek(String username) {
         boolean exists = memberRepository.existsByUsername(username);
-        String encodedPassword = passwordEncoder.encode("test");
         if (exists) {
-            return ResponseEntity.ok("중복된 아이디입니다."+encodedPassword);
+            return ResponseEntity.ok("중복된 아이디입니다.");
         } else {
             return ResponseEntity.ok("사용가능한 아이디 입니다.");
         }
