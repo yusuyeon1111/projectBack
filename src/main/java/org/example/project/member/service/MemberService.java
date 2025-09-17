@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -86,8 +87,9 @@ public class MemberService {
 
     public ResponseEntity<String> idChek(String username) {
         boolean exists = memberRepository.existsByUsername(username);
+        String encodedPassword = passwordEncoder.encode("test");
         if (exists) {
-            return ResponseEntity.ok("중복된 아이디입니다.");
+            return ResponseEntity.ok("중복된 아이디입니다."+encodedPassword);
         } else {
             return ResponseEntity.ok("사용가능한 아이디 입니다.");
         }

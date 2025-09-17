@@ -44,7 +44,6 @@ public class MemberController {
    private final PositionService positionService;
     @PostMapping("/signup")
     public ResponseEntity<Member> signUp(@Valid @RequestBody SignUpDto signUpDto) {
-        System.out.println("실행"+signUpDto);
        return ResponseEntity.ok(memberService.signUp(signUpDto));
    }
 
@@ -52,7 +51,6 @@ public class MemberController {
     public ResponseEntity<?> signIn(@Valid @RequestBody SignInDto signInDto) {
         try {
             JwtToken token = memberService.signIn(signInDto);
-            System.out.println("성공"+token);
             return ResponseEntity.ok(token);
         } catch (RuntimeException ex) {
             // 로그인 실패 시 메시지 반환
