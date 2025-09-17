@@ -88,7 +88,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             response.getWriter().write(
                     "<script>" +
                             "alert('비활성화된 사용자입니다.');" +
-                            "window.location.href='http://localhost:3000/';" +
+                            "window.location.href='https://teamhaeyo.kro.kr/';" +
                             "</script>"
             );
             return;
@@ -101,7 +101,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         // 리다이렉트 URL 생성
         String redirectUri = UriComponentsBuilder
-                .fromUriString("http://localhost:3000/oauth2/success")
+                .fromUriString("https://teamhaeyo.kro.kr/success")
                 .queryParam("accessToken", token.getAccessToken())
                 .queryParam("refreshToken", token.getRefreshToken())
                 .queryParam("username", member.getUsername())
