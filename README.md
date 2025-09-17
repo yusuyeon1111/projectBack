@@ -4,7 +4,14 @@
 팀이 없어도 협업 경험을 흉내 내고, 실제 배포까지 경험하며 백엔드 인증, 프론트 상태 관리, 클라우드 배포까지 구현하였습니다.
 ## 🚀 1. 프로젝트 소개 (About)
 혼자서 프로젝트하거나 공부할 때 누군가와 같이 하고싶다고 생각해본적이 있나요? 그럴 때 필용한 서비스입니다!
-## 🛠️ 사용 언어 / 기술 스택 (Languages & Tech Stack)
+
+## 2. 🔗 실제 사이트
+프로젝트를 실제 환경에서 사용해볼 수 있습니다.
+[🌐 팀해요 - 실제 서비스 바로가기](https://teamhaeyo.kro.kr/)
+사용자 테스트 계정 test/test1234
+
+
+## 🛠️ 3. 사용 언어 / 기술 스택 (Languages & Tech Stack)
 | 분야 | 기술 |
 |------|------|
 | **Backend** | ![Java](https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white) ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white) |
@@ -13,10 +20,10 @@
 | **DevOps / Infra** | ![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white) ![EC2](https://img.shields.io/badge/EC2-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white) ![S3](https://img.shields.io/badge/S3-569A31?style=for-the-badge&logo=amazon-aws&logoColor=white) ![CloudFront](https://img.shields.io/badge/CloudFront-FF9900?style=for-the-badge&logo=amazon-aws&logoColor=white) |
 | **Tools** | ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) |
 
-## 3. 프로세스 흐름도
+## 4. 프로세스 흐름도
 <img width="800" height="500" alt="제목 없는 다이어그램 drawio" src="https://github.com/user-attachments/assets/a73a3a53-1e1d-4593-a4b4-7ed8804a54a2" />
 
-## 4. ERD
+## 5. ERD
 아래 ERD는 스터디/프로젝트 매칭 플랫폼의 데이터베이스 구조를 나타냅니다.
 회원(Member), 모집글(Post), 지원(Application) 등을 중심으로 설계되었으며, 각 테이블은 다음과 같은 역할을 합니다.
 <img width="800" height="500" alt="project@localhost" src="https://github.com/user-attachments/assets/5f531f3d-9519-4b3a-8944-74e5e43520a5" />
@@ -41,8 +48,8 @@
 - **post_like**  
   게시글에 달린 좋아요 정보를 관리합니다.
   
-## 5. 주요 기능 소개
-### 5-1. 회원가입/로그인
+## 6. 주요 기능 소개
+### 6-1. 회원가입/로그인
 - 회원가입 / 로그인 / 로그아웃 기능
 - 비밀번호 암호화(Bcrypt)로 안전하게 저장
 - 소셜 로그인(Kakao) 기능
@@ -51,7 +58,7 @@
 
 [![프로젝트 시연](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
 
-### 5-2. 프로젝트/스터디원 모집
+### 6-2. 프로젝트/스터디원 모집
 - 프로젝트 제목, 기간(시작일/마감일) 입력
 - 프로젝트 방식 선택: 온라인 / 오프라인 / 혼합
 - 지역 선택 (오프라인인 경우)
