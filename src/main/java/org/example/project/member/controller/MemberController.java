@@ -87,7 +87,6 @@ public class MemberController {
        List<ApplyResponseDto> apply = positionService.findApplyPost(username);
        List<PostAcceptDto> accept = positionService.findAcceptPost(username);
        List<PostResponseDto> like = postService.findLikePost(username);
-        System.out.println("=============실행=========="+accept);
        return MyPageResponseDto.builder()
                .member(member)
                .posts(posts)
