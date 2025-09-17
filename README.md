@@ -73,7 +73,7 @@
   
 [![프로젝트 시연](https://img.youtube.com/vi/P1CJEVxjok4/0.jpg)](https://www.youtube.com/watch?v=P1CJEVxjok4)
 
-## 8. 트러플 슈팅
+## 8. 트러블 슈팅
 ### 8-1. HTTPS + CloudFront + React 배포 문제
 - React 프론트엔드를 S3 + CloudFront로 배포.
 - 백엔드(Spring Boot)는 EC2 또는 RDS 연결
@@ -82,3 +82,7 @@
 - 원인 분석: CloudFront 배포 시 SSL 인증서를 적용하지 않아 브라우저에서 HTTPS 요청 거부
 - 해결 과정: 도메인을 구매해 CloudFront 배포에서 ACM SSL 인증서 연결 → HTTPS 적용.
 - 배운 점: 클라우드 배포 시 프론트엔드와 백엔드의 도메인, 프로토콜, CORS 정책을 꼼꼼히 확인해야 함
+
+## 9. 향후 개선점 / 기능 추가 계획
+- 웹소켓 채팅 기능 추가
+- 알림 기능 추가
