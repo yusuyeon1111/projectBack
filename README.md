@@ -54,24 +54,23 @@
   게시글에 달린 좋아요 정보를 관리합니다.
   
 ## 7. 주요 기능 소개
-### 7-1. 회원가입/로그인
-- 회원가입 / 로그인 / 로그아웃 기능
-- 비밀번호 암호화(Bcrypt)로 안전하게 저장
-- 소셜 로그인(Kakao) 기능
-- JWT 인증을 통한 세션 관리
-- 로그인 시 JWT 발급하여 로그아웃, 만료 관리를 용이하기 위해 Redis에 토큰 저장.
-
-[![프로젝트 시연](https://img.youtube.com/vi/ahoGU-vfmzc/0.jpg)](https://www.youtube.com/watch?v=ahoGU-vfmzc)
-
-### 7-2. 프로젝트/스터디원 모집
-- 프로젝트 제목, 기간(시작일/마감일) 입력
-- 프로젝트 방식 선택: 온라인 / 오프라인 / 혼합
-- 지역 선택 (오프라인인 경우)
-- 모집 포지션 선택 및 인원 수 지정
-- 기술 스택 입력
-- 상세 설명 작성
+- 회원가입/로그인 : JWT 기반 인증, 소셜 로그인(Kakao), Redis를 활용한 세션 관리
   
+[![프로젝트 시연](https://img.youtube.com/vi/oNG0h_y2NdI/0.jpg)](https://www.youtube.com/watch?v=oNG0h_y2NdI)
+
+- 프로젝트/스터디 모집 : 모집글 작성, 기술 스택/지역/포지션 기반 검색 및 필터링, 지원·승인 워크플로우
+
 [![프로젝트 시연](https://img.youtube.com/vi/P1CJEVxjok4/0.jpg)](https://www.youtube.com/watch?v=P1CJEVxjok4)
+
+- 마이페이지 : 내가 작성/신청/매칭/좋아요한 글 관리, S3 기반 프로필 이미지 업로드
+  
+[![프로젝트 시연](https://img.youtube.com/vi/SzjfDOYIS3s/0.jpg)](https://www.youtube.com/watch?v=SzjfDOYIS3s)
+
+- 관리자페이지: 대시보드 기능(사용자, 게시글, 포지션 매칭 수 등), 사용자 계정 관리, 게시물 관리 기능
+  
+[![프로젝트 시연](https://img.youtube.com/vi/SzjfDOYIS3s/0.jpg)](https://www.youtube.com/watch?v=tQVsKJQeyIs)
+
+- 클라우드 인프라 : AWS(EC2, S3, CloudFront, RDS, ElastiCache, ACM) 활용한 서비스 배포 및 운영
 
 ## 8. 트러블 슈팅
 ### 8-1. HTTPS + CloudFront + React 배포 문제
