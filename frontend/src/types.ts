@@ -82,6 +82,7 @@ export interface ApplyPost {
   memberId: number;
   memberName: string;
   positionId: number;
+  positionName: string;
   applyStatus: string;
   positionStatus: string;
   postId: number;
@@ -90,8 +91,7 @@ export interface ApplyPost {
   appliedAt: string;
   acceptedAt: string | null;
   rejectedAt: string | null;
-  // 프론트에서 참조하지만 DTO에는 없는 필드 (항상 undefined)
-  positionName?: string;
+  // 프론트(참여중 탭)에서 참조하지만 ApplyResponseDto에는 없는 필드. 실제로는 AcceptPost에 있음
   postStatus?: string;
   startDate?: string;
   endDate?: string;
