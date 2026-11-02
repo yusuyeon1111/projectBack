@@ -1,0 +1,111 @@
+.header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 32px;
+  position: sticky; /* 스크롤 시 고정 */
+  top: 0;
+  background-color: #ffffff; /* 흰색 배경 */
+  z-index: 1000;
+  height: 45px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06); /* 부드러운 그림자 */
+}
+
+/* 로고 */
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#logo {
+  font-size: clamp(1rem, 2vw + 1rem, 2rem);
+  font-family: 'TheJamsil5Bold', sans-serif;
+  color: #007bff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#logo:hover {
+  color: #0056b3; /* hover 시 진한 블루 */
+}
+
+#bookmark {
+  color: #007bff;
+  font-size: 28px;
+  transition: transform 0.2s ease;
+}
+
+#bookmark:hover {
+  transform: scale(1.1);
+}
+
+/* 멤버 아이콘 영역 */
+.member-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.memberIcon,
+#userIcon {
+  font-size: clamp(1.5rem, 1.5vw + 0.5rem, 1.8rem);
+  padding: 6px;
+  color: #007bff;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.memberIcon:hover,
+#userIcon:hover {
+  background-color: rgba(0, 123, 255, 0.08);
+  color: #0056b3;
+}
+
+#line {
+  color: #ccc; /* 너무 강하지 않게 */
+  font-size: 18px;
+}
+
+/* 드롭다운 메뉴 */
+.menu-container {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  background-color: white;
+  border: 1px solid #eee;
+  padding: 8px 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  z-index: 999;
+  min-width: 160px;
+  text-align: center;
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+.menu-container p {
+  margin: 0;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.menu-container p:hover {
+  background-color: rgba(0, 123, 255, 0.08);
+  color: #007bff;
+  font-weight: 600;
+}
+
+/* 간단한 Fade-in 효과 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

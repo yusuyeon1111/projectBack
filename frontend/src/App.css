@@ -1,0 +1,101 @@
+@font-face {
+  font-family: 'TTTogether';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/TTTogetherA.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Freesentation-9Black';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2404@1.0/Freesentation-9Black.woff2') format('woff2');
+  font-style: normal;
+}
+@font-face {
+  font-family: 'EliceDigitalBaeum-Bd';
+  src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_elice@1.0/EliceDigitalBaeum-Bd.woff2') format('woff2');
+  font-style: normal;
+}
+
+@font-face {
+    font-family: 'TheJamsil5Bold';
+    src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/noonfonts_2302_01@1.0/TheJamsil5Bold.woff2') format('woff2');
+    font-weight: 800;
+    font-style: normal;
+}
+
+.App {
+  height: 100vh;
+}
+
+#submitBtn {
+  border-radius: 8px;
+  border:none;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#submitBtn:hover {
+  background-color: #0056b3;
+  transform: scale(1.03); 
+}
+
+#cancleBtn {
+  border-radius: 8px;
+  border:none;
+  color: black;
+  padding: 10px 20px;
+  background-color: #ddd;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#cancleBtn:hover {
+  background-color: #ccc;
+  transform: scale(1.03);
+}
+
+/* 버튼 스타일 */
+#graBtn {
+  font-size: 16px;
+  color: white; /* 텍스트는 흰색이 잘 어울림 */
+  border: none;
+  border-radius: 12px; /* 완전 둥글게 */
+  cursor: pointer;
+  padding: 5px 11px;
+  background: linear-gradient(135deg, #4f9cff, #007bff); /* 그라데이션 */
+  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* 살짝 입체감 */
+  transition: all 0.3s ease;
+}
+
+#graBtn:hover {
+  background: linear-gradient(135deg, #5aa9ff, #1a86ff); /* hover 시 더 밝게 */
+  box-shadow: 0 6px 14px rgba(0, 123, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.pagination {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.pagination button {
+  margin: 0 5px;
+  padding: 6px 12px;
+  border: none;
+  background-color: #eee;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.pagination button.active {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

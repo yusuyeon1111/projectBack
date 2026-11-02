@@ -1,0 +1,138 @@
+/* 전체 폼 컨테이너 */
+.form-container {
+  padding: 40px 150px;
+  background-color: #F9FAFB;
+  display: flex;
+  justify-content: center;
+}
+
+.form {
+  width: 70%;
+  max-width: 1000px;
+  background-color: white;
+  padding: 70px 150px;
+  border-radius: 15px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.form-top {
+    gap: 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 라벨 + 타이틀 */
+.label {
+  width: 100%;
+  font-size: 1.2rem;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* 공통 input */
+.input {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+/* 작은 input (숫자용) */
+.input.small {
+  flex: 1; /* select보다 좁게 */
+  min-width: 60px;
+  padding: 11px;
+  font-size: 14px;
+}
+
+/* 공통 select */
+.select {
+  flex: 2; /* 비율로 공간 차지 */
+  min-width: 100px;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+/* 한 줄짜리 라벨+입력 UI */
+.row {
+width: 100%;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* 설명 에디터 영역 */
+.editor-wrapper {
+  border: 1px solid #ccc;
+  border-radius: 7px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.editor-buttons {
+  display: flex;
+  padding: 10px;
+  background: #f8f8f8;
+}
+
+/* 스택 섹션 */
+.stack-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stack-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* 설명 보조 텍스트 */
+.sub {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.memberLabel .row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap; 
+  width: 100%;
+  margin-top: 5px;
+}
+
+.project-type-row {
+  display: flex;
+  gap: 2%;
+}
+
+.project-type-row .select {
+  width: 49%;
+}
+
+.btmBtn-container {
+   display: flex;
+  justify-content: flex-end; 
+  gap: 10px; 
+  margin-top: 7%;
+}
+
+.toastui-editor-defaultUI {
+  height: 100% !important; 
+}
+
+.memberLabel #graBtn {
+  flex: 0;
+  white-space: nowrap;
+}
+
+.css-1nh9prl-MuiStack-root {
+  margin-top: 5px;
+}

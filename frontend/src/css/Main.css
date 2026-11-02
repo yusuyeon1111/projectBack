@@ -1,0 +1,230 @@
+.main-container {
+    background-color: #F9FAFB;
+}
+
+.main-inner { padding: 50px 150px;}
+.main-post-inner {display: flex; gap: 20px;}
+
+.itemList {
+    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    width: 75%;
+}
+.searchMenu {
+  background-color: white;
+  width: 25%;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.emptyItem {
+  background-color: white;
+  width: 75%;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+  text-align: center;
+  justify-content: center;
+  display: flex;
+}
+
+#emptyMent {
+  padding-top: 50px;
+  font-size:  clamp(16px, 2vw + 10px, 32px);
+}
+
+.studyItem {
+    background-color: white;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+.main-post-container {
+    margin-bottom: 60px;
+}
+#postTitle {
+    font-size: clamp(10px, 2vw + 8px, 28px);
+    font-weight: 700;
+    margin-left: 20px;
+}
+
+#locationLogo {
+    font-size: 18px;
+    color: grey;
+    margin-bottom: -3px;
+}
+
+#circle {
+    color: grey;
+    margin: 0 10px;
+}
+
+.stack-container {
+    margin-bottom: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+#projectLabel {
+  color: rgb(223, 95, 137);
+  background-color: pink;
+  padding: 7px 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+#delLabel{
+  color: #333;
+  background-color: #ccc;
+  padding: 7px 12px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+#studyLabel {
+  box-sizing: border-box;
+  color: #17a2b8;
+  background-color: paleturquoise;
+  padding: 7px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* 정렬 버튼 영역 */
+.sortButton {
+  margin : 20px 0;
+  display: flex;
+  gap: 10px; /* 버튼 간 간격 */
+}
+
+/* 버튼 스타일 */
+.sortButton button {
+  padding: 6px 12px;
+  border: 1px solid gainsboro;
+  background-color: #fff;
+  color: grey;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.sortButton button.active {
+  background-color: #0070f3; /* 로고 블루 */
+  color: white;
+  font-weight: bold;
+  border: none;
+}
+.sortButton button:hover {
+  background-color: dimgray;
+  color: #fff;
+}
+
+#main-top-p {
+    font-size: clamp(26px, 2vw + 10px, 35px);
+    font-weight: 600;
+    margin-bottom: 50px;
+}
+
+.itemListTop {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.dataInner{margin-bottom: 5px; display: flex;}
+.searchMenu {
+  display: flex;
+  gap: 30px;
+  padding: 20px 20px;
+  flex-direction: column;
+}
+
+.searchItem {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 30px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.searchItem label {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.searchItem select {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.searchBox {
+  position: relative;
+  width: 100%;          /* 부모 폭에 맞춤 */
+}
+
+.searchBox input {
+  width: 100%;          /* 부모 폭 채우기 */
+  padding: 0 35px 0 10px; /* 오른쪽 아이콘 공간 확보 */
+  height: 36px;         /* 높이 통일 */
+}
+
+.searchBox .searchIcon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  pointer-events: none;
+}
+
+.searchItem select,
+.searchItem input {
+  width: 100%;          /* 부모 폭에 맞춤 */
+  height: 36px;         /* 높이 통일 */
+  padding: 0 10px;      /* 좌우 padding 통일 */
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+
+.searchBtn {
+  background: #17a2b8;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+.searchMenuMobile {display: none;}
+
+@media (max-width: 1180px) {
+  .main-inner {padding: 10px;}
+}
+
+@media (max-width: 810px) {
+  .itemList {width: 70%;}
+  .dataInner {flex-wrap: wrap;}
+}
+
+@media (max-width: 768px) {
+  .main-post-inner{display: block;}
+  .searchMenu{display: none;}
+  .itemList {width: 100%;}
+  .searchMenuMobile {display:flex; width: 100%; gap: 2%; padding: 0 10px;}
+  .searchItem{border-bottom: none; width: 80%;}
+  .searchIcon{display: flex; align-items: center;}
+  .filterMenuMobile { align-items: center; justify-content: center; display: flex; flex-direction: column; padding-bottom: 25%; overflow: hidden;}
+  #filterTop {font-size: 1.5rem; font-weight: 700;  color: white; margin: 0; margin-left: 30px;}
+  .filterHeader {flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; background-color: #333;width: 100%; padding: 20px 50px;  margin-bottom: 20px;}
+  .filterHeader svg { color: white; cursor: pointer; margin-right: 10px;}
+}
