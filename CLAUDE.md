@@ -55,3 +55,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### S3 업로드
 
 서버가 파일을 받지 않는다. `GET /api/member/presigned-url`이 PUT용 presigned URL을 발급하고 프론트가 직접 S3에 올린다. 버킷명이 컨트롤러에 하드코딩되어 있다(`AWS_S3_BUCKET_NAME` 환경변수는 선언만 되어 있고 미사용).
+
+## 커밋 메시지 규칙
+
+포트폴리오 저장소라서 면접관이 커밋 로그를 읽는다는 전제로 쓴다. diff에 이미 "무엇을"이 있으니 메시지에는 "왜"를 적는다.
+
+- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style` 중 하나다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
+- 제목은 50자 안팎으로, 의도가 드러나게 쓴다. `Update SecurityConfig.java`처럼 파일 이름만 적은 제목은 쓰지 않는다.
+- 판단이 들어간 커밋에는 본문이 필수다. 버그 수정, 설계 변경, 의존성이나 설정 변경이 여기에 해당한다. 본문은 문제, 원인, 해결 순서로 쓴다. 단순한 변경이면 본문을 생략해도 된다.
+- 커밋 하나에는 의도를 하나만 담는다. 기능 추가, 버그 수정, 리팩터링이 섞이면 나눠서 커밋한다. 작업 중에 발견한 버그는 별도의 `fix:` 커밋으로 분리해서 로그에 드러나게 한다.
+- README를 고칠 때도 내용을 적는다. 예: `docs: ERD 이미지 교체`
+- 이미 push한 이력은 rebase로 다시 쓰지 않는다.
+
+```
+fix(back): 로그아웃 후에도 access token이 유효하던 문제 수정
+
+만료 전 토큰은 서명만 검증하므로 로그아웃해도 계속 통과했다.
+로그아웃 시 토큰을 남은 만료시간 TTL로 Redis에 저장하고,
+JwtAuthenticationFilter에서 해당 키가 있으면 인증을 건너뛴다.
+```
