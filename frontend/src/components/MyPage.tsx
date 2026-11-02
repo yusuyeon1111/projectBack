@@ -1,21 +1,21 @@
-import React, { use, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import '../css/Mypage.css';
-import Header from './Header';
 import axios from 'axios';
 import { MdEdit } from "react-icons/md";
-import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem, ListItemText } from '@mui/material';
+import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
-const roleTextMap = {
-  backend: "BACKEND",
-  frontend: "FRONTEND",
-  pm: "기획",
-  design: "디자인",
-  etc: "기타",
-};
-function CustomTabPanel(props) {
+import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, roleTextMap } from '../types';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  value: number;
+  index: number;
+}
+
+function CustomTabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
-  
+
   return (
     <div
       role="tabpanel"
@@ -29,7 +29,7 @@ function CustomTabPanel(props) {
   );
 }
 
-function a11yProps(index) {
+function a11yProps(index: number) {
   return {
     id: `simple-tab-${index}`,
     'aria-controls': `simple-tabpanel-${index}`,
@@ -40,19 +40,20 @@ function MyPage() {
   const [open, setOpen] = useState(false);
   const [nickname, setNickname] = useState("");
   const [introduce, setIntroduce] = useState("");
-  const [memberData, setMemberData] = useState([]);
-  const [postData, setPostData] = useState([]);
-  const [applyData, setApplyData] = useState([]);
-  const [acceptData, setAcceptData] = useState([]);
-  const [likeData, setLikeData] = useState([]);
+  const [memberData, setMemberData] = useState<Member | null>(null);
+  const [postData, setPostData] = useState<Post[]>([]);
+  const [applyData, setApplyData] = useState<ApplyPost[]>([]);
+  const [acceptData, setAcceptData] = useState<AcceptPost[]>([]);
+  const [likeData, setLikeData] = useState<Post[]>([]);
   const [stackInput, setStackInput] = useState("");
-  const [stackList, setStackList] = useState([]);
+  const [stackList, setStackList] = useState<string[]>([]);
   const username = localStorage.getItem("username")
   const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
+  // /api/post/postMember 응답: 선택한 글의 신청자 목록
+  const [selectedPost, setSelectedPost] = useState<ApplyMember[] | null>(null);
   const [openApplicantModal, setOpenApplicantModal] = useState(false);
-  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [selectedApplicant, setSelectedApplicant] = useState<Member | null>(null);
   const modalStyle = {
     position: 'absolute',
     top: '50%',
@@ -63,13 +64,13 @@ function MyPage() {
     borderRadius: '8px',
     boxShadow: 24,
     p: 4,
-  } 
+  } as const;
 
    useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/member/myPage`, {
-            params: { username }  
+          const response = await axios.get<MyPageResponse>(`${process.env.REACT_APP_API_URL}/api/member/myPage`, {
+            params: { username }
           });
           setMemberData(response.data.member);
           setAcceptData(response.data.acceptPosts)
@@ -77,8 +78,8 @@ function MyPage() {
           setLikeData(response.data.likePosts)
           setPostData(response.data.posts)
         } catch (error) {
-          if (error.response) {
-            alert(error.response.data); 
+          if (axios.isAxiosError(error) && error.response) {
+            alert(error.response.data);
           } else {
             alert("네트워크 에러");
           }
@@ -90,7 +91,7 @@ function MyPage() {
 
   const [value, setValue] = React.useState(0);
 
-  const handleChange = (event, newValue) => {
+  const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
 
@@ -120,7 +121,7 @@ function MyPage() {
 
       // 상태 업데이트로 화면 갱신
       setMemberData(prev => ({
-        ...prev,
+        ...prev!,
         nickname: updatedData.nickname,
         introduce: updatedData.introduce,
         preferredTechStacks: updatedData.preferredTechStacks,
@@ -142,17 +143,17 @@ function MyPage() {
     };
 
     // 스택 삭제
-    const handleDeleteStack = (stackToDelete) => {
+    const handleDeleteStack = (stackToDelete: string) => {
       setStackList((prev) => prev.filter((stack) => stack !== stackToDelete));
     };
-  
+
     // 모달 열기
-     const handleOpenModal = async (postId) => {
+     const handleOpenModal = async (postId: number) => {
       try{
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/post/postMember/${postId}`)
+        const response = await axios.get<ApplyMember[]>(`${process.env.REACT_APP_API_URL}/api/post/postMember/${postId}`)
         setSelectedPost(response.data);
         } catch (error) {
-          alert.error("정보를 불러오는 데 실패했습니다. 다시 시도해주세요.")
+          alert("정보를 불러오는 데 실패했습니다. 다시 시도해주세요.")
         }
       setOpenModal(true);
     };
@@ -162,9 +163,9 @@ function MyPage() {
       setSelectedPost(null);
     };
 
-   const handleAccept = async (postId, positionId, postPositionId) => {
+   const handleAccept = async (postId: number, positionId: number, postPositionId: number) => {
       try {
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/accept`, {
+        const response = await axios.post<ApplyMember[]>(`${process.env.REACT_APP_API_URL}/api/post/accept`, {
           postId,
           positionId,
           postPositionId,
@@ -174,14 +175,14 @@ function MyPage() {
         // 서버에서 최신 신청자 목록 받아서 바로 상태 업데이트
         setSelectedPost(response.data);
         alert("수락되었습니다.");
-      } catch (error) {
+      } catch (error: any) {
         alert(error.response?.data || "에러가 발생했습니다.");
       }
     };
 
-    const handleReject = async (postId, positionId, postPositionId) => {
+    const handleReject = async (postId: number, positionId: number, postPositionId: number) => {
       try {
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/reject`, {
+        const response = await axios.post<ApplyMember[]>(`${process.env.REACT_APP_API_URL}/api/post/reject`, {
           postId,
           positionId,
           postPositionId,
@@ -190,17 +191,17 @@ function MyPage() {
 
         setSelectedPost(response.data);
         alert("거절되었습니다.");
-      } catch (error) {
+      } catch (error: any) {
         alert(error.response?.data || "에러가 발생했습니다.");
       }
     };
 
 
-    
+
       // 신청자 클릭 시 상세 정보 모달 열기
-      const handleOpenApplicantModal = async (memberId) => {
+      const handleOpenApplicantModal = async (memberId: number) => {
         try{
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/member/getUserInfo/${memberId}`)
+          const response = await axios.get<Member>(`${process.env.REACT_APP_API_URL}/api/member/getUserInfo/${memberId}`)
           setSelectedApplicant(response.data);
         setOpenApplicantModal(true);
         setOpenModal(false);
@@ -215,7 +216,7 @@ function MyPage() {
         setOpenApplicantModal(false);
         setSelectedApplicant(null);
       };
-      
+
   return (
     <div className="mypage-container">
       <div className='mypage-inner'>
@@ -224,7 +225,7 @@ function MyPage() {
           <>
            <div className='myInfo-inner'>
             <div id="editIcon"><span>프로필 수정</span><MdEdit size={22} onClick={handleOpen} style={{ cursor: "pointer" }} /><IoIosSettings size={22} style={{marginLeft:'10px', cursor: "pointer" }}/></div>
-            
+
             <div className="profile-header">
               <span className="nickname">{memberData.nickname}</span>
               {memberData?.preferredPosition && (
@@ -370,7 +371,7 @@ function MyPage() {
             </div>
           </CustomTabPanel>
           <CustomTabPanel value={value} index={1}>
-            {applyData.length > 0 ? 
+            {applyData.length > 0 ?
              applyData.map((post)=>(
               <div key={post.postId} className='postItem'>
                 {post.category === 'study' ?
@@ -400,7 +401,7 @@ function MyPage() {
 
                 <div className='dataInner'>
                   <span className='myDate'> 신청일자 : {post.appliedAt}</span>
-                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName]}</span></>}
+                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName ?? ""]}</span></>}
                 </div>
               </div>
             ))
@@ -423,7 +424,7 @@ function MyPage() {
                 <div className='dataInner'>
                   <span className='myDate'>참여일자 : {post.acceptedAt}</span>
                   <span className='myDate'> 기간 : {post.startDate} - {post.endDate}</span><span className='line'>|</span>
-                  <span className='myDate'> 참여분야 : {roleTextMap[post.positionName]}</span>
+                  <span className='myDate'> 참여분야 : {roleTextMap[post.positionName ?? ""]}</span>
               </div>
               </div>
             )): <div><p>데이터 없음.</p></div>}
@@ -448,7 +449,7 @@ function MyPage() {
                   <span className='myDate'> 조회수 {post.viewCount}</span><span className='line'>|</span>
                   <span className='myDate'> ❤️ {post.likeCount}</span>
                 </div>
-                  
+
               </div>
             )): <div><p>데이터 없음.</p></div>}
           </CustomTabPanel>
@@ -474,14 +475,14 @@ function MyPage() {
           textAlign: 'left',
         }}>
           <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: 22, mb: 2 }}>
-            {selectedPost?.title} 신청자 관리
+            신청자 관리
           </Typography>
 
-          {selectedPost?.length > 0 ? (
+          {selectedPost && selectedPost.length > 0 ? (
             <List sx={{ maxHeight: 300, overflowY: 'auto', '&::-webkit-scrollbar': { width: 6 }, '&::-webkit-scrollbar-thumb': { backgroundColor: '#ccc', borderRadius: 3 } }}>
               {selectedPost.map((post) => (
-                <ListItem key={post.id} sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 1, p: 2, borderRadius: 2, bgcolor: '#f9f9f9' }}>
-                  <Typography 
+                <ListItem key={post.postPositionId} sx={{ flexDirection: 'column', alignItems: 'flex-start', mb: 1, p: 2, borderRadius: 2, bgcolor: '#f9f9f9' }}>
+                  <Typography
                     sx={{ color: '#1976d2', cursor: 'pointer', fontWeight: 500, mb: 0.5, fontSize: 20 }}
                     onClick={() => handleOpenApplicantModal(post.memberId)}
                   >
@@ -542,8 +543,8 @@ function MyPage() {
                   fontWeight: 700,
                   fontSize: 22,
                   mb: 1,
-                  color: '#222', 
-                  borderBottom: '1px solid #eee', 
+                  color: '#222',
+                  borderBottom: '1px solid #eee',
                   pb: 1
                 }}>
                   {selectedApplicant.nickname}
@@ -555,10 +556,10 @@ function MyPage() {
                 <strong>자기소개:</strong> {selectedApplicant.introduce}
               </Typography>
               <Typography sx={{ fontSize: 16, color: '#555', lineHeight: 1.6 }}>
-                <strong>선호 포지션:</strong> {roleTextMap[selectedApplicant.preferredPosition]}
+                <strong>선호 포지션:</strong> {roleTextMap[selectedApplicant.preferredPosition ?? ""]}
               </Typography>
               <Typography sx={{ fontSize: 16, color: '#555', lineHeight: 1.6 }}>
-                <strong>기술스택:</strong> {selectedApplicant.preferredTechStacks.join(", ")}
+                <strong>기술스택:</strong> {selectedApplicant.preferredTechStacks?.join(", ")}
               </Typography>
             </>
           ) : (

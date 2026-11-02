@@ -3,13 +3,16 @@ import { TextField, Button, Box, MenuItem, Chip, Stack } from '@mui/material';
 import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '../css/PostForm.css'
-import { Category } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-const regions = [
-  '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
-  '강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도',
-];
+import { regions } from "../types";
+
+interface PositionInput {
+  id: number;
+  role: string;
+  count: number;
+  status?: string;
+}
 const initialContents = [
   "## 1. 프로젝트 개요 \n",
   " ### 1-1. 프로젝트 소개 ",
@@ -51,9 +54,9 @@ const refreshContents = [
 function PostForm() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const editorRef = useRef();
+  const editorRef = useRef<Editor>(null);
   const [stackInput, setStackInput] = useState("");
-  const [stackList, setStackList] = useState([]);
+  const [stackList, setStackList] = useState<string[]>([]);
   const [type, setType] = useState('online');
   const [region, setRegion] = useState('nothing');
   const username = localStorage.getItem("username")
@@ -61,7 +64,7 @@ function PostForm() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const today = new Date().toISOString().split('T')[0];
-  const [positions, setPositions] = useState([
+  const [positions, setPositions] = useState<PositionInput[]>([
     { id: Date.now(), role: "backend", count: 1 , status:"ING"},
   ]);
 
@@ -69,7 +72,7 @@ function PostForm() {
     setTimeout(() => setShowEditor(true), 0);
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!startDate || !endDate) {
       alert('시작일과 마감일을 모두 선택해주세요.');
@@ -84,7 +87,7 @@ function PostForm() {
     alert("마감일은 시작일 이후로 설정해주세요.");
     return;
   }
-    const markdown = editorRef.current.getInstance().getMarkdown();
+    const markdown = editorRef.current!.getInstance().getMarkdown();
 
     let postStatus = '';
     if(startDate == today) {
@@ -123,9 +126,9 @@ function PostForm() {
   }
   };
 
-  const handleRefresh = (e) => {
+  const handleRefresh = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    editorRef.current.getInstance().setMarkdown(refreshContents);
+    editorRef.current!.getInstance().setMarkdown(refreshContents);
   };
 
   const handleAddStack = () => {
@@ -136,7 +139,7 @@ function PostForm() {
     }
   };
 
-  const handleDeleteStack = (stackToDelete) => {
+  const handleDeleteStack = (stackToDelete: string) => {
     setStackList(stackList.filter((stack) => stack !== stackToDelete));
   };
 
@@ -147,11 +150,11 @@ function PostForm() {
     ]);
   };
 
-  const handleRemove = (id) => {
+  const handleRemove = (id: number) => {
     setPositions(positions.filter((pos) => pos.id !== id));
   };
 
-  const handleChange = (id, field, value) => {
+  const handleChange = (id: number, field: "role" | "count", value: string | number) => {
     setPositions(
       positions.map((pos) =>
         pos.id === id ? { ...pos, [field]: value } : pos
@@ -240,9 +243,9 @@ function PostForm() {
                 className="input small"
                 min="1"
                 value={pos.count}
-                onChange={(e) => handleChange(pos.id, "count", e.target.value)}
+                onChange={(e) => handleChange(pos.id, "count", Number(e.target.value))}
               />
-              <button type="button" onClick={() => handleAdd(pos.role)} id='graBtn'>
+              <button type="button" onClick={handleAdd} id='graBtn'>
                 추가
               </button>
               {positions.length > 1 && (

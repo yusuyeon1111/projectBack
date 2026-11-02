@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 
+export interface Coords {
+  latitude: number;
+  longitude: number;
+}
+
 export default function useLocation() {
-  const [location, setLocation] = useState(null);
+  const [location, setLocation] = useState<Coords | null>(null);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -14,7 +19,7 @@ export default function useLocation() {
       console.log("Geolocation을 지원하지 않는 브라우저입니다.");
     }
 
-    function success(position) {
+    function success(position: GeolocationPosition) {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
 

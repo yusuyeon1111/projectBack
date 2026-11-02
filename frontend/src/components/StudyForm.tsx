@@ -3,13 +3,16 @@ import { TextField, Button, Box, MenuItem, Chip, Stack } from '@mui/material';
 import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '../css/PostForm.css'
-import { Category } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-const regions = [
-  '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
-  '강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도',
-];
+import { regions } from "../types";
+
+interface PositionInput {
+  id: number;
+  role: string;
+  count: number;
+  status?: string;
+}
 const initialContents = [
   "### 1. 스터디 주제/목표",
   " - 자격증 이름이나 공부할 기술을 간단히 적어주세요.",
@@ -42,17 +45,17 @@ const refreshContents = [
 function PostForm() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
-  const editorRef = useRef();
+  const editorRef = useRef<Editor>(null);
   const [type, setType] = useState('online');
   const [region, setRegion] = useState('nothing');
   const username = localStorage.getItem("username")
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const today = new Date().toISOString().split('T')[0];
-  const [positions, setPositions] = useState([
+  const [positions, setPositions] = useState<PositionInput[]>([
       { id: Date.now(), role: "totalCount", count: 1 },
     ]);
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     let postStatus = "";
     e.preventDefault();
     if (!startDate || !endDate) {
@@ -72,7 +75,7 @@ function PostForm() {
     } else {
       postStatus = "SCHEDULED"
     }
-    const markdown = editorRef.current.getInstance().getMarkdown();
+    const markdown = editorRef.current!.getInstance().getMarkdown();
 
     const postData = {
       title,
@@ -103,12 +106,12 @@ function PostForm() {
   }
   };
 
-  const handleRefresh = (e) => {
+  const handleRefresh = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    editorRef.current.getInstance().setMarkdown(refreshContents);
+    editorRef.current!.getInstance().setMarkdown(refreshContents);
   };
 
-  const handleChange = (id, field, value) => {
+  const handleChange = (id: number, field: "role" | "count", value: string | number) => {
     setPositions(
       positions.map((pos) =>
         pos.id === id ? { ...pos, [field]: value } : pos
@@ -193,7 +196,7 @@ function PostForm() {
                 className="input small"
                 min="1"
                 value={pos.count}
-                onChange={(e) => handleChange(pos.id, "count", e.target.value)}
+                onChange={(e) => handleChange(pos.id, "count", Number(e.target.value))}
               />
             </label>
           ))}

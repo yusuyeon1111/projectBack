@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, FormEvent } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 const OAuth2Success = () => {
@@ -6,9 +6,9 @@ const OAuth2Success = () => {
   const navigate = useNavigate();
   const [username, setUserName] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
-  const onsubmit = async (event) => {
+  const onsubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.target);
+    const formData = new FormData(event.currentTarget);
     const data = {
       nickname: formData.get('nickname'),
       preferredPosition: formData.get('preferredPosition'),
@@ -45,16 +45,16 @@ const OAuth2Success = () => {
 
       if (newUserFlag === 'false') {
         // 기존 회원 - 토큰 저장 후 바로 홈으로 이동
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('username', username);
+        localStorage.setItem('accessToken', accessToken ?? "");
+        localStorage.setItem('refreshToken', refreshToken ?? "");
+        localStorage.setItem('username', username ?? "");
         alert('로그인 완료!');
         navigate('/');
       } else if (newUserFlag === 'true') {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
-        localStorage.setItem('username', username);
-        setUserName(username);
+        localStorage.setItem('accessToken', accessToken ?? "");
+        localStorage.setItem('refreshToken', refreshToken ?? "");
+        localStorage.setItem('username', username ?? "");
+        setUserName(username ?? "");
         setIsNewUser(true);
       } else {
         alert('로그인 실패');

@@ -1,6 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import '../css/Modal.css'
-const LoginRequiredModal = ({ isOpen, onClose }) => {
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const LoginRequiredModal = ({ isOpen, onClose }: Props) => {
   const navigate = useNavigate();
 
   if (!isOpen) return null;

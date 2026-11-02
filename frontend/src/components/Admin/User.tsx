@@ -1,15 +1,16 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from "react";
+import { AdminMember, PageResponse } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 function User() {
-const [members, setMembers] = useState([]);
+const [members, setMembers] = useState<AdminMember[]>([]);
   const [filters, setFilters] = useState({ page: 0, size: 10 }); // 현재 페이지와 페이지 크기
   const [totalPages, setTotalPages] = useState(0);
 
   const fetchMembers = async () => {
   try {
-    const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/memberAll?page=${filters.page}&size=${filters.size}`, {
+    const res = await axios.get<PageResponse<AdminMember>>(`${process.env.REACT_APP_API_URL}/api/admin/memberAll?page=${filters.page}&size=${filters.size}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       }
@@ -25,7 +26,7 @@ useEffect(() => {
   fetchMembers();
 }, [filters.page, filters.size]);
 
-const acceptUser = async (memberId) => {
+const acceptUser = async (memberId: number) => {
   try {
     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/acceptUser`, { memberId }, {
       headers: {
@@ -34,12 +35,12 @@ const acceptUser = async (memberId) => {
     });
     alert(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
-  } catch (error) {
-    alert(error.data);
+  } catch (error: any) {
+    alert(error.response?.data ?? "요청에 실패했습니다.");
   }
 }
 
-const banUser = async (memberId) => {
+const banUser = async (memberId: number) => {
   try {
     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/banUser`, { memberId }, {
       headers: {
@@ -48,8 +49,8 @@ const banUser = async (memberId) => {
     });
     alert(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
-  } catch (error) {
-    alert(error.data);
+  } catch (error: any) {
+    alert(error.response?.data ?? "요청에 실패했습니다.");
   }
 }
 

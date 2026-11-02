@@ -1,28 +1,33 @@
 import axios from 'axios';
 import React, { useEffect, useState } from 'react'
-import { Bar, BarChart, CartesianGrid, Cell, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import '../../css/admin/Admin.css'
+import { Bar, BarChart, CartesianGrid, Cell, DefaultLegendContent, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import "../../css/admin/Admin.css";
+import { AdminChart, CategoryStats, MonthlyStats, PositionStats } from "../../types";
+
+interface Row {
+  name: string;
+  total: number;
+  [category: string]: string | number;
+}
 function Dashboard() {
-  const [memberData , setMemberData] = useState([]);
-  const [postData , setPostData] = useState([]);
-  const [statusData , setStatusData] = useState([]);
-  const [positionData, setPositionData] = useState([]);
-  const [categoryData, setCategoryData] = useState([]);
-  const [chartData, setChartData] = useState([]);
+  const [memberData , setMemberData] = useState<Row[]>([]);
+  const [statusData , setStatusData] = useState<MonthlyStats[]>([]);
+  const [positionData, setPositionData] = useState<PositionStats[]>([]);
+  const [chartData, setChartData] = useState<Row[]>([]);
   useEffect(() => {
     fetchPosts();
   },[])
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/chartAll`, {
+      const res = await axios.get<AdminChart>(`${process.env.REACT_APP_API_URL}/api/admin/chartAll`, {
         params: { year: 2025 },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
       });
       setStatusData(res.data.postStsStatus)
-      const position = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/chartPosition`, {
+      const position = await axios.get<PositionStats[]>(`${process.env.REACT_APP_API_URL}/api/admin/chartPosition`, {
         params: { year: 2025 },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
@@ -31,7 +36,7 @@ function Dashboard() {
       setPositionData(position.data)
       console.log(position.data)
 
-      const post = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/chartPost`, {
+      const post = await axios.get<CategoryStats[]>(`${process.env.REACT_APP_API_URL}/api/admin/chartPost`, {
         params: { year: 2025 },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
@@ -40,7 +45,7 @@ function Dashboard() {
       const chartData = mergeChartData(res.data.postStatus, post.data);
       setChartData(chartData);
 
-      const member = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/chartPre`, {
+      const member = await axios.get<CategoryStats[]>(`${process.env.REACT_APP_API_URL}/api/admin/chartPre`, {
         params: { year: 2025 },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
@@ -54,8 +59,8 @@ function Dashboard() {
     }
   };
 
-  const mergeChartData = (postStatus, CategoryStatus) => {
-    const base = {};
+  const mergeChartData = (postStatus: MonthlyStats[], CategoryStatus: CategoryStats[]): Row[] => {
+    const base: Record<string, Row> = {};
     postStatus.forEach(item => {
       base[item.name] = {
         name: item.name,
@@ -73,8 +78,8 @@ function Dashboard() {
     return Object.values(base);
   }
 
-    const memberChartData = (totalStatus, categoryStatus) => {
-      const base = {};
+    const memberChartData = (totalStatus: MonthlyStats[], categoryStatus: CategoryStats[]): Row[] => {
+      const base: Record<string, Row> = {};
 
       totalStatus.forEach(item => {
         base[item.name] = {
@@ -152,7 +157,7 @@ function Dashboard() {
               <XAxis
                 dataKey="name"
                 tick={{ fill: '#ffffff', fontSize: 14, fontWeight: 600 }}
-                tickFormatter={(value) =>
+                tickFormatter={(value: string) =>
                   value === 'IN_PROGRESS' ? '진행중' :
                   value === 'END' ? '진행종료' :
                   value === 'SCHEDULED' ? '진행예정' :
@@ -169,11 +174,13 @@ function Dashboard() {
                 }
               />
               <Legend
-                payload={[
+                content={() => (
+                  <DefaultLegendContent payload={[
                   { value: '진행중', type: 'square', color: '#4caf50' },
                   { value: '진행종료', type: 'square', color: '#f44336' },
                   { value: '진행예정', type: 'square', color: '#2196f3' },
-                ]}
+                  ]} />
+                )}
               />
               <Bar dataKey="count" name="게시글 수" barSize={120}>
                 {statusData.map((entry, index) => (

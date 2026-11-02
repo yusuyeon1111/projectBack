@@ -5,12 +5,22 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Chip, TextField, Stack } from "@mui/material";
 import naver from '../assets/naver.png';
-import kakao from '../assets/kakao.png';
+import kakao from "../assets/kakao.png";
+
+interface SignUpForm {
+  name: string;
+  nickname: string;
+  username: string;
+  email: string;
+  password: string;
+  pwConfirm: string;
+  preferredPosition: string;
+}
 
 function MemberSignUp() {
   const navigate = useNavigate();
   const [stackInput, setStackInput] = useState("");
-  const [stackList, setStackList] = useState([]);
+  const [stackList, setStackList] = useState<string[]>([]);
 
   // 중복 체크 상태
   const [isIdChecked, setIsIdChecked] = useState(false);
@@ -23,17 +33,17 @@ function MemberSignUp() {
     setValue,
     getValues,
     formState: { errors },
-  } = useForm();
+  } = useForm<SignUpForm>();
 
   const password = watch("password");
 
   // 입력 변화 시 중복 체크 초기화
-  const handleUsernameChange = (e) => {
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsIdChecked(false);
     setValue("username", e.target.value, { shouldValidate: true });
   };
 
-  const handleEmailChange = (e) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsEmailChecked(false);
     setValue("email", e.target.value, { shouldValidate: true });
   };
@@ -82,7 +92,7 @@ function MemberSignUp() {
   };
 
   // 회원가입 제출
-  const onsubmit = async (data) => {
+  const onsubmit = async (data: SignUpForm) => {
       if (!isIdChecked) {
           alert("아이디 중복 체크를 완료해주세요.");
           return;
@@ -111,7 +121,7 @@ function MemberSignUp() {
       setStackInput("");
     }
   };
-  const handleDeleteStack = (stackToDelete) => {
+  const handleDeleteStack = (stackToDelete: string) => {
     setStackList(stackList.filter((stack) => stack !== stackToDelete));
   };
 

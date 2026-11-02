@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
+import { ApplyMember } from "../types";
 
-const ApplyMemberModal = ({ isOpen, onClose, postId }) => {
-  const [memberData, setMemberData] = useState([]);
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  postId?: number;
+}
+
+const ApplyMemberModal = ({ isOpen, onClose, postId }: Props) => {
+  const [memberData, setMemberData] = useState<ApplyMember[]>([]);
 
   useEffect(() => {
     if (isOpen && postId) {
       const fetchData = async () => {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/post/postMember/${postId}`);
+        const response = await axios.get<ApplyMember[]>(`${process.env.REACT_APP_API_URL}/api/post/postMember/${postId}`);
         setMemberData(response.data);
       };
       fetchData();
@@ -24,7 +31,7 @@ const ApplyMemberModal = ({ isOpen, onClose, postId }) => {
         </button>
         <h2>신청자 목록</h2>
         {memberData.length > 0 ? (
-          memberData.map((m, idx) => <p key={idx}>{m.username}</p>)
+          memberData.map((m, idx) => <p key={idx}>{m.nickname}</p>)
         ) : (
           <p>데이터 없음</p>
         )}

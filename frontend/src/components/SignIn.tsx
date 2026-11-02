@@ -1,10 +1,17 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../css/Sign.css';
-import axios from 'axios';
+import axios from "axios";
+import { JwtToken } from "../types";
+
 import { useForm } from 'react-hook-form'
 import kakao from '../assets/kakaoLogin.png';
 import naver from '../assets/naverLogin.png';
+
+interface SignInForm {
+  username: string;
+  password: string;
+}
 function Signin() {
    useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -20,12 +27,12 @@ function Signin() {
       handleSubmit,
       watch,
       formState:{errors},
-    }= useForm();
+    }= useForm<SignInForm>();
 
-  const onsubmit = async (data) => {
+  const onsubmit = async (data: SignInForm) => {
     const username = watch("username");
     try {
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/member/signin`, data, {
+        const response = await axios.post<JwtToken>(`${process.env.REACT_APP_API_URL}/api/member/signin`, data, {
           headers: { "Content-Type": "application/json" }, 
         });
         localStorage.setItem("accessToken", response.data.accessToken);
@@ -39,7 +46,7 @@ function Signin() {
           nav("/"); 
         }
       } catch (error) {
-          if (error.response) {
+          if (axios.isAxiosError(error) && error.response) {
               if (error.response.status === 401) {
                   alert("아이디 또는 비밀번호가 잘못되었습니다.");
               } else if (error.response.status === 403) {

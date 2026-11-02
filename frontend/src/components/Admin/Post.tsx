@@ -1,9 +1,10 @@
 import axios from 'axios';
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from "react";
+import { Post as PostType, PageResponse } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 function Post() {
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<PostType[]>([]);
   const [totalPages, setTotalPages] = useState(0);
   const [filters, setFilters] = useState({
         page: 0,
@@ -13,7 +14,7 @@ function Post() {
 
     const fetchPosts = async () => {
         try {
-        const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
+        const res = await axios.post<PageResponse<PostType>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
         setPosts(res.data.content);
         setTotalPages(res.data.totalPages);
         console.log(res.data.content)
@@ -26,7 +27,7 @@ function Post() {
     fetchPosts();
     }, [filters.page, filters.size]);
 
- const changePostStatus = async (postId, delYn ) => {
+ const changePostStatus = async (postId: number, delYn: "Y" | "N") => {
   try {
     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/changePostStatus`, {id: postId, delYn: delYn }, {
       headers: {
@@ -35,8 +36,8 @@ function Post() {
     });
     alert(res.data);
     fetchPosts(); // 성공 시 리스트 갱신
-  } catch (error) {
-    alert(error.data);
+  } catch (error: any) {
+    alert(error.response?.data ?? "요청에 실패했습니다.");
   }
 }
   return (

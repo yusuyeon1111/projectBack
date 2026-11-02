@@ -4,8 +4,8 @@ import { MdGpsFixed } from "react-icons/md";
 import "../css/Map.css"; // CSS 파일 불러오기
 import homePin from '../assets/homePin.png'
 function KakaoMap() {
-  const mapRef = useRef(null);
-  const markerRef = useRef(null);
+  const mapRef = useRef<any>(null);
+  const markerRef = useRef<any>(null);
   const location = useLocation();
 
   useEffect(() => {

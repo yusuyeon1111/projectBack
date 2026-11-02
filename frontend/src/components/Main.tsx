@@ -8,27 +8,32 @@ import PostList from './PostList'
 import axios from 'axios';
 import { IoLocationSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
-const regions = [
-  '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
-  '강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도',
-];
-const roleTextMap = {
-  backend: "BACKEND",
-  frontend: "FRONTEND",
-  pm: "기획",
-  design: "디자인",
-  etc: "기타",
+import { Post, PageResponse, regions, roleTextMap } from "../types";
+
+interface Filters {
+  category: string | null;
+  status: string | null;
+  postStatus: string | null;
+  region: string | null;
+  position: string | null;
+  keyword: string | null;
+  page: number;
+  size: number;
+  sortType: string;
+  projectType: string | null;
+  stackKeyword: string | null;
 }
 function Main() {
   const navigate = useNavigate();
-  const [projectList, setProjectList] = useState([]);
+  const [projectList, setProjectList] = useState<Post[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [type, setType] = useState('');
   const [filterClick, setFilterClick] = useState(false);
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filters>({
     category: "",
     status: "",
+    postStatus: "",
     region: "",
     position: "",
     keyword: "",
@@ -41,7 +46,7 @@ function Main() {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
+      const res = await axios.post<PageResponse<Post>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
       setProjectList(res.data.content);
       setTotalPages(res.data.totalPages);
     } catch (error) {
@@ -49,7 +54,7 @@ function Main() {
     }
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFilters(prev => ({
       ...prev,
@@ -95,7 +100,7 @@ function Main() {
                 type="text"
                 name="keyword"
                 placeholder="제목, 내용, 작성자 검색"
-                value={filters.keyword}
+                value={filters.keyword ?? ""}
                 onChange={handleChange}
               />
                 <FiSearch size={18} className="searchIcon" />
@@ -103,7 +108,7 @@ function Main() {
              </div>
             <div className='searchItem'>
             <label>진행상황</label>
-            <select name="postStatus" onChange={handleChange} value={filters.postStatus}>
+            <select name="postStatus" onChange={handleChange} value={filters.postStatus ?? ""}>
               <option value="">전체</option>
               <option value="SCHEDULED">진행예정</option>
               <option value="IN_PROGRESS">진행중</option>
@@ -112,7 +117,7 @@ function Main() {
           </div>
           <div className='searchItem'>
             <label>모집상황</label>
-            <select name="status" onChange={handleChange} value={filters.status}>
+            <select name="status" onChange={handleChange} value={filters.status ?? ""}>
               <option value="">전체</option>
               <option value="ING">모집중</option>
               <option value="END">모집완료</option>
@@ -120,7 +125,7 @@ function Main() {
           </div>
            <div className='searchItem'>
             <label>목적</label>
-            <select name="category" onChange={handleChange} value={filters.category}>
+            <select name="category" onChange={handleChange} value={filters.category ?? ""}>
               <option value="">전체</option>
               <option value="project">프로젝트</option>
               <option value="study">스터디</option>
@@ -128,7 +133,7 @@ function Main() {
           </div>
           <div className='searchItem'>
             <label>방식</label>
-            <select name="projectType" onChange={handleChange} value={filters.projectType}>
+            <select name="projectType" onChange={handleChange} value={filters.projectType ?? ""}>
               <option value="">전체</option>
               <option value="online">온라인</option>
               <option value="offline">오프라인</option>
@@ -138,7 +143,7 @@ function Main() {
           {filters.projectType !== "" && filters.projectType !== "online" &&(
           <div className='searchItem'>
             <label>지역</label>
-            <select name="region" onChange={handleChange} value={filters.region}>
+            <select name="region" onChange={handleChange} value={filters.region ?? ""}>
               <option value="">전체</option>
               <option value="nothing">지역무관</option>
               {type !== 'online' && regions.map((r) => <option key={r}>{r}</option>)}
@@ -147,7 +152,7 @@ function Main() {
           )}
           <div className='searchItem'>
             <label>포지션</label>
-            <select name="position" onChange={handleChange} value={filters.position}>
+            <select name="position" onChange={handleChange} value={filters.position ?? ""}>
               <option value="">전체</option>
               <option value="frontend">프론트엔드</option>
               <option value="backend">백엔드</option>
@@ -163,7 +168,7 @@ function Main() {
                 type="text"
                 name="stackKeyword"
                 placeholder="스택 검색"
-                value={filters.stackKeyword}
+                value={filters.stackKeyword ?? ""}
                 onChange={handleChange}
               />
                 <FiSearch size={18} className="searchIcon" />
@@ -178,7 +183,7 @@ function Main() {
                 type="text"
                 name="keyword"
                 placeholder="제목, 내용, 작성자 검색"
-                value={filters.keyword}
+                value={filters.keyword ?? ""}
                 onChange={handleChange}
               />
                 <FiSearch size={18} className="searchIcon" />
@@ -303,7 +308,7 @@ function Main() {
                 type="text"
                 name="keyword"
                 placeholder="제목, 내용, 작성자 검색"
-                value={filters.keyword}
+                value={filters.keyword ?? ""}
                 onChange={handleChange}
               />
                 <FiSearch size={18} className="searchIcon" />
@@ -311,7 +316,7 @@ function Main() {
              </div>
             <div className='searchItem'>
             <label>진행상황</label>
-            <select name="postStatus" onChange={handleChange} value={filters.postStatus}>
+            <select name="postStatus" onChange={handleChange} value={filters.postStatus ?? ""}>
               <option value="">전체</option>
               <option value="SCHEDULED">진행예정</option>
               <option value="IN_PROGRESS">진행중</option>
@@ -320,7 +325,7 @@ function Main() {
           </div>
           <div className='searchItem'>
             <label>모집상황</label>
-            <select name="status" onChange={handleChange} value={filters.status}>
+            <select name="status" onChange={handleChange} value={filters.status ?? ""}>
               <option value="">전체</option>
               <option value="ING">모집중</option>
               <option value="END">모집완료</option>
@@ -328,7 +333,7 @@ function Main() {
           </div>
            <div className='searchItem'>
             <label>목적</label>
-            <select name="category" onChange={handleChange} value={filters.category}>
+            <select name="category" onChange={handleChange} value={filters.category ?? ""}>
               <option value="">전체</option>
               <option value="project">프로젝트</option>
               <option value="study">스터디</option>
@@ -336,7 +341,7 @@ function Main() {
           </div>
           <div className='searchItem'>
             <label>방식</label>
-            <select name="projectType" onChange={handleChange} value={filters.projectType}>
+            <select name="projectType" onChange={handleChange} value={filters.projectType ?? ""}>
               <option value="">전체</option>
               <option value="online">온라인</option>
               <option value="offline">오프라인</option>
@@ -346,7 +351,7 @@ function Main() {
           {filters.projectType !== "" && filters.projectType !== "online" &&(
           <div className='searchItem'>
             <label>지역</label>
-            <select name="region" onChange={handleChange} value={filters.region}>
+            <select name="region" onChange={handleChange} value={filters.region ?? ""}>
               <option value="">전체</option>
               <option value="nothing">지역무관</option>
               {type !== 'online' && regions.map((r) => <option key={r}>{r}</option>)}
@@ -355,7 +360,7 @@ function Main() {
           )}
           <div className='searchItem'>
             <label>포지션</label>
-            <select name="position" onChange={handleChange} value={filters.position}>
+            <select name="position" onChange={handleChange} value={filters.position ?? ""}>
               <option value="">전체</option>
               <option value="frontend">프론트엔드</option>
               <option value="backend">백엔드</option>
@@ -371,7 +376,7 @@ function Main() {
                 type="text"
                 name="stackKeyword"
                 placeholder="스택 검색"
-                value={filters.stackKeyword}
+                value={filters.stackKeyword ?? ""}
                 onChange={handleChange}
               />
                 <FiSearch className="searchIcon" />

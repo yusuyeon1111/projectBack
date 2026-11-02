@@ -1,23 +1,27 @@
-import { useRef, useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import axios from 'axios';
 import { IoBookmark } from "react-icons/io5";
 import { FaUserCircle } from "react-icons/fa";
-import '../../css/admin/Header.css';
+import { MdEdit } from "react-icons/md";
+import { FaBell } from "react-icons/fa6";
+import '../css/Header.css';
+
 function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
-  const [accessToken, setAccessToken] = useState("");
+  const [accessToken, setAccessToken] = useState<string | null>("");
 
-  const menuRef = useRef(null); // 메뉴 영역 ref
+  const menuRef = useRef<HTMLDivElement>(null); // 메뉴 영역 ref
 
+  // 토큰 불러오기
   useEffect(() => {
     setAccessToken(localStorage.getItem("accessToken"));
   }, []);
 
-  // 경로가 바뀌면 메뉴 닫기
+  // 경로 변경 시 메뉴 닫기
   useEffect(() => {
     setShowMenu(false);
     setShowEditMenu(false);
@@ -25,16 +29,14 @@ function Header() {
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
         setShowEditMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const toggleMenu = () => {
@@ -61,7 +63,7 @@ function Header() {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       alert("로그아웃 되었습니다.");
-      navigate("/")
+      navigate("/");
       window.location.reload();
     } catch (error) {
       console.error("로그아웃 실패", error);
@@ -70,16 +72,30 @@ function Header() {
   };
 
   return (
-    <div className='adminHeader-container'>
-      <div className='adminlogo-container'>
-        <IoBookmark id='adminbookmark'/>
-        <span id='adminlogo' onClick={()=>navigate("/")}>팀해요 관리자</span>
+    <div className='header-container' ref={menuRef}>
+      <div className='logo-container'>
+        <IoBookmark id='bookmark'/>
+        <span id='logo' onClick={()=>navigate("/")}>팀해요</span>
       </div>
-      <div className='adminmember-container' ref={menuRef}>
-        <FaUserCircle onClick={toggleMenu} id='adminuserIcon'/>
+
+      <div className='member-container'>
+        {accessToken && (
+          <>
+            <MdEdit className='memberIcon' onClick={editMenu}/>
+            {showEditMenu && (
+              <div className='menu-container'>
+                <p onClick={() => navigate("/postform")}>프로젝트 모집글 작성</p>
+                <p onClick={() => navigate("/studyform")}>스터디 모집글 작성</p>
+              </div>
+            )}
+            <span id='line'>|</span>
+          </>
+        )}
+
+        <FaUserCircle onClick={toggleMenu} id='userIcon'/>
 
         {showMenu && (
-          <div className='adminmenu-container'>
+          <div className='menu-container'>
             {!accessToken ? (
               <>
                 <p onClick={() => navigate("/signin")}>로그인</p>
@@ -87,6 +103,7 @@ function Header() {
               </>
             ) : (
               <>
+                <p onClick={() => navigate("/myPage")}>마이페이지</p>
                 <p onClick={goToLogout}>로그아웃</p>
               </>
             )}
