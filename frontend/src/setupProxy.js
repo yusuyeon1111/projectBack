@@ -1,10 +1,12 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
+// 개발 서버(npm start) 전용. REACT_APP_API_URL을 빈 값으로 두면 /api 요청이 여기로 온다.
+// 백엔드가 같은 저장소에 있으므로 기본값은 로컬 백엔드, 원격 서버를 쓰려면 PROXY_TARGET 지정.
 module.exports = function (app) {
   app.use(
     '/api',
     createProxyMiddleware({
-      target: 'http://3.36.157.46:8080/api',
+      target: `${process.env.PROXY_TARGET || 'http://localhost:8080'}/api`,
       changeOrigin: true,
     })
   );
