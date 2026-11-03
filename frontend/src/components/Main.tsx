@@ -260,7 +260,9 @@ function Main() {
                   <span data-type="active" className='myDate'><strong>(모집중)</strong></span>
                 )}
                 <span className='myDate' style={{marginLeft:'8px'}}>
-                포지션: {[...new Set(post.positions.map(pos => roleTextMap[pos.role]))].join(", ")}
+                {post.category === 'study'
+                  ? `모집 인원: ${post.positions[0]?.count ?? 0}명`
+                  : `포지션: ${[...new Set(post.positions.map(pos => roleTextMap[pos.role]))].join(", ")}`}
               </span>
               </div>
               </div>
