@@ -66,11 +66,18 @@ public class PositionService {
     }
 
     // 신청 기록을 찾고, 그 신청이 달린 글의 작성자인지 확인. 글/포지션은 클라이언트가 보낸 id가 아닌 신청 기록에서 꺼낸다.
-    private PostPositionMember findOwnedApplication(Long postPositionMemberId, String username) {
+    // 글 행 잠금을 트랜잭션의 첫 조회로 둔다. MySQL(REPEATABLE READ)은 첫 일반 조회 시점의 스냅샷을 계속 읽으므로,
+    // 잠금보다 먼저 조회하면 앞선 트랜잭션이 커밋한 승인 수를 못 보고 정원을 넘겨 승인하게 된다.
+    private PostPositionMember lockAndFindOwnedApplication(Long postPositionMemberId, String username) {
+        postRepository.findByApplicationIdForUpdate(postPositionMemberId)
+                .orElseThrow(()-> new RuntimeException("신청 내역이 존재하지 않습니다."));
         PostPositionMember application = postPositionMemberRepository.findById(postPositionMemberId)
                 .orElseThrow(()-> new RuntimeException("신청 내역이 존재하지 않습니다."));
         if (!application.getPostPosition().getPost().getAuthor().equals(username)) {
             throw new AccessDeniedException("본인이 작성한 글의 신청만 처리할 수 있습니다.");
+        }
+        if (!"APPLY".equals(application.getStatus())) {
+            throw new IllegalStateException("이미 처리된 신청입니다.");
         }
         return application;
     }
@@ -78,15 +85,16 @@ public class PositionService {
     // 포지션 수락
     @Transactional
     public List<ApplyMemeberDto> acceptPosition(ApplyPositionRequestDto dto, String username) {
-        PostPositionMember position = findOwnedApplication(dto.getPostPositionId(), username);
+        PostPositionMember position = lockAndFindOwnedApplication(dto.getPostPositionId(), username);
         PostPosition postPosition = position.getPostPosition();
         Post post = postPosition.getPost();
 
+        long acceptedCount = postPositionMemberRepository.findCountByPostPositionId(postPosition.getId());
+        if (acceptedCount >= postPosition.getCount()) {
+            throw new IllegalStateException("모집 인원이 모두 찼습니다.");
+        }
         position.setStatus("ACCEPT");
-        int positionCount = postPosition.getCount();
-        long temp = postPositionMemberRepository.findCountByPostPositionId(postPosition.getId());
-        int memberPositionCount = (int)temp;
-        if(positionCount == memberPositionCount) {
+        if (acceptedCount + 1 == postPosition.getCount()) {
             postPosition.setStatus("END");
             postPositionRepository.save(postPosition);
         }
@@ -106,7 +114,7 @@ public class PositionService {
     // 포지션 거절
     @Transactional
     public List<ApplyMemeberDto>  rejectPosition(ApplyPositionRequestDto dto, String username) {
-        PostPositionMember position = findOwnedApplication(dto.getPostPositionId(), username);
+        PostPositionMember position = lockAndFindOwnedApplication(dto.getPostPositionId(), username);
 
         position.setStatus("REJECT");
         position.setRejectedAt(LocalDateTime.now());
