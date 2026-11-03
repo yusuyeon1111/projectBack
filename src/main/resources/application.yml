@@ -1,6 +1,9 @@
 spring:
   application:
     name: project
+  jackson:
+    # @JsonFormat에 timezone이 없으면 UTC로 직렬화되어 작성일이 9시간 이르게 표시됐다
+    time-zone: Asia/Seoul
   security:
     oauth2:
       client:
