@@ -401,7 +401,7 @@ function MyPage() {
 
                 <div className='dataInner'>
                   <span className='myDate'> 신청일자 : {post.appliedAt}</span>
-                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName ?? ""]}</span></>}
+                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName]}</span></>}
                 </div>
               </div>
             ))
@@ -409,7 +409,7 @@ function MyPage() {
           }
           </CustomTabPanel>
           <CustomTabPanel value={value} index={2}>
-            {applyData.length > 0 ? applyData.map((post)=>(
+            {acceptData.length > 0 ? acceptData.map((post)=>(
               <div key={post.postId} className='postItem'>
                 {post.category === 'study' ?
                 <span id='studylabel'>스터디</span>
@@ -422,9 +422,9 @@ function MyPage() {
                   <span className='status' data-type="active">진행중</span>
                 )}
                 <div className='dataInner'>
-                  <span className='myDate'>참여일자 : {post.acceptedAt}</span>
-                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}</span><span className='line'>|</span>
-                  <span className='myDate'> 참여분야 : {roleTextMap[post.positionName ?? ""]}</span>
+                  <span className='myDate'>참여일자 : {post.acceptedAt}</span><span className='line'>|</span>
+                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}</span>
+                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 참여분야 : {roleTextMap[post.positionName]}</span></>}
               </div>
               </div>
             )): <div><p>데이터 없음.</p></div>}

@@ -91,16 +91,14 @@ export interface ApplyPost {
   appliedAt: string;
   acceptedAt: string | null;
   rejectedAt: string | null;
-  // 프론트(참여중 탭)에서 참조하지만 ApplyResponseDto에는 없는 필드. 실제로는 AcceptPost에 있음
-  postStatus?: string;
-  startDate?: string;
-  endDate?: string;
 }
 
 // PostAcceptDto
 export interface AcceptPost {
   postId: number;
   postTitle: string;
+  category: string;
+  positionName: string;
   acceptedAt: string;
   endDate: string;
   startDate: string;

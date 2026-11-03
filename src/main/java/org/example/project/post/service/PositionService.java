@@ -126,18 +126,7 @@ public class PositionService {
 
     // 참여중인 프로젝트 조회
     public List<PostAcceptDto> findAcceptPost(String username) {
-        List<PostAcceptDto> accept = postPositionMemberRepository.findAcceptedPostsByUsername(username);
-        if(accept.isEmpty()) {
-            return new ArrayList<>();
-        }
-        return accept.stream().map( map->new PostAcceptDto(
-                map.getPostId(),
-                map.getPostTitle(),
-                map.getAcceptedAt(),
-                map.getStartDate(),
-                map.getEndDate(),
-                map.getPostStatus()
-        )).collect(Collectors.toList());
+        return postPositionMemberRepository.findAcceptedPostsByUsername(username);
     }
 
     // 포지션 조회
