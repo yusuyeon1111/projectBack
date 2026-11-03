@@ -14,6 +14,7 @@ import org.example.project.post.entity.PostPositionMember;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.post.repositoty.PostPositionRepository;
 import org.example.project.post.repositoty.PostRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -40,8 +41,8 @@ public class PositionService {
                 .collect(Collectors.toList());
     }
 
-    // 포지션 신청
-    @Transactional
+    // 포지션 신청. 동시 중복 신청은 DB 유니크 제약(uk_position_member)이 막는다.
+    // save가 바로 커밋되어야 제약 위반을 여기서 잡을 수 있으므로 메서드 트랜잭션을 두지 않는다.
     public ResponseEntity<String> applyPostPosition(ApplyPositionRequestDto dto) {
         PostPosition position = postPositionRepository.findById(dto.getPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
@@ -60,7 +61,11 @@ public class PositionService {
         postPositionMember.setMember(member);
         postPositionMember.setStatus("APPLY");
         postPositionMember.setAppliedAt(LocalDateTime.now());
-        postPositionMemberRepository.save(postPositionMember);
+        try {
+            postPositionMemberRepository.save(postPositionMember);
+        } catch (DataIntegrityViolationException e) {
+            return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
+        }
 
         return ResponseEntity.ok("포지션 신청이 완료되었습니다.");
     }

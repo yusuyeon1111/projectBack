@@ -76,6 +76,24 @@ class PositionConcurrencyTest {
         assertThat(acceptedCount(position)).isEqualTo(1);
     }
 
+    @Test
+    void 같은_사람이_동시에_신청해도_한_번만_저장된다() throws Exception {
+        PostPosition position = createPost(1);
+        Member applicant = member("dup");
+
+        runConcurrently(i -> {
+            ApplyPositionRequestDto dto = new ApplyPositionRequestDto();
+            dto.setPositionId(position.getId());
+            dto.setUsername(applicant.getUsername());
+            positionService.applyPostPosition(dto);
+        });
+
+        long saved = applicationRepository.findAll().stream()
+                .filter(a -> a.getPostPosition().getId().equals(position.getId()))
+                .count();
+        assertThat(saved).isEqualTo(1);
+    }
+
     // --- helpers ---
 
     private PostPosition createPost(int count) {

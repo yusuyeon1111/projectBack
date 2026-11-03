@@ -10,7 +10,8 @@ import org.example.project.member.entity.Member;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "post_position_member")
+@Table(name = "post_position_member",
+        uniqueConstraints = @UniqueConstraint(name = "uk_position_member", columnNames = {"post_position_id", "member_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
