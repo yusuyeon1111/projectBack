@@ -26,6 +26,7 @@ interface Filters {
 function Main() {
   const navigate = useNavigate();
   const [projectList, setProjectList] = useState<Post[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [type, setType] = useState('');
@@ -49,8 +50,10 @@ function Main() {
       const res = await axios.post<PageResponse<Post>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
       setProjectList(res.data.content);
       setTotalPages(res.data.totalPages);
+      setLoadError(false);
     } catch (error) {
       console.error(error);
+      setLoadError(true);
     }
   };
 
@@ -263,7 +266,7 @@ function Main() {
               </div>
             ))}
           </div>
-          </> :<div className='emptyItem'><p id='emptyMent'>데이터 없음.</p></div>
+          </> :<div className='emptyItem'><p id='emptyMent'>{loadError ? '목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : '데이터 없음.'}</p></div>
           }
           </div>
           {projectList.length > 0 && (
