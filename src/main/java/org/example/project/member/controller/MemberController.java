@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.net.URL;
+import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -76,12 +77,14 @@ public class MemberController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<MemberResponseDto> update(@Valid @RequestBody UpdateMemberDto updateMemberDto) {
+    public ResponseEntity<MemberResponseDto> update(@Valid @RequestBody UpdateMemberDto updateMemberDto, Principal principal) {
+       updateMemberDto.setUsername(principal.getName()); // 본문의 username은 무시하고 본인만 수정
        return ResponseEntity.ok(memberService.updateInfo(updateMemberDto));
     }
 
     @GetMapping("/myPage")
-    public MyPageResponseDto myPage(@RequestParam String username) {
+    public MyPageResponseDto myPage(Principal principal) {
+       String username = principal.getName();
        MemberResponseDto member = memberService.selectMypageById(username);
        List<PostResponseDto> posts = postService.findMyPosts(username);
        List<ApplyResponseDto> apply = positionService.findApplyPost(username);
@@ -103,7 +106,8 @@ public class MemberController {
     }
 
     @GetMapping("/presigned-url")
-    public Map<String, String> presignedUrl(@RequestParam String filename, @RequestParam String username) {
+    public Map<String, String> presignedUrl(@RequestParam String filename, Principal principal) {
+        String username = principal.getName();
         String bucketName = "aws-practice-img-suyeon";
         String objectKey = "uploads/"+username+"/"+filename;
 

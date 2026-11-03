@@ -1,6 +1,5 @@
 package org.example.project.post.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -99,11 +99,20 @@ public class PostService {
         return new PostResponseDto(post);
     }
 
+    // 본인이 작성한 글만 반환, 아니면 403
+    public Post findOwnedPost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+        if (!post.getAuthor().equals(username)) {
+            throw new AccessDeniedException("본인이 작성한 글만 처리할 수 있습니다.");
+        }
+        return post;
+    }
+
     // 게시글 수정
     @Transactional
-    public PostResponseDto updatePost(@Valid PostRequestDto dto) {
-        Post post = postRepository.findById(dto.getId())
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+    public PostResponseDto updatePost(@Valid PostRequestDto dto, String username) {
+        Post post = findOwnedPost(dto.getId(), username);
 
         if (dto.getContent() != null) {
             post.setContent(dto.getContent());
@@ -150,11 +159,8 @@ public class PostService {
     }
 
     // 게시글 삭제
-    public void deletePost(Long postId) {
-        if(!postRepository.existsById(postId)) {
-            throw new EntityNotFoundException("게시글이 존재하지 않습니다.");
-        }
-        postRepository.deleteById(postId);
+    public void deletePost(Long postId, String username) {
+        postRepository.delete(findOwnedPost(postId, username));
     }
 
     // 게시글 전체 리스트 조회

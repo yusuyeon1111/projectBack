@@ -42,7 +42,7 @@ npx tsc --noEmit                       # 타입 체크만 (빌드보다 빠름)
 - 레이아웃 없음: `/signin`, `/membersignup`, `/oauth2/success`
 - `<AdminLayout/>`(`components/Admin/Layout.tsx`) 아래: `/admin`
 
-**인증**: 서버 측 세션 없음. 로그인(`SignIn.tsx`) 또는 OAuth2 콜백(`OAuth2Success.tsx`, 쿼리스트링으로 토큰 수신)이 `localStorage`에 `accessToken`, `refreshToken`, `username`, `role`을 저장. 각 컴포넌트가 직접 `localStorage.getItem("username")`을 읽고, 인증이 필요한 요청에만 `Authorization: Bearer` 헤더를 수동으로 붙임. axios 인스턴스/인터셉터 없음 — 새 API 호출을 추가할 때 기존 컴포넌트의 패턴을 그대로 따를 것. 관리자 판별은 `role === 'ROLE_ADMIN'`.
+**인증**: 서버 측 세션 없음. 로그인(`SignIn.tsx`) 또는 OAuth2 콜백(`OAuth2Success.tsx`, 쿼리스트링으로 토큰 수신)이 `localStorage`에 `accessToken`, `refreshToken`, `username`, `role`을 저장. `src/auth.ts`의 axios 전역 인터셉터가 모든 요청에 `Authorization: Bearer` 헤더를 붙이고, 401이면 저장값을 지우고 `/signin`으로 보낸다(`index.tsx`에서 import). 백엔드는 토큰으로 사용자를 식별하므로 요청에 username을 실어 보낼 필요가 없다. 로그아웃 등 인증값 정리는 `clearAuth()`를 쓴다. 관리자 판별은 `role === 'ROLE_ADMIN'`.
 
 **게시글 = project / study 두 종류**: 같은 `/api/post/*` 엔드포인트를 쓰되 `category` 필드로 구분. 그래서 UI가 거의 복제된 쌍으로 존재함:
 - `PostForm.tsx` (category `'project'`, 등록 후 `/post/:id`) ↔ `StudyForm.tsx` (category `'study'`, 등록 후 `/study/:id`)

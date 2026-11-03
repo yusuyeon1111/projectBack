@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
 - JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
-- 유일한 테스트 `ProjectApplicationTests.contextLoads`는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
+- 테스트(`contextLoads`, `SecurityAccessTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
 ## 아키텍처
 
@@ -34,11 +34,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 인증 흐름 (JWT + Redis)
 
-- `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. `/api/post/**`, `/api/member/**`, `/oauth2/**`는 `permitAll`, `/api/admin/**`은 `ROLE_ADMIN`. 즉 post/member 엔드포인트는 **Spring Security 레벨에서 인증을 강제하지 않으며** 대부분 `username`을 요청 파라미터/바디로 받아 동작한다. 새 엔드포인트를 추가할 때 이 점을 의식할 것.
+- `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. 공개 API(회원가입·로그인·아이디/이메일 중복 체크, 게시글 목록·비로그인 상세, OAuth2 경로)만 `permitAll`이고 나머지는 인증 필요, `/api/admin/**`은 `ROLE_ADMIN`. 미인증 요청은 401(`HttpStatusEntryPoint`). **사용자 식별은 항상 컨트롤러의 `Principal`(토큰 subject = 회원 username)로 하고, 요청 본문·파라미터의 username은 믿지 않는다.** 글 수정·삭제와 신청 승인·거절은 `PostService.findOwnedPost` 등으로 작성자 본인인지 확인한다. 이 규칙은 `SecurityAccessTest`가 검증한다.
 - `JwtAuthenticationFilter`: `Authorization: Bearer <token>` 헤더를 파싱해 `SecurityContext`에 인증을 채운다. 토큰 자체가 Redis 키로 존재하면(`logout` 값) 블랙리스트로 간주해 인증을 건너뛴다. `/api/post/list`는 필터를 아예 통과시킨다.
 - `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. `roles` 클레임에 권한을 콤마로 저장한다.
 - Redis 키 규약: `RT:{username}` → refresh token, `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL).
-- 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후 토큰을 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다.
+- 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후, 회원 username과 DB 권한으로 토큰을 만들어 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다. (OAuth2 인증 객체의 이름은 카카오 숫자 id라서 그대로 쓰면 안 된다.)
 - 계정 비활성화는 `Member.delYn = 'Y'`로 표현한다(soft delete). 로그인·OAuth 양쪽에서 이 값을 검사한다.
 
 ### 도메인 모델
