@@ -59,7 +59,6 @@ function PostForm() {
   const [stackList, setStackList] = useState<string[]>([]);
   const [type, setType] = useState('online');
   const [region, setRegion] = useState('nothing');
-  const username = localStorage.getItem("username")
   const [showEditor, setShowEditor] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -104,7 +103,6 @@ function PostForm() {
       region,
       projectType:type,
       category:'project',
-      author:username,
       status:'ING',
       startDate,
       endDate,

@@ -48,7 +48,6 @@ function PostForm() {
   const editorRef = useRef<Editor>(null);
   const [type, setType] = useState('online');
   const [region, setRegion] = useState('nothing');
-  const username = localStorage.getItem("username")
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const today = new Date().toISOString().split('T')[0];
@@ -83,7 +82,6 @@ function PostForm() {
       region,
       projectType:type,
       category:'study',
-      author:username,
       positions: positions,
       startDate,
       endDate,

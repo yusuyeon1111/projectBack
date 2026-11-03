@@ -4,7 +4,6 @@ import axios from 'axios';
 const OAuth2Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [username, setUserName] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
   const onsubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -12,7 +11,6 @@ const OAuth2Success = () => {
     const data = {
       nickname: formData.get('nickname'),
       preferredPosition: formData.get('preferredPosition'),
-      username: username
     };
 
     if (!data.nickname) {
@@ -54,7 +52,6 @@ const OAuth2Success = () => {
         localStorage.setItem('accessToken', accessToken ?? "");
         localStorage.setItem('refreshToken', refreshToken ?? "");
         localStorage.setItem('username', username ?? "");
-        setUserName(username ?? "");
         setIsNewUser(true);
       } else {
         alert('로그인 실패');

@@ -28,10 +28,10 @@ function PostView() {
     const fetchPost = async () => {
       try {
         const response = username
-          ? await axios.get<PostEdit>(`${process.env.REACT_APP_API_URL}/api/post/viewUsername/${postId}?username=${username}`)
+          ? await axios.get<PostEdit>(`${process.env.REACT_APP_API_URL}/api/post/viewUsername/${postId}`)
           : await axios.get<PostEdit>(`${process.env.REACT_APP_API_URL}/api/post/view/${postId}`);
         if (username) {
-          axios.get<number[]>(`${process.env.REACT_APP_API_URL}/api/post/applied/${postId}?username=${username}`)
+          axios.get<number[]>(`${process.env.REACT_APP_API_URL}/api/post/applied/${postId}`)
             .then(res => setAppliedPositions(res.data));
         }
         setPost(response.data);
@@ -122,7 +122,6 @@ function PostView() {
     try {
       const response = await axios.post<string>(`${process.env.REACT_APP_API_URL}/api/post/apply`, {
         positionId,
-        username,
       });
       alert(response.data);
       setAppliedPositions([...appliedPositions, positionId]); // 성공하면 상태에 추가
@@ -141,13 +140,12 @@ function PostView() {
           await axios.post(`${process.env.REACT_APP_API_URL}/api/post/like`, null, {
           params: {
             postId: postId,
-            username: username
           }
         });
         setLike(true);
         } else {
           await axios.delete(`${process.env.REACT_APP_API_URL}/api/post/unLike`, {
-          params: { id: postId, username: username }
+          params: { id: postId }
         });
         setLike(false);
         }

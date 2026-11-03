@@ -25,10 +25,10 @@ function StudyView() {
     const fetchPost = async () => {
       try {
         const response = username
-          ? await axios.get<Post>(`${process.env.REACT_APP_API_URL}/api/post/viewUsername/${postId}?username=${username}`)
+          ? await axios.get<Post>(`${process.env.REACT_APP_API_URL}/api/post/viewUsername/${postId}`)
           : await axios.get<Post>(`${process.env.REACT_APP_API_URL}/api/post/view/${postId}`);
         if (username) {
-          axios.get<number[]>(`${process.env.REACT_APP_API_URL}/api/post/applied/${postId}?username=${username}`)
+          axios.get<number[]>(`${process.env.REACT_APP_API_URL}/api/post/applied/${postId}`)
             .then(res => setAppliedPositions(res.data));
         }
         setPost(response.data);
@@ -99,13 +99,12 @@ function StudyView() {
           await axios.post(`${process.env.REACT_APP_API_URL}/api/post/like`, null, {
           params: {
             postId: postId,
-            username: username
           }
         });
         setLike(true);
         } else {
           await axios.delete(`${process.env.REACT_APP_API_URL}/api/post/unLike`, {
-          params: { id: postId, username: username }
+          params: { id: postId }
         });
         setLike(false);
         }
@@ -122,7 +121,6 @@ function StudyView() {
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/post/apply`, {
         positionId,
-        username,
       });
       alert("스터디 신청 되었습니다.");
       setAppliedPositions([...appliedPositions, positionId]); // 성공하면 상태에 추가
