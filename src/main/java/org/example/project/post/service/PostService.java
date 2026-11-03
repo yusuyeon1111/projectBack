@@ -144,16 +144,8 @@ public class PostService {
             }
         }
 
-        // 모집 포지션 업데이트
-        if (dto.getPositions() != null) {
-            post.getPositions().clear(); // 기존 데이터 삭제
-            for (PostRequestDto.PostPositionDto positionDto : dto.getPositions()) {
-                PostPosition position = new PostPosition();
-                position.setPost(post);
-                position.setRole(positionDto.getRole());
-                post.getPositions().add(position); // 리스트에 추가
-            }
-        }
+        // 모집 포지션은 수정하지 않는다. 포지션에 신청 내역(PostPositionMember)이 cascade로 묶여 있어
+        // 지우고 다시 만들면 신청 기록이 삭제되고 인원(count)도 0이 된다. 수정 화면에도 포지션 편집 UI가 없다.
 
         return new PostResponseDto(post);
     }
