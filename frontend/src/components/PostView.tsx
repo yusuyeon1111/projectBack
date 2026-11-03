@@ -9,6 +9,7 @@ import '../css/View.css'
 import { IoSettingsSharp } from "react-icons/io5";
 import LoginRequiredModal from './LoginRequiredModal';
 import { Post, regions, roleTextMap } from '../types';
+import { errorMessage } from '../auth';
 
 // 수정 폼에서 스택 입력칸 값을 post 상태에 같이 들고 다님
 type PostEdit = Post & { stackInput?: string };
@@ -126,7 +127,7 @@ function PostView() {
       alert(response.data);
       setAppliedPositions([...appliedPositions, positionId]); // 성공하면 상태에 추가
     } catch (error: any) {
-      alert(error.response?.data || "신청 실패");
+      alert(errorMessage(error, "신청 실패"));
     }
   }
 
