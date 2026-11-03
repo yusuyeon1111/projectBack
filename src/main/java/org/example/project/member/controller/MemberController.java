@@ -15,6 +15,7 @@ import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import com.amazonaws.services.s3.AmazonS3;
@@ -100,8 +101,8 @@ public class MemberController {
     }
 
     @GetMapping("/getUserInfo/{memberId}")
-    public ResponseEntity<MemberResponseDto> getUserInfo(@PathVariable Long memberId) {
-        MemberResponseDto member = memberService.selectById(memberId);
+    public ResponseEntity<MemberResponseDto> getUserInfo(@PathVariable Long memberId, Principal principal) {
+        MemberResponseDto member = memberService.selectById(memberId, principal.getName());
         return ResponseEntity.ok(member);
     }
 
@@ -137,6 +138,12 @@ public class MemberController {
             return token.substring(7);
         }
         return null;
+    }
+
+    // 아래 RuntimeException(400) 핸들러에 권한 거부까지 묻히지 않도록 403으로 분리
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)
