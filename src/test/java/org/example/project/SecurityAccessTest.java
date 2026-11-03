@@ -94,4 +94,24 @@ class SecurityAccessTest {
             memberRepository.delete(member);
         }
     }
+
+    @Test
+    void 차단된_회원의_기존_토큰은_401() throws Exception {
+        Member member = memberRepository.save(Member.builder()
+                .username("ban-target").email("ban@test.com").delYn("N").build());
+        String token = bearer("ban-target", "ROLE_USER");
+        try {
+            mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isOk());
+            mvc.perform(post("/api/admin/banUser").header("Authorization", bearer("admin", "ROLE_ADMIN"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"memberId\":" + member.getId() + "}"))
+                    .andExpect(status().isOk());
+            mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isUnauthorized());
+            mvc.perform(post("/api/admin/acceptUser").header("Authorization", bearer("admin", "ROLE_ADMIN"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"memberId\":" + member.getId() + "}"))
+                    .andExpect(status().isOk());
+            mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isOk());
+        } finally {
+            memberRepository.delete(member);
+        }
+    }
 }

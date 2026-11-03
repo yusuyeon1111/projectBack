@@ -194,6 +194,7 @@ public class MemberService {
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
         member.setDelYn("N");
         memberRepository.save(member);
+        redisTemplate.delete("BAN:" + member.getUsername());
 
         return "계정이 활성화 되었습니다.";
     }
@@ -204,6 +205,9 @@ public class MemberService {
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
         member.setDelYn("Y");
         memberRepository.save(member);
+        // 이미 발급된 access token은 서명만으로 통과하므로, 남은 최대 수명 동안 필터에서 막는다
+        redisTemplate.opsForValue().set("BAN:" + member.getUsername(), "ban", JwtTokenProvider.ACCESS_TIME, TimeUnit.MILLISECONDS);
+        redisTemplate.delete("RT:" + member.getUsername());
         return "계정이 비활성화 되었습니다.";
     }
 

@@ -36,7 +36,10 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
             // 인증 객체 생성 및 등록
             if(ObjectUtils.isEmpty(isLogout)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 차단된 회원은 기존 토큰도 인증하지 않는다
+                if (!Boolean.TRUE.equals(redisTemplate.hasKey("BAN:" + authentication.getName()))) {
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
         }
 
