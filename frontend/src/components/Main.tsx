@@ -8,7 +8,7 @@ import PostList from './PostList'
 import axios from 'axios';
 import { IoLocationSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
-import { Post, PageResponse, regions, roleTextMap } from "../types";
+import { Post, PageResponse, postStatusText, regions, roleTextMap } from "../types";
 
 interface Filters {
   category: string | null;
@@ -229,7 +229,7 @@ function Main() {
                   className='status'
                   data-type={
                     post.postStatus === 'END' ? 'end' : post.postStatus === 'IN_PROGRESS' ? 'active' : 'scheduled'}>
-                  {post.postStatus === 'END' ? '진행완료' : post.postStatus === 'IN_PROGRESS' ? '진행중' : '예정'}
+                  {postStatusText(post.postStatus)}
                 </span>
                 </div>
                 {post.category === 'project' && (
