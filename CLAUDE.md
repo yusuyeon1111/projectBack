@@ -26,7 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
 - JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
-- 테스트(`contextLoads`, `SecurityAccessTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
+- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
 ## 아키텍처
 
@@ -44,13 +44,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 도메인 모델
 
 - `Member` ↔ `MemberProfile`(1:1, cascade ALL) + `member_roles` ElementCollection.
-- `Post` → `PostPosition`(모집 포지션, 1:N) → `PostPositionMember`(지원 내역, status: `apply`/`accept`/`reject`). `Post` → `PostStack`, `PostLike`.
+- `Post` → `PostPosition`(모집 포지션, 1:N) → `PostPositionMember`(지원 내역, status: `APPLY`/`ACCEPT`/`REJECT`, (포지션, 회원) 유니크 제약으로 중복 신청 방지). `Post` → `PostStack`, `PostLike`.
+- 신청 승인·거절(`PositionService`)은 `PostRepository.findByApplicationIdForUpdate`로 글 행을 비관적 락으로 잠근 뒤 정원을 확인한다. **이 락은 트랜잭션의 첫 조회여야 한다.** MySQL REPEATABLE READ는 첫 일반 조회 시점의 스냅샷을 읽으므로, 잠금 전에 조회가 있으면 다른 트랜잭션이 커밋한 승인 수를 못 봐서 정원을 넘긴다. 정원 초과·이미 처리된 신청은 `IllegalStateException` → 409.
 - `Post.postStatus`(`SCHEDULED`/`IN_PROGRESS`/`END`)는 `PostStatusScheduler`가 매일 00:00 및 앱 기동 시 `startDate`/`endDate` 기준으로 일괄 갱신한다. `Post.delYn`은 관리자 숨김 처리용.
 - 통계/차트 쿼리(`countMemberPerMonth` 등)는 리포지토리에 JPQL로 작성되어 `Object[]`를 반환하고 서비스에서 DTO로 매핑한다.
 
 ### 예외 처리
 
-`GlobalExceptionHandler`가 `RuntimeException` → 403, `BadCredentialsException` → 401로 변환한다. 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
+`GlobalExceptionHandler`가 `RuntimeException` → 403, `IllegalStateException` → 409, `BadCredentialsException` → 401로 변환한다(본문은 `{error: 메시지}`, 프론트는 `auth.ts`의 `errorMessage`로 꺼낸다). 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
 
 ### S3 업로드
 
