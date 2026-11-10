@@ -112,3 +112,19 @@ S1 목록 쿼리 EXPLAIN ANALYZE (요약)
 
 조회한 엔티티가 트랜잭션 밖에서 분리(detached)된 상태라 `saveAll`이 건마다 `merge`(재조회)하고, cascade로 포지션·스택·좋아요 컬렉션까지 다시 읽는다.
 이 문제는 서버 2대 전환 작업(중복 실행)과 함께 다룬다.
+
+## 1. 응답에서 신청자 목록 제거 (`52f6ba7`)
+
+보안 문제(원인 4)를 고친 커밋이지만 목록 조회에도 영향이 있어 같은 조건으로 다시 쟀다. 결과: [`results/after-1-hide-applicants-queries.tsv`](results/after-1-hide-applicants-queries.tsv)
+
+| 시나리오 | 요청당 SQL (전 → 후) | 응답 크기 (전 → 후) |
+|---|---:|---:|
+| S1_latest | 36 → **12** | 6,384B → 5,146B |
+| S2_popular | 24 → **12** | 5,908B → 5,475B |
+| S3_category_status | 26 → **12** | 5,298B → 4,772B |
+| S4_region_position | 29 → **12** | 6,293B → 5,453B |
+| S5_keyword_hit | 29 → **12** | 5,964B → 5,173B |
+| S7_stack | 34 → **12** | 6,489B → 5,387B |
+| S8_deep_page | 23 → **12** | 5,759B → 5,351B |
+
+남은 12개는 목록 1 + 건수 1 + 글마다 기술스택·포지션 2개 × 5건이다. 응답 시간은 원인 1(조인 후 DISTINCT)이 대부분이라 그대로다.
