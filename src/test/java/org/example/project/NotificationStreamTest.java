@@ -41,6 +41,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
+import com.zaxxer.hikari.HikariDataSource;
+import com.zaxxer.hikari.HikariPoolMXBean;
+import javax.sql.DataSource;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 // 실제 스트리밍을 확인하려고 내장 서버를 띄우고 HTTP로 구독한다.
@@ -67,6 +71,7 @@ class NotificationStreamTest {
     @Autowired PostPositionMemberRepository applicationRepository;
     @Autowired RedisTemplate<String, String> redisTemplate;
     @Autowired JdbcTemplate jdbcTemplate;
+    @Autowired DataSource dataSource;
     @Autowired PlatformTransactionManager transactionManager;
 
     final HttpClient http = HttpClient.newHttpClient();
@@ -230,6 +235,19 @@ class NotificationStreamTest {
         assertThat(both.next()).containsEntry("event", "connected");
         assertThat(both.next()).containsEntry("id", String.valueOf(n2));
         assertThat(both.next()).containsEntry("id", String.valueOf(n3));
+    }
+
+    @Test
+    void 재전송을_마친_구독은_연결이_열려_있어도_DB_커넥션을_돌려준다() throws Exception {
+        // SSE 요청은 최대 30분 열려 있다. 그동안 커넥션을 쥐고 있으면 풀(기본 10개)이 금방 바닥난다
+        long n1 = save(prefix + "a"), n2 = save(prefix + "a");
+        HikariPoolMXBean pool = dataSource.unwrap(HikariDataSource.class).getHikariPoolMXBean();
+
+        SseStream stream = subscribe(ticketService.issue(prefix + "a"), n1, null);
+        assertThat(stream.next()).containsEntry("event", "connected");
+        assertThat(stream.next()).containsEntry("id", String.valueOf(n2));
+
+        waitUntil(() -> pool.getActiveConnections() == 0);
     }
 
     // --- 연결 유지·종료 ---
