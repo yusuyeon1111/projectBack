@@ -97,6 +97,13 @@ class PostSearchTest {
         assertThat(ids(postService.getPostList(dto))).containsExactly(c.getId());
     }
 
+    @Test
+    void 키워드의_퍼센트는_와일드카드가_아니라_글자로_찾는다() {
+        PostRequestDto dto = baseRequest();
+        dto.setKeyword(marker + "%");
+        assertThat(postService.getPostList(dto).getTotalElements()).isZero();
+    }
+
     // --- helpers ---
 
     private Page<PostResponseDto> search(Consumer<PostRequestDto> filter) {

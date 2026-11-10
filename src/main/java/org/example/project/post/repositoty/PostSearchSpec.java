@@ -77,7 +77,9 @@ public final class PostSearchSpec {
         }
     }
 
+    // 사용자가 입력한 %, _ 는 와일드카드가 아니라 글자로 검색한다
     private static String contains(String keyword) {
-        return "%" + keyword + "%";
+        String escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        return "%" + escaped + "%";
     }
 }
