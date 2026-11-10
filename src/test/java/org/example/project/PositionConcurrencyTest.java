@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,6 +42,7 @@ class PositionConcurrencyTest {
     @Autowired PostRepository postRepository;
     @Autowired MemberRepository memberRepository;
     @Autowired PostPositionMemberRepository applicationRepository;
+    @Autowired JdbcTemplate jdbcTemplate;
 
     final String prefix = "cc-" + UUID.randomUUID().toString().substring(0, 8) + "-";
     final List<Member> members = new ArrayList<>();
@@ -50,6 +52,8 @@ class PositionConcurrencyTest {
     void cleanUp() {
         if (post != null) postRepository.findById(post.getId()).ifPresent(postRepository::delete);
         memberRepository.deleteAll(members);
+        // 신청·승인 때 생기는 알림도 받는 사람이 모두 이 테스트의 회원이다
+        jdbcTemplate.update("DELETE FROM notification WHERE receiver LIKE ?", prefix + "%");
     }
 
     @Test
