@@ -63,7 +63,7 @@ public final class PostSearchSpec {
                 if ("popular".equalsIgnoreCase(dto.getSortType())) {
                     query.orderBy(cb.desc(root.get("likeCount")), cb.desc(root.get("id")));
                 } else {
-                    query.orderBy(cb.desc(cb.coalesce(root.get("updated"), root.get("created"))), cb.desc(root.get("id")));
+                    query.orderBy(cb.desc(root.get("lastModified")), cb.desc(root.get("id")));
                 }
             }
             return cb.and(where.toArray(Predicate[]::new));
