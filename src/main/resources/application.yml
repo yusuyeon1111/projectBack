@@ -37,6 +37,10 @@ spring:
       format_sql: true
       use_sql_comments: true
     show-sql: true
+    properties:
+      hibernate:
+        # 목록처럼 여러 글의 연관 컬렉션을 읽을 때 글마다 따로 조회하지 않고 IN으로 묶는다
+        default_batch_fetch_size: 100
 
   data:
     redis:
