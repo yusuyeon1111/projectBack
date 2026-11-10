@@ -34,6 +34,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -81,6 +82,14 @@ class NotificationApiTest {
         mvc.perform(get("/api/notifications/unread-count")).andExpect(status().isUnauthorized());
         mvc.perform(patch("/api/notifications/1/read")).andExpect(status().isUnauthorized());
         mvc.perform(patch("/api/notifications/read-all")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 운영_프론트에서_PATCH_preflight가_허용된다() throws Exception {
+        mvc.perform(options("/api/notifications/read-all")
+                        .header("Origin", "https://teamhaeyo.kro.kr")
+                        .header("Access-Control-Request-Method", "PATCH"))
+                .andExpect(status().isOk());
     }
 
     @Test
