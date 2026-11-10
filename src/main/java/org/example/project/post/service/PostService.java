@@ -14,11 +14,10 @@ import org.example.project.post.repositoty.PostLikeRepository;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.post.repositoty.PostPositionRepository;
 import org.example.project.post.repositoty.PostRepository;
+import org.example.project.post.repositoty.PostSearchSpec;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -158,28 +157,8 @@ public class PostService {
     // 게시글 전체 리스트 조회. DTO 변환 중 지연 로딩이 일어나므로 OSIV에 기대지 않고 트랜잭션 안에서 끝낸다.
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(PostRequestDto dto) {
-        Sort sort;
-        if ("popular".equalsIgnoreCase(dto.getSortType())) {
-            sort = Sort.by(Sort.Direction.DESC, "likeCount");
-        } else {
-            sort = JpaSort.unsafe(Sort.Direction.DESC, "COALESCE(p.updated, p.created)");
-        }
-
-        Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize(), sort);
-
-        Page<Post> postPage = postRepository.findPostsWithFilter(
-                dto.getCategory(),
-                dto.getStatus(),
-                dto.getPostStatus(),
-                dto.getProjectType(),
-                dto.getRegion(),
-                dto.getPosition(),
-                dto.getKeyword(),
-                dto.getStackKeyword(),
-                pageable
-        );
-
-        return postPage.map(PostResponseDto::new);
+        Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize());
+        return postRepository.findAll(PostSearchSpec.of(dto), pageable).map(PostResponseDto::new);
     }
 
     public List<PostResponseDto> findMyPosts(String username) {
