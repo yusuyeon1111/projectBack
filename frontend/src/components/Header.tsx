@@ -5,7 +5,7 @@ import axios from 'axios';
 import { IoBookmark } from "react-icons/io5";
 import { FaUserCircle } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { FaBell } from "react-icons/fa6";
+import NotificationBell from "./NotificationBell";
 import '../css/Header.css';
 
 function Header() {
@@ -13,6 +13,7 @@ function Header() {
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>("");
 
   const menuRef = useRef<HTMLDivElement>(null); // 메뉴 영역 ref
@@ -26,6 +27,7 @@ function Header() {
   useEffect(() => {
     setShowMenu(false);
     setShowEditMenu(false);
+    setShowNotification(false);
   }, [location.pathname]);
 
   // 외부 클릭 시 메뉴 닫기
@@ -34,6 +36,7 @@ function Header() {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
         setShowEditMenu(false);
+        setShowNotification(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -42,14 +45,21 @@ function Header() {
 
   const toggleMenu = () => {
     setShowMenu(prev => {
-      if (!prev) setShowEditMenu(false);
+      if (!prev) { setShowEditMenu(false); setShowNotification(false); }
       return !prev;
     });
   };
 
   const editMenu = () => {
     setShowEditMenu(prev => {
-      if (!prev) setShowMenu(false);
+      if (!prev) { setShowMenu(false); setShowNotification(false); }
+      return !prev;
+    });
+  };
+
+  const toggleNotification = () => {
+    setShowNotification(prev => {
+      if (!prev) { setShowMenu(false); setShowEditMenu(false); }
       return !prev;
     });
   };
@@ -79,6 +89,7 @@ function Header() {
       <div className='member-container'>
         {accessToken && (
           <>
+            <NotificationBell open={showNotification} onToggle={toggleNotification}/>
             <MdEdit className='memberIcon' onClick={editMenu}/>
             {showEditMenu && (
               <div className='menu-container'>
