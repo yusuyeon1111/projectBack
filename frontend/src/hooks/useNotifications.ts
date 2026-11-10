@@ -60,7 +60,8 @@ export default function useNotifications() {
     ]).then(([list, count]) => {
       if (stopped) return;
       list.data.forEach(n => seen.current.add(n.id));
-      lastId = list.data[0]?.id;
+      // 목록이 비어 있어도 0을 기준으로 삼아야 조회와 구독 사이에 생긴 알림을 재전송받는다
+      lastId = list.data[0]?.id ?? 0;
       setItems(list.data);
       setUnreadCount(count.data.count);
     }).catch(error => console.error('알림 조회 실패', error))

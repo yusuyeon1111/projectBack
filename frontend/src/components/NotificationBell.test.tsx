@@ -111,6 +111,25 @@ test('알림이 없으면 안내 문구', async () => {
   expect(document.querySelector('.notification-badge')).toBeNull();
 });
 
+test('첫 구독은 목록의 최신 id 이후부터 받는다', async () => {
+  renderHeader();
+  expect((await connected(1)).url).toContain('lastEventId=5');
+});
+
+test('목록이 비어 있어도 그 사이에 생긴 알림을 놓치지 않게 0부터 받는다', async () => {
+  list = [];
+  count = 0;
+  renderHeader();
+  expect((await connected(1)).url).toContain('lastEventId=0');
+});
+
+test('목록 조회가 실패하면 기준이 없으므로 재전송 없이 구독한다', async () => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  api.get.mockRejectedValue(new Error('down'));
+  renderHeader();
+  expect((await connected(1)).url).not.toContain('lastEventId');
+});
+
 test('실시간 알림을 맨 앞에 추가하고 같은 id는 무시한다', async () => {
   renderHeader();
   const es = await connected(1);
