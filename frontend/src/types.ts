@@ -18,6 +18,28 @@ export const pageNumbers = (page: number, totalPages: number) => {
   return Array.from({ length: Math.max(0, Math.min(start + 10, totalPages) - start) }, (_, i) => start + i);
 };
 
+// NotificationResponse (/api/notifications)
+export interface NotificationItem {
+  id: number;
+  type: 'APPLY' | 'ACCEPT' | 'REJECT';
+  postId: number;
+  postTitle: string;
+  postCategory: 'project' | 'study';
+  role: string;
+  actor: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+export const notificationMessage = (n: NotificationItem) => {
+  const target = `'${n.postTitle}' ${roleTextMap[n.role] ?? n.role} 포지션`;
+  if (n.type === 'APPLY') return `${target}에 ${n.actor}님이 신청했습니다.`;
+  return `${target} 신청이 ${n.type === 'ACCEPT' ? '승인' : '거절'}되었습니다.`;
+};
+
+export const notificationLink = (n: NotificationItem) =>
+  `/${n.postCategory === 'study' ? 'study' : 'post'}/${n.postId}`;
+
 export const regions = [
   '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
   '강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도',
