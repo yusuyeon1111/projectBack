@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useState, useEffect } from "react";
-import { Post as PostType, PageResponse } from "../../types";
+import { Post as PostType, PageResponse, pageNumbers } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
 import { errorMessage } from '../../auth';
@@ -91,7 +91,7 @@ function Post() {
               이전
             </button>
     
-            {Array.from({ length: totalPages }, (_, i) => (
+            {pageNumbers(filters.page, totalPages).map(i => (
               <button
                 key={i}
                 className={filters.page === i ? "active" : ""}
