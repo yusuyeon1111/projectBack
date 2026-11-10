@@ -15,6 +15,13 @@ import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.post.repositoty.PostPositionRepository;
 import org.example.project.post.repositoty.PostRepository;
 import org.example.project.post.repositoty.PostSearchSpec;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +44,9 @@ public class PostService {
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final PostLikeRepository postLikeRepository;
+    private final EntityManager entityManager;
+
+    private static final int PAGES_AHEAD = 10;
 
     // 게시글 작성
     @Transactional
@@ -155,10 +166,36 @@ public class PostService {
     }
 
     // 게시글 전체 리스트 조회. DTO 변환 중 지연 로딩이 일어나므로 OSIV에 기대지 않고 트랜잭션 안에서 끝낸다.
+    //
+    // 전체 건수는 세지 않는다. 프론트는 건수를 보여 주지 않고 페이지 버튼만 그리므로 "뒤에 몇 페이지가 더 있는지"면 충분하다.
+    // count는 조건에 맞는 글을 전부 읽어야 해서, 목록은 몇 ms인데 count 때문에 1~3초가 걸렸다.
+    // 대신 현재 페이지부터 PAGES_AHEAD 페이지 분량 + 1건의 id만 정렬 인덱스로 읽고, 앞쪽 한 페이지만 엔티티로 가져온다.
+    // 그래서 응답의 totalElements는 정확한 전체 건수가 아니라 "적어도 이만큼은 있다"는 값이다.
     @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(PostRequestDto dto) {
-        Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize());
-        return postRepository.findAll(PostSearchSpec.of(dto), pageable).map(PostResponseDto::new);
+        Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize(), PostSearchSpec.sort(dto.getSortType()));
+        List<Long> ids = findPostIds(PostSearchSpec.of(dto), pageable, dto.getSize() * PAGES_AHEAD + 1);
+        List<Long> pageIds = ids.subList(0, Math.min(dto.getSize(), ids.size()));
+
+        Map<Long, Post> posts = postRepository.findAllById(pageIds).stream()
+                .collect(Collectors.toMap(Post::getId, Function.identity()));
+        List<PostResponseDto> content = pageIds.stream()
+                .map(posts::get).filter(Objects::nonNull) // 두 조회 사이에 지워진 글
+                .map(PostResponseDto::new).toList();
+        return new PageImpl<>(content, pageable, pageable.getOffset() + ids.size());
+    }
+
+    private List<Long> findPostIds(Specification<Post> spec, Pageable pageable, int limit) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Post> root = query.from(Post.class);
+        query.select(root.get("id"))
+                .where(spec.toPredicate(root, query, cb))
+                .orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
+        return entityManager.createQuery(query)
+                .setFirstResult((int) pageable.getOffset())
+                .setMaxResults(limit)
+                .getResultList();
     }
 
     public List<PostResponseDto> findMyPosts(String username) {

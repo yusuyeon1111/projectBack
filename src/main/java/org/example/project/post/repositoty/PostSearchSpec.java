@@ -9,6 +9,7 @@ import org.example.project.post.dto.PostRequestDto;
 import org.example.project.post.entity.Post;
 import org.example.project.post.entity.PostPosition;
 import org.example.project.post.entity.PostStack;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.util.StringUtils;
 
@@ -57,17 +58,14 @@ public final class PostSearchSpec {
                         cb.like(root.get("content"), pattern, ESCAPE),
                         cb.like(root.get("author"), pattern, ESCAPE)));
             }
-
-            // 정렬은 목록 조회에만 건다. Spring Data가 count 쿼리를 만들 때는 이 정렬을 지운다.
-            if (query.getResultType() != Long.class) {
-                if ("popular".equalsIgnoreCase(dto.getSortType())) {
-                    query.orderBy(cb.desc(root.get("likeCount")), cb.desc(root.get("id")));
-                } else {
-                    query.orderBy(cb.desc(root.get("lastModified")), cb.desc(root.get("id")));
-                }
-            }
             return cb.and(where.toArray(Predicate[]::new));
         };
+    }
+
+    // 두 정렬 모두 (정렬 컬럼, id) 인덱스를 거꾸로 읽는다. id는 같은 값끼리 순서가 흔들리지 않게 붙인다.
+    public static Sort sort(String sortType) {
+        String column = "popular".equalsIgnoreCase(sortType) ? "likeCount" : "lastModified";
+        return Sort.by(Sort.Order.desc(column), Sort.Order.desc("id"));
     }
 
     // 프론트는 빈 필터를 ""로 보낸다

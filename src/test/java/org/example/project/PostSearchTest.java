@@ -114,6 +114,14 @@ class PostSearchTest {
         assertThat(postService.getPostList(dto).getTotalElements()).isZero();
     }
 
+    @Test
+    void 페이지를_넘기면_다음_글이_나오고_페이지_수는_실제_글_수만큼() {
+        Page<PostResponseDto> second = search(d -> { d.setSize(1); d.setPage(1); });
+        assertThat(ids(second)).containsExactly(c.getId());
+        assertThat(second.getTotalPages()).isEqualTo(3);
+        assertThat(search(d -> { d.setSize(1); d.setPage(3); }).getContent()).isEmpty();
+    }
+
     // --- helpers ---
 
     private Page<PostResponseDto> search(Consumer<PostRequestDto> filter) {
