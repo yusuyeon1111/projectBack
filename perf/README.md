@@ -128,3 +128,34 @@ S1 목록 쿼리 EXPLAIN ANALYZE (요약)
 | S8_deep_page | 23 → **12** | 5,759B → 5,351B |
 
 남은 12개는 목록 1 + 건수 1 + 글마다 기술스택·포지션 2개 × 5건이다. 응답 시간은 원인 1(조인 후 DISTINCT)이 대부분이라 그대로다.
+
+## 2. 들어온 조건만 쿼리에 넣고, 포지션·스택은 EXISTS로 (`PostSearchSpec`)
+
+원인 1을 고쳤다. 고정 JPQL을 Spring Data JPA `Specification`으로 바꿔 값이 있는 조건만 WHERE에 넣고,
+포지션·기술스택 조건은 조인 대신 `EXISTS` 서브쿼리로 걸러 글이 중복되지 않게 했다. 그래서 `DISTINCT`가 필요 없어졌다.
+정렬 방식(`COALESCE(updated, created)`)은 이 단계에서 바꾸지 않았다. 같은 페이지 안 순서가 흔들리지 않게 `id DESC`만 덧붙였다.
+
+- QueryDSL 대신 `Specification`을 쓴 이유: 이미 쓰는 spring-data-jpa에 들어 있어 의존성·코드 생성 설정이 필요 없고, 조건 8개 정도의 동적 쿼리는 충분히 표현된다.
+- 바꾸기 전에 [`PostSearchTest`](../src/test/java/org/example/project/PostSearchTest.java)로 기존 쿼리의 필터·정렬·중복 제거 동작을 먼저 고정하고, 바꾼 뒤 같은 테스트를 통과시켰다. 시나리오별 결과 건수도 기준선과 같다.
+
+결과: [`results/after-2-spec-latency.json`](results/after-2-spec-latency.json), [`results/after-2-spec-queries.tsv`](results/after-2-spec-queries.tsv)
+
+| 시나리오 | 기준선 중앙값 | 이번 중앙값 | 요청당 SQL |
+|---|---:|---:|---:|
+| S1_latest | 55.5초 | **1.2초** | 12 |
+| S2_popular | 51.5초 | **1.2초** | 12 |
+| S3_category_status | 31.2초 | **1.6초** | 12 |
+| S4_region_position | 2.1초 | **1.8초** | 12 |
+| S5_keyword_hit | 13.0초 | **3.8초** | 12 |
+| S6_keyword_miss | 2.0초 | **2.0초** | 1 |
+| S7_stack | 6.3초 | **2.6초** | 12 |
+| S8_deep_page | 60.6초 | **7.0초** | 12 |
+
+남은 비용(S1 기준 EXPLAIN ANALYZE): 필터가 없으면 여전히 100만 건 전체를 읽어 식(`COALESCE`)으로 정렬한다(약 1.4~1.6초). 건수 쿼리는 `count(id)`가 되어 0.2초.
+키워드 검색(S5·S6)은 `LIKE '%키워드%'`로 본문을 훑는 비용이 그대로 남아 있다.
+
+```
+-> Limit: 5 row(s)                                        (actual time=1631)
+  -> Sort: coalesce(updated, created) DESC, id DESC        (limit input to 5 rows)
+    -> Table scan on post                                 (rows=1e+6, actual time=1444)
+```
