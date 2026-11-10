@@ -15,8 +15,11 @@ import org.example.project.post.repositoty.PostRepository;
 import org.example.project.security.JwtTokenProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -35,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "KAKAO_CLIENT_ID=test", "AWS_ACCESS_KEY_ID=test", "AWS_SECRET_ACCESS_KEY=test",
         "AWS_REGION=ap-northeast-2", "AWS_S3_BUCKET_NAME=test",
 })
+@ExtendWith(OutputCaptureExtension.class)
 class NotificationStreamTest {
 
     static final Duration WAIT = Duration.ofSeconds(5);
@@ -227,7 +232,7 @@ class NotificationStreamTest {
         assertThat(both.next()).containsEntry("id", String.valueOf(n3));
     }
 
-    // --- 연결 유지 ---
+    // --- 연결 유지·종료 ---
 
     @Test
     void 하트비트는_주석으로_보낸다() throws Exception {
@@ -236,6 +241,34 @@ class NotificationStreamTest {
         registry.heartbeat();
 
         assertThat(stream.next()).containsKey("comment").doesNotContainKey("event");
+    }
+
+    @Test
+    void 로그아웃하면_스트림이_닫힌다(CapturedOutput output) throws Exception {
+        String user = prefix + "a";
+        SseStream stream = connected(user);
+        String token = accessToken(user, "ROLE_USER");
+        redisKeys.add(token);
+
+        assertThat(post("/api/member/logout", token, null)).isEqualTo(200);
+
+        assertThat(stream.next()).isNull();
+        waitUntil(() -> registry.count(user) == 0);
+        // 연결을 닫으면 ASYNC 디스패치가 보안 필터를 다시 지난다. 거기서 막히면 이미 커밋된 응답에 401을 쓰려다 에러가 난다
+        assertThat(output).doesNotContain("response is already committed", "AccessDeniedException");
+    }
+
+    @Test
+    void 관리자가_차단하면_스트림이_닫힌다(CapturedOutput output) throws Exception {
+        Member target = member("a");
+        redisKeys.add("BAN:" + target.getUsername());
+        SseStream stream = connected(target.getUsername());
+
+        assertThat(post("/api/admin/banUser", accessToken(prefix + "admin", "ROLE_ADMIN"),
+                "{\"memberId\":" + target.getId() + "}")).isEqualTo(200);
+
+        assertThat(stream.next()).isNull();
+        assertThat(output).doesNotContain("response is already committed", "AccessDeniedException");
     }
 
     // --- helpers ---
@@ -333,6 +366,14 @@ class NotificationStreamTest {
         application.setStatus("APPLY");
         application.setAppliedAt(LocalDateTime.now());
         return applicationRepository.save(application).getId();
+    }
+
+    private static void waitUntil(BooleanSupplier condition) throws InterruptedException {
+        long deadline = System.nanoTime() + WAIT.toNanos();
+        while (!condition.getAsBoolean()) {
+            assertThat(System.nanoTime()).as("조건을 기다리다 시간 초과").isLessThan(deadline);
+            Thread.sleep(20);
+        }
     }
 
     // 응답 본문을 별도 스레드에서 줄 단위로 읽어 큐에 쌓고, 빈 줄까지를 이벤트 하나로 묶어 꺼낸다

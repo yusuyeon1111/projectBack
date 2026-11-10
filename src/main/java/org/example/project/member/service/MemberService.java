@@ -11,6 +11,7 @@ import org.example.project.member.dto.*;
 import org.example.project.member.entity.Member;
 import org.example.project.member.entity.MemberProfile;
 import org.example.project.member.repository.MemberRepository;
+import org.example.project.notification.service.SseEmitterRegistry;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.security.JwtTokenProvider;
 import org.springframework.data.domain.Page;
@@ -39,6 +40,7 @@ public class MemberService {
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
     private final PostPositionMemberRepository postPositionMemberRepository;
+    private final SseEmitterRegistry sseEmitterRegistry;
     Date date = new Date();
     @Transactional
     public Member signUp(SignUpDto signUpDto) {
@@ -84,6 +86,8 @@ public class MemberService {
 
         Long expiration = jwtTokenProvider.getExpiration(accessToken);
         redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
+        // 열린 알림 구독은 토큰과 상관없이 유지되므로 직접 닫는다
+        sseEmitterRegistry.closeAll(authentication.getName());
 
         return "Logout successful";
     }
@@ -208,6 +212,7 @@ public class MemberService {
         // 이미 발급된 access token은 서명만으로 통과하므로, 남은 최대 수명 동안 필터에서 막는다
         redisTemplate.opsForValue().set("BAN:" + member.getUsername(), "ban", JwtTokenProvider.ACCESS_TIME, TimeUnit.MILLISECONDS);
         redisTemplate.delete("RT:" + member.getUsername());
+        sseEmitterRegistry.closeAll(member.getUsername());
         return "계정이 비활성화 되었습니다.";
     }
 
