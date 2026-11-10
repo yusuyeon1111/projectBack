@@ -50,8 +50,8 @@ class PostSearchTest {
         // B: 생성은 중간이지만 1시간 전에 수정 → 최신순 맨 앞
         b = save("B", "project", "END", "부산광역시", 1, new Date(now - 48 * hour), new Date(now - hour), "",
                 List.of("frontend"), List.of("Java"));
-        // C: 스터디, 본문에만 별도 표식
-        c = save("C", "study", "ING", "nothing", 9, new Date(now - 24 * hour), null, contentMarker,
+        // C: 스터디, 본문에만 별도 표식. 지역도 고유 값이라 한 글자 키워드 테스트에서 이 글만 걸러 볼 수 있다
+        c = save("C", "study", "ING", marker, 9, new Date(now - 24 * hour), null, contentMarker,
                 List.of("totalCount"), List.of());
     }
 
@@ -101,6 +101,16 @@ class PostSearchTest {
     void 키워드의_퍼센트는_와일드카드가_아니라_글자로_찾는다() {
         PostRequestDto dto = baseRequest();
         dto.setKeyword(marker + "%");
+        assertThat(postService.getPostList(dto).getTotalElements()).isZero();
+    }
+
+    @Test
+    void 한_글자_키워드도_검색한다() {
+        PostRequestDto dto = baseRequest();
+        dto.setRegion(marker);
+        dto.setKeyword("C");
+        assertThat(ids(postService.getPostList(dto))).containsExactly(c.getId());
+        dto.setKeyword("X");
         assertThat(postService.getPostList(dto).getTotalElements()).isZero();
     }
 
