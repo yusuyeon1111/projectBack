@@ -3,6 +3,9 @@ package org.example.project;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
 import org.example.project.post.entity.Post;
+import org.example.project.post.entity.PostPosition;
+import org.example.project.post.entity.PostPositionMember;
+import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.post.repositoty.PostRepository;
 import org.example.project.security.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
@@ -18,6 +21,9 @@ import java.util.Date;
 import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // DB/Redis가 필요하다 (CLAUDE.md의 실행 환경변수 참고). JWT·외부 연동 값은 여기서 더미로 채운다.
@@ -34,6 +40,7 @@ class SecurityAccessTest {
     @Autowired JwtTokenProvider jwt;
     @Autowired PostRepository postRepository;
     @Autowired MemberRepository memberRepository;
+    @Autowired PostPositionMemberRepository applicationRepository;
 
     private String bearer(String username, String role) {
         var auth = new UsernamePasswordAuthenticationToken(username, null, List.of(new SimpleGrantedAuthority(role)));
@@ -112,6 +119,37 @@ class SecurityAccessTest {
             mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isOk());
         } finally {
             memberRepository.delete(member);
+        }
+    }
+
+    @Test
+    void 비로그인_상세_응답에_신청자_정보가_없다() throws Exception {
+        Member applicant = memberRepository.save(Member.builder()
+                .username("leak-applicant").email("leak@test.com").delYn("N").build());
+        Post post = Post.builder()
+                .title("신청자 노출 테스트").author("owner").category("project")
+                .created(new Date()).delYn("N").likeCount(0).viewCount(0)
+                .positions(new java.util.ArrayList<>()).techStacks(new java.util.ArrayList<>()).likes(new java.util.ArrayList<>())
+                .build();
+        PostPosition position = new PostPosition();
+        position.setPost(post);
+        position.setRole("backend");
+        position.setCount(1);
+        post.getPositions().add(position);
+        post = postRepository.save(post);
+        PostPositionMember application = new PostPositionMember();
+        application.setPostPosition(post.getPositions().get(0));
+        application.setMember(applicant);
+        application.setStatus("APPLY");
+        applicationRepository.save(application);
+        try {
+            mvc.perform(get("/api/post/view/" + post.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(not(containsString("leak-applicant"))))
+                    .andExpect(content().string(not(containsString("positionMemberList"))));
+        } finally {
+            postRepository.findById(post.getId()).ifPresent(postRepository::delete);
+            memberRepository.delete(applicant);
         }
     }
 }

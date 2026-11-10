@@ -65,16 +65,6 @@ public class PostResponseDto {
             dto.setRole(position.getRole());
             dto.setCount(position.getCount());
             dto.setStatus(position.getStatus());
-            dto.setPositionMemberList(
-                    position.getPositionMemberList().stream().map(pm -> {
-                        PostPositionDto.PostPositionMemberDto memberDto = new PostPositionDto.PostPositionMemberDto();
-                        memberDto.setId(pm.getId());
-                        memberDto.setMemberId(pm.getMember().getId());
-                        memberDto.setMemberName(pm.getMember().getUsername()); // 또는 .getNickname() 등
-                        memberDto.setStatus(pm.getStatus());
-                        return memberDto;
-                    }).toList()
-            );
 
             return dto;
         }).toList();
@@ -108,16 +98,6 @@ public class PostResponseDto {
             dto.setRole(position.getRole());
             dto.setCount(position.getCount());
             dto.setStatus(position.getStatus());
-            dto.setPositionMemberList(
-                    position.getPositionMemberList().stream().map(pm -> {
-                        PostPositionDto.PostPositionMemberDto memberDto = new PostPositionDto.PostPositionMemberDto();
-                        memberDto.setId(pm.getId());
-                        memberDto.setMemberId(pm.getMember().getId());
-                        memberDto.setMemberName(pm.getMember().getUsername()); // 또는 .getNickname() 등
-                        memberDto.setStatus(pm.getStatus());
-                        return memberDto;
-                    }).toList()
-            );
 
             return dto;
         }).toList();
@@ -130,15 +110,7 @@ public class PostResponseDto {
         private String role;
         private int count;
         private String status;
-        private List<PostPositionMemberDto> positionMemberList;
-
-        @Getter
-        @Setter
-        public static class PostPositionMemberDto {
-            private Long id;
-            private Long memberId;
-            private String memberName; // Member 엔티티에서 가져올 수 있음
-            private String status;
-        }
+        // 신청자 목록은 넣지 않는다. 이 DTO는 로그인 없이 부르는 목록·상세 응답에 쓰이고,
+        // 신청자는 작성자 본인만 applyList·postMember API로 조회한다.
     }
 }
