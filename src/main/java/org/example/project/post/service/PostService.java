@@ -155,7 +155,8 @@ public class PostService {
         postRepository.delete(findOwnedPost(postId, username));
     }
 
-    // 게시글 전체 리스트 조회
+    // 게시글 전체 리스트 조회. DTO 변환 중 지연 로딩이 일어나므로 OSIV에 기대지 않고 트랜잭션 안에서 끝낸다.
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(PostRequestDto dto) {
         Sort sort;
         if ("popular".equalsIgnoreCase(dto.getSortType())) {
