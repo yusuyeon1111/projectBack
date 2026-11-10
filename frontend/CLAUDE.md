@@ -20,7 +20,7 @@ npm test -- -t "renders learn react"   # 단일 테스트 이름
 npx tsc --noEmit                       # 타입 체크만 (빌드보다 빠름)
 ```
 
-`src/App.test.tsx`는 CRA 기본 템플릿 그대로라 현재 `App.tsx`와 맞지 않아 실패함. 실제 테스트 코드는 없음.
+`src/App.test.tsx`는 CRA 기본 템플릿 그대로라 현재 `App.tsx`와 맞지 않아 실패함. 알림 기능 테스트는 `src/types.test.ts`, `src/components/NotificationBell.test.tsx`에 있다(axios와 `EventSource`를 가짜로 바꿔 끼운다). react-router-dom 7을 jest 27이 못 읽어서 `package.json`의 `jest.moduleNameMapper`로 CJS 파일을 직접 가리킨다.
 
 ## 환경 변수
 
