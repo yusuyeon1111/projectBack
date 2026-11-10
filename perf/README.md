@@ -159,3 +159,40 @@ S1 목록 쿼리 EXPLAIN ANALYZE (요약)
   -> Sort: coalesce(updated, created) DESC, id DESC        (limit input to 5 rows)
     -> Table scan on post                                 (rows=1e+6, actual time=1444)
 ```
+
+## 3. 정렬 기준을 인덱스로 (`last_modified` 생성 컬럼)
+
+원인 2를 고쳤다. 최신순 기준인 `COALESCE(updated, created)`를 DB가 계산하는 생성 컬럼(`last_modified`, virtual)으로 만들고
+`(last_modified, id)` 인덱스를, 인기순에는 `(like_count, id)` 인덱스를 걸었다. 정렬 인덱스를 거꾸로 읽다가 5건이 차면 멈춘다.
+
+- 앱이 값을 채우는 일반 컬럼 대신 생성 컬럼을 쓴 이유: 기존 글 100만 건을 따로 채울(backfill) 필요가 없고, 수정 API를 새로 만들어도 값이 어긋날 수 없다.
+- MySQL 함수 인덱스(`INDEX ((COALESCE(...)))`) 대신 생성 컬럼을 쓴 이유: 이 프로젝트는 마이그레이션 도구 없이 `ddl-auto`로 스키마를 만들어서, 엔티티의 `@Index`로 선언할 수 있어야 운영 DB에도 그대로 반영된다.
+
+결과: [`results/after-3-sort-index-latency.json`](results/after-3-sort-index-latency.json), [`results/after-3-sort-index-queries.tsv`](results/after-3-sort-index-queries.tsv)
+
+| 시나리오 | 기준선 | 2단계 | 이번 |
+|---|---:|---:|---:|
+| S1_latest | 55.5초 | 1.2초 | **90ms** |
+| S2_popular | 51.5초 | 1.2초 | **95ms** |
+| S3_category_status | 31.2초 | 1.6초 | **631ms** |
+| S4_region_position | 2.1초 | 1.8초 | **870ms** |
+| S5_keyword_hit | 13.0초 | 3.8초 | **1.9초** |
+| S6_keyword_miss | 2.0초 | 2.0초 | **3.9초** |
+| S7_stack | 6.3초 | 2.6초 | **2.9초** |
+| S8_deep_page | 60.6초 | 7.0초 | **148ms** |
+
+필터 없는 목록 쿼리는 1.6초 → 4ms, 50,001번째 행부터 읽는 깊은 페이지도 0.9초 → 0.1초가 됐다.
+
+```
+-> Limit: 5 row(s)                                            (actual time=4.5)
+  -> Index scan on post using idx_post_last_modified (reverse) (rows=5)
+```
+
+**나빠진 것: 결과가 없는 키워드 검색(S6) 2.0초 → 3.9초.**
+옵티마이저가 "정렬 인덱스를 거꾸로 읽다 보면 금방 5건을 찾는다"고 보고 이 인덱스를 고른다.
+그런데 키워드가 아무 글에도 없으면 100만 건을 인덱스 순서대로 하나씩 본문을 찾아가며 끝까지 읽는다(4.3초).
+같은 쿼리에서 인덱스를 막으면 테이블을 순서대로 다 읽고 정렬해 2.2초다. 결과가 많은 키워드(S5)는 앞쪽에서 5건이 금방 차서 빨라졌다.
+키워드 조건이 자기 인덱스를 타지 못하는 것이 근본 원인이라 다음 단계(원인 5)에서 함께 다룬다.
+
+남은 비용: 필터가 있을 때의 **건수 쿼리**. 목록은 앞쪽 몇 건만 읽고 끝나지만,
+`count`는 조건에 맞는 글을 전부 세야 해서 테이블을 다 읽는다(S3 프로젝트+모집중 0.75초, S4 지역+포지션 1.6초).
