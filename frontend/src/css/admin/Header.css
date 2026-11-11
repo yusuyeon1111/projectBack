@@ -1,0 +1,113 @@
+.adminHeader-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 32px;
+  position: sticky; /* 스크롤 시 고정 */
+  top: 0;
+  background-color: #121212; /* 다크 배경 */
+  z-index: 1000;
+  height: 45px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.6); /* 어두운 그림자 */
+}
+
+/* 로고 */
+.adminlogo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#adminlogo {
+  font-size: clamp(1rem, 2vw + 1rem, 2rem);
+  font-family: 'TheJamsil5Bold', sans-serif;
+  color: #4dabf7; /* 밝은 블루 */
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+#adminlogo:hover {
+  color: #82caff; /* hover 시 더 밝은 블루 */
+}
+
+#adminbookmark {
+  color: #4dabf7;
+  font-size: 28px;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+#adminbookmark:hover {
+  transform: scale(1.1);
+  color: #82caff;
+}
+
+/* 멤버 아이콘 영역 */
+.adminmember-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.adminmemberIcon,
+#adminuserIcon {
+  font-size: clamp(1.5rem, 1.5vw + 0.5rem, 1.8rem);
+  padding: 6px;
+  color: #4dabf7;
+  border-radius: 50%;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.adminmemberIcon:hover,
+#adminuserIcon:hover {
+  background-color: rgba(77, 171, 247, 0.12); /* 블루빛 hover */
+  color: #82caff;
+}
+
+#adminline {
+  color: #666; /* 다크모드에서 연한 회색 */
+  font-size: 18px;
+}
+
+/* 드롭다운 메뉴 */
+.adminmenu-container {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  background-color: #1e1e1e; /* 다크 배경 */
+  border: 1px solid #333;
+  padding: 8px 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  z-index: 999;
+  min-width: 160px;
+  text-align: center;
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+.adminmenu-container p {
+  margin: 0;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #e0e0e0; /* 밝은 텍스트 */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.adminmenu-container p:hover {
+  background-color: rgba(77, 171, 247, 0.12);
+  color: #82caff;
+  font-weight: 600;
+}
+
+/* 간단한 Fade-in 효과 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

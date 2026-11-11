@@ -1,0 +1,308 @@
+/* ==========================
+   공통 스타일
+========================== */
+.auth-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  padding-bottom: 40px;
+}
+
+.sign-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+.auth-container h2 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 8px;
+}
+
+.auth-container p.subtitle {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 32px;
+}
+
+/* ==========================
+   폼 공통
+========================== */
+.auth-form {
+  width: 100%;
+  max-width: 420px;
+  background-color: #fff;
+  padding: 32px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-form label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.auth-form input {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.auth-form select {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.auth-form select > {
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.auth-form input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* 에러 메시지 */
+.auth-form .error {
+  font-size: 12px;
+  color: #e74c3c;
+  margin-top: -10px;
+  margin-bottom: 4px;
+}
+
+/* 버튼 */
+.auth-form button {
+  margin-top: 14px;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.auth-form button:hover {
+  background-color: #0056b3;
+}
+
+/* ==========================
+   링크 / 기타
+========================== */
+.auth-links {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.auth-links a {
+  font-size: 14px;
+  color: #555;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s;
+}
+
+.auth-links a:hover {
+  border-bottom-color: #007bff;
+  color: #007bff;
+}
+
+/* ==========================
+   소셜 로그인 버튼
+========================== */
+.oauth-buttons {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+}
+
+.kakao-login {
+  width: 220px;
+}
+
+.naver-login {
+  width: 210px;
+}
+
+.input-button-group {
+  display: flex;
+  gap: 8px; /* input과 버튼 사이 간격 */
+  align-items: center; /* 수직 중앙 정렬 */
+}
+
+.input-button-group input {
+  flex: 1; /* 가능한 가로 공간 모두 차지 */
+  padding: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.input-button-group input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.input-button-group button {
+  width: 110px; /* 필요에 따라 조절 */
+  padding: 12px;
+  font-size: 14px;
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: -0.1px;
+}
+
+.input-button-group button:hover {
+  background-color: #0056b3;
+}
+
+.signStack-container .input-button-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.signStack-container{
+  display: block;
+}
+
+.signStack-container .input-button-group button {
+  width: 40px;          /* + 버튼을 정사각형으로 작게 */
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  font-size: 24px;      /* + 모양이 잘 보이도록 */
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.signStack-container .input-button-group button:hover {
+  background-color: #0056b3;
+}
+
+.oauth-container {
+ width: 100%;
+  max-width: 420px;
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 10px;
+  gap: 10px;
+  display: flex;
+}
+
+.oauth-container span{
+  font-size: 1.3rem;
+  margin-right: 17%;
+  font-weight: bold;
+}
+
+#naverImg {
+  width: 34px;
+}
+
+/* 태블릿 이하 */
+@media (max-width: 768px) {
+  .auth-form,
+  .oauth-container {
+    max-width: 90%;
+    padding: 24px 20px;
+  }
+
+  .auth-container h2 {
+    font-size: 24px;
+  }
+
+  .auth-links {
+    gap: 10px;
+  }
+
+  .oauth-buttons {
+    width: 60%;
+  }
+
+  .kakao-login,
+  .naver-login {
+    width: 100%;
+  }
+}
+
+/* 모바일 이하 */
+@media (max-width: 480px) {
+  .auth-container h2 {
+    font-size: 20px;
+  }
+
+  .auth-form {
+    padding: 20px 16px;
+    gap: 10px;
+  }
+
+  .auth-form button {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .input-button-group button {
+    width: 100%;
+    height: auto;
+    font-size: 14px;
+  }
+
+  .oauth-buttons {
+    gap: 8px;
+  }
+
+  #idChkBtn {
+    width: 30%;
+  }
+
+  #kakaoImg, #naverImg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .oauth-container span {
+    font-size: 1rem;
+    margin-right: 10%;
+  }
+}
