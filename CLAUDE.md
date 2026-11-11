@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
 - JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
 - OSIV(`spring.jpa.open-in-view`)는 꺼져 있고, `WebMvcConfig`가 같은 인터셉터를 알림 구독(`/api/notifications/subscribe`)만 빼고 직접 건다. SSE 요청이 열려 있는 동안 DB 커넥션을 쥐지 않게 하려는 것이다. 다른 API는 여전히 OSIV에 기대어 지연 로딩할 수 있다.
-- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
+- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`, `ApplyFormTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
 ## 아키텍처
 
@@ -59,13 +59,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 구독 인증: `EventSource`는 헤더를 못 붙이므로 `POST /api/notifications/ticket`(Bearer)으로 1회용 티켓을 받고 `GET /api/notifications/subscribe?ticket=`로 연다. 구독 경로는 `permitAll`이고 컨트롤러가 티켓·`BAN:` 키를 확인한다.
 - 재연결: 티켓이 1회용이라 브라우저 자동 재연결은 실패한다. 프론트(`useNotifications`)가 에러 시 직접 닫고 새 티켓 + `lastEventId` 쿼리로 다시 붙으면 서버가 그 이후 알림을 다시 보낸다. 로그아웃·차단 시 서버가 그 회원의 연결을 닫는다.
 
+### 신청서 (서식)
+
+- 글 작성자가 신청 때 받을 질문을 만든다. 질문은 `apply_form` 테이블(글당 1행, `questions` JSON)에 둔다. `Post` 컬럼이나 `Post` 쪽 연관으로 두지 않는다. 목록 API가 `Post`를 통째로 읽고, 주인이 아닌 쪽 1:1은 지연 로딩이 안 돼 목록 성능이 나빠진다. 글 삭제 시 DB의 ON DELETE CASCADE로 지워진다.
+- 글 등록·수정 요청의 `applyQuestions`로 통째로 바꾼다(null이면 유지, 빈 목록이면 삭제 → 바로 신청되는 글). 질문마다 바뀌지 않는 `key`가 있다.
+- 답변은 `post_position_member.answers`(JSON)에 질문의 라벨·타입·선택지를 복사해 저장한다. 그래서 질문을 고쳐도 이미 낸 신청서는 제출 당시 모습이고, 질문 버전 이력은 따로 없다.
+- 답변은 `ApplyFormService.buildAnswers`가 서버에서 다시 검사한다(필수, 선택지, 길이, http(s) 주소, 모르는 키). 실패는 `IllegalArgumentException` → 400.
+- 첨부: 키는 서버가 `apply/{memberId}/{uuid}`로 만들고, 제출 시 본인 경로·업로드 여부·10MB·3개·pdf/jpg/png/zip을 S3 메타데이터로 확인한다. 받을 때는 5분짜리 presigned GET. 제한값은 프론트 `APPLY_FILE_LIMIT`와 맞춰야 한다.
+- 답변·첨부는 글 작성자와 신청자 본인만 본다(`PositionService.findReadableApplication`). 관리자도 못 본다. `ApplyFormTest`가 검증한다(S3만 가짜).
+- 프론트: 편집기 `ApplyFormBuilder`, 입력 폼 `ApplyFormRenderer`, 신청 창 `ApplyModal`, 읽기 `ApplicationAnswersDialog`. S3 PUT은 axios 인터셉터의 Authorization 헤더를 피하려고 `fetch`로 한다.
+
 ### 예외 처리
 
-`GlobalExceptionHandler`가 `RuntimeException` → 403, `IllegalStateException` → 409, `BadCredentialsException` → 401로 변환한다(본문은 `{error: 메시지}`, 프론트는 `auth.ts`의 `errorMessage`로 꺼낸다). 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
+`GlobalExceptionHandler`가 `RuntimeException` → 403, `IllegalStateException` → 409, `IllegalArgumentException` → 400, `BadCredentialsException` → 401로 변환한다(본문은 `{error: 메시지}`, 프론트는 `auth.ts`의 `errorMessage`로 꺼낸다). 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
 
 ### S3 업로드
 
-서버가 파일을 받지 않는다. `GET /api/member/presigned-url`이 PUT용 presigned URL을 발급하고 프론트가 직접 S3에 올린다. 버킷명이 컨트롤러에 하드코딩되어 있다(`AWS_S3_BUCKET_NAME` 환경변수는 선언만 되어 있고 미사용).
+서버가 파일을 받지 않는다. 프로필 이미지는 `GET /api/member/presigned-url`이 PUT용 presigned URL과 공개 URL을 주고, 버킷명이 컨트롤러에 하드코딩되어 있다. 신청서 첨부 파일은 `ApplyFileStorage`가 `AWS_S3_BUCKET_NAME` 버킷을 쓰고 공개 URL을 주지 않는다(위 신청서 참고).
 
 ## 커밋 메시지 규칙
 
