@@ -84,6 +84,35 @@
   outline: none;
 }
 
+/* 비밀번호 보기 토글(눈 아이콘) */
+.auth-form .pw-field {
+  position: relative;
+}
+
+.auth-form .pw-field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 44px;
+}
+
+/* .auth-form button의 파란 배경·여백을 되돌린다 */
+.auth-form .pw-field .pw-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 6px;
+  display: flex;
+  background: none;
+  color: #888;
+}
+
+.auth-form .pw-field .pw-toggle:hover {
+  background: none;
+  color: #007bff;
+}
+
 /* 에러 메시지 */
 .auth-form .error {
   font-size: 12px;

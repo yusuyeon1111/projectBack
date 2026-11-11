@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Chip, TextField, Stack } from "@mui/material";
 import naver from '../assets/naver.png';
 import kakao from "../assets/kakao.png";
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 interface SignUpForm {
   name: string;
@@ -25,6 +26,10 @@ function MemberSignUp() {
   // 중복 체크 상태
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [isEmailChecked, setIsEmailChecked] = useState(false);
+
+  // 비밀번호 표시 여부
+  const [showPw, setShowPw] = useState(false);
+  const [showPwConfirm, setShowPwConfirm] = useState(false);
 
   const {
     register,
@@ -166,23 +171,43 @@ function MemberSignUp() {
         {errors.email && <p className='error'>{errors.email.message}</p>}
 
         <label htmlFor='password'>비밀번호</label>
-        <input
-          type="password"
-          {...register("password", {
-            required: "비밀번호를 입력해주세요",
-            minLength: { value: 6, message: "6자 이상 입력해주세요!" },
-          })}
-        />
+        <div className="pw-field">
+          <input
+            type={showPw ? "text" : "password"}
+            {...register("password", {
+              required: "비밀번호를 입력해주세요",
+              minLength: { value: 6, message: "6자 이상 입력해주세요!" },
+            })}
+          />
+          <button
+            type="button"
+            className="pw-toggle"
+            onClick={() => setShowPw(v => !v)}
+            aria-label={showPw ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPw ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+          </button>
+        </div>
         {errors.password && <p className='error'>{errors.password.message}</p>}
 
         <label htmlFor='pwConfirm'>비밀번호 확인</label>
-        <input
-          type="password"
-          {...register("pwConfirm", {
-            required: "비밀번호 확인은 필수입니다",
-            validate: (value) => value === password || "비밀번호가 일치하지 않습니다!",
-          })}
-        />
+        <div className="pw-field">
+          <input
+            type={showPwConfirm ? "text" : "password"}
+            {...register("pwConfirm", {
+              required: "비밀번호 확인은 필수입니다",
+              validate: (value) => value === password || "비밀번호가 일치하지 않습니다!",
+            })}
+          />
+          <button
+            type="button"
+            className="pw-toggle"
+            onClick={() => setShowPwConfirm(v => !v)}
+            aria-label={showPwConfirm ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPwConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+          </button>
+        </div>
         {errors.pwConfirm && <p className='error'>{errors.pwConfirm.message}</p>}
 
         <label htmlFor='preferredPosition'>희망 포지션</label>
