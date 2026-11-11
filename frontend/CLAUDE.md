@@ -15,12 +15,12 @@ npm start                              # 개발 서버 (localhost:3000, /api →
 npm run build                          # 프로덕션 빌드 → build/
 npm test                               # Jest watch 모드
 CI=true npm test                       # 단발 실행
-npm test -- src/App.test.tsx           # 단일 파일
-npm test -- -t "renders learn react"   # 단일 테스트 이름
+npm test -- src/types.test.ts          # 단일 파일
+npm test -- -t "모두 읽음"              # 단일 테스트 이름
 npx tsc --noEmit                       # 타입 체크만 (빌드보다 빠름)
 ```
 
-`src/App.test.tsx`는 CRA 기본 템플릿 그대로라 현재 `App.tsx`와 맞지 않아 실패함. 알림 기능 테스트는 `src/types.test.ts`, `src/components/NotificationBell.test.tsx`에 있다(axios와 `EventSource`를 가짜로 바꿔 끼운다). react-router-dom 7을 jest 27이 못 읽어서 `package.json`의 `jest.moduleNameMapper`로 CJS 파일을 직접 가리킨다.
+CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경고를 오류로 처리하는데, 기존 코드에 경고(안 쓰는 import 등)가 남아 있기 때문이다. 경고를 정리하면 CI에서 `CI=false`를 지운다. 알림 기능 테스트는 `src/types.test.ts`, `src/components/NotificationBell.test.tsx`에 있다(axios와 `EventSource`를 가짜로 바꿔 끼운다). react-router-dom 7을 jest 27이 못 읽어서 `package.json`의 `jest.moduleNameMapper`로 CJS 파일을 직접 가리킨다.
 
 ## 환경 변수
 

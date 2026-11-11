@@ -71,12 +71,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 포트폴리오 저장소라서 면접관이 커밋 로그를 읽는다는 전제로 쓴다. diff에 이미 "무엇을"이 있으니 메시지에는 "왜"를 적는다.
 
-- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style` 중 하나다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
+- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `ci`, `chore`, `style` 중 하나다. 측정해서 빨라진 변경은 `refactor`가 아니라 `perf`로 쓴다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
 - 제목은 50자 안팎으로, 의도가 드러나게 쓴다. `Update SecurityConfig.java`처럼 파일 이름만 적은 제목은 쓰지 않는다.
 - 판단이 들어간 커밋에는 본문이 필수다. 버그 수정, 설계 변경, 의존성이나 설정 변경이 여기에 해당한다. 본문은 문제, 원인, 해결 순서로 쓴다. 단순한 변경이면 본문을 생략해도 된다.
 - 커밋 하나에는 의도를 하나만 담는다. 기능 추가, 버그 수정, 리팩터링이 섞이면 나눠서 커밋한다. 작업 중에 발견한 버그는 별도의 `fix:` 커밋으로 분리해서 로그에 드러나게 한다.
 - README를 고칠 때도 내용을 적는다. 예: `docs: ERD 이미지 교체`
 - 이미 push한 이력은 rebase로 다시 쓰지 않는다.
+
+### 브랜치와 PR
+
+GitHub Flow를 쓴다. `main`은 항상 테스트가 통과하는 상태로 두고 직접 커밋하지 않는다.
+
+- 작업마다 `main`에서 브랜치를 딴다. 이름은 `<type>/<작업>` 형태의 소문자·하이픈이다. 예: `feat/sse-notification`, `fix/osiv-connection-leak`, `perf/post-list-search`
+- PR 제목은 커밋 제목과 같은 형식으로 쓰고, 본문은 `.github/pull_request_template.md`를 따른다. 성능 작업은 전후 측정값을 본문에 남긴다.
+- CI(`.github/workflows/ci.yml`)가 통과해야 병합한다.
+- 병합은 **Merge commit**으로 한다. Squash하면 작업 중 분리해 둔 `fix:` 커밋이 기능 커밋 하나에 묻혀 로그에서 사라진다.
+- 병합한 브랜치는 지운다.
 
 ```
 fix(back): 로그아웃 후에도 access token이 유효하던 문제 수정
