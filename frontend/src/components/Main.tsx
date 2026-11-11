@@ -267,11 +267,6 @@ function Main() {
               </div>
               </div>
             ))}
-          </div>
-          </> :<div className='emptyItem'><p id='emptyMent'>{loadError ? '목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : '데이터 없음.'}</p></div>
-          }
-          </div>
-          {projectList.length > 0 && (
           <div className="pagination">
             <button
               onClick={() => setFilters(prev => ({ ...prev, page: Math.max(prev.page - 1, 0) }))}
@@ -295,7 +290,10 @@ function Main() {
               다음
             </button>
           </div>
-          )}
+          </div>
+          </> :<div className='emptyItem'><p id='emptyMent'>{loadError ? '목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : '데이터 없음.'}</p></div>
+          }
+          </div>
           </div>
         </div>
         </> :
