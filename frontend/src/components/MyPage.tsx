@@ -69,9 +69,7 @@ function MyPage() {
    useEffect(() => {
       const fetchData = async () => {
         try {
-          const response = await axios.get<MyPageResponse>(`${process.env.REACT_APP_API_URL}/api/member/myPage`, {
-            params: { username }
-          });
+          const response = await axios.get<MyPageResponse>(`${process.env.REACT_APP_API_URL}/api/member/myPage`);
           setMemberData(response.data.member);
           setAcceptData(response.data.acceptPosts)
           setApplyData(response.data.applyPosts)
@@ -169,7 +167,6 @@ function MyPage() {
           postId,
           positionId,
           postPositionId,
-          username,
         });
 
         // 서버에서 최신 신청자 목록 받아서 바로 상태 업데이트
@@ -186,7 +183,6 @@ function MyPage() {
           postId,
           positionId,
           postPositionId,
-          username,
         });
 
         setSelectedPost(response.data);

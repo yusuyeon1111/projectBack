@@ -1,5 +1,7 @@
 package org.example.project;
 
+import org.example.project.member.entity.Member;
+import org.example.project.member.repository.MemberRepository;
 import org.example.project.post.entity.Post;
 import org.example.project.post.repositoty.PostRepository;
 import org.example.project.security.JwtTokenProvider;
@@ -31,6 +33,7 @@ class SecurityAccessTest {
     @Autowired MockMvc mvc;
     @Autowired JwtTokenProvider jwt;
     @Autowired PostRepository postRepository;
+    @Autowired MemberRepository memberRepository;
 
     private String bearer(String username, String role) {
         var auth = new UsernamePasswordAuthenticationToken(username, null, List.of(new SimpleGrantedAuthority(role)));
@@ -76,5 +79,39 @@ class SecurityAccessTest {
     void 일반_사용자는_관리자_API에_403() throws Exception {
         mvc.perform(get("/api/admin/memberAll").header("Authorization", bearer("someone", "ROLE_USER")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 회원_정보는_본인만_보고_무관한_회원은_403() throws Exception {
+        Member member = memberRepository.save(Member.builder()
+                .username("info-target").email("target@test.com").delYn("N").build());
+        try {
+            mvc.perform(get("/api/member/getUserInfo/" + member.getId()).header("Authorization", bearer("info-target", "ROLE_USER")))
+                    .andExpect(status().isOk());
+            mvc.perform(get("/api/member/getUserInfo/" + member.getId()).header("Authorization", bearer("stranger", "ROLE_USER")))
+                    .andExpect(status().isForbidden());
+        } finally {
+            memberRepository.delete(member);
+        }
+    }
+
+    @Test
+    void 차단된_회원의_기존_토큰은_401() throws Exception {
+        Member member = memberRepository.save(Member.builder()
+                .username("ban-target").email("ban@test.com").delYn("N").build());
+        String token = bearer("ban-target", "ROLE_USER");
+        try {
+            mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isOk());
+            mvc.perform(post("/api/admin/banUser").header("Authorization", bearer("admin", "ROLE_ADMIN"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"memberId\":" + member.getId() + "}"))
+                    .andExpect(status().isOk());
+            mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isUnauthorized());
+            mvc.perform(post("/api/admin/acceptUser").header("Authorization", bearer("admin", "ROLE_ADMIN"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"memberId\":" + member.getId() + "}"))
+                    .andExpect(status().isOk());
+            mvc.perform(get("/api/member/myPage").header("Authorization", token)).andExpect(status().isOk());
+        } finally {
+            memberRepository.delete(member);
+        }
     }
 }

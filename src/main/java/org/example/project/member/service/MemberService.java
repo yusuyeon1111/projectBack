@@ -11,11 +11,13 @@ import org.example.project.member.dto.*;
 import org.example.project.member.entity.Member;
 import org.example.project.member.entity.MemberProfile;
 import org.example.project.member.repository.MemberRepository;
+import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.security.JwtTokenProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -36,6 +38,7 @@ public class MemberService {
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final RedisTemplate<String, String> redisTemplate;
+    private final PostPositionMemberRepository postPositionMemberRepository;
     Date date = new Date();
     @Transactional
     public Member signUp(SignUpDto signUpDto) {
@@ -191,6 +194,7 @@ public class MemberService {
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
         member.setDelYn("N");
         memberRepository.save(member);
+        redisTemplate.delete("BAN:" + member.getUsername());
 
         return "계정이 활성화 되었습니다.";
     }
@@ -201,12 +205,20 @@ public class MemberService {
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
         member.setDelYn("Y");
         memberRepository.save(member);
+        // 이미 발급된 access token은 서명만으로 통과하므로, 남은 최대 수명 동안 필터에서 막는다
+        redisTemplate.opsForValue().set("BAN:" + member.getUsername(), "ban", JwtTokenProvider.ACCESS_TIME, TimeUnit.MILLISECONDS);
+        redisTemplate.delete("RT:" + member.getUsername());
         return "계정이 비활성화 되었습니다.";
     }
 
-    public MemberResponseDto selectById(Long memberId) {
+    // 이메일이 포함되므로 본인이거나, 내 글에 신청한 회원일 때만 조회할 수 있다
+    public MemberResponseDto selectById(Long memberId, String username) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
+        if (!member.getUsername().equals(username)
+                && !postPositionMemberRepository.existsByMember_IdAndPostPosition_Post_Author(memberId, username)) {
+            throw new AccessDeniedException("내 글에 신청한 회원의 정보만 볼 수 있습니다.");
+        }
         return new MemberResponseDto(member);
     }
 
