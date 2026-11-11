@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
+import org.example.project.notification.service.NotificationService;
 import org.example.project.post.dto.ApplyMemeberDto;
 import org.example.project.post.dto.ApplyPositionRequestDto;
 import org.example.project.post.dto.ApplyResponseDto;
@@ -32,6 +33,7 @@ public class PositionService {
     private final PostRepository postRepository;
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository postPositionMemberRepository;
+    private final NotificationService notificationService;
 
     // 포지션 id, username으로 신청 여부 판단
     public List<Long> getAppliedPositions(Long postId, String username) {
@@ -66,6 +68,7 @@ public class PositionService {
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
         }
+        notificationService.notifyApply(position.getId(), member);
 
         return ResponseEntity.ok("포지션 신청이 완료되었습니다.");
     }
@@ -111,6 +114,7 @@ public class PositionService {
         }
         position.setAcceptedAt(LocalDateTime.now());
         postPositionMemberRepository.save(position);
+        notificationService.notifyResult(position);
 
         List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(post.getId());
         return list;
@@ -124,6 +128,7 @@ public class PositionService {
         position.setStatus("REJECT");
         position.setRejectedAt(LocalDateTime.now());
         postPositionMemberRepository.save(position);
+        notificationService.notifyResult(position);
         List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(position.getPostPosition().getPost().getId());
         return list;
     }

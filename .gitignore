@@ -40,3 +40,6 @@ out/
 # k6 기본 출력(타임스탬프 파일)은 커밋하지 않는다. 기준선 등 기록할 결과는 OUT으로 이름을 정해 남긴다.
 perf/results/latency-*.json
 perf/results/load-*.json
+
+# Claude Code 작업용 worktree
+.claude/worktrees/
