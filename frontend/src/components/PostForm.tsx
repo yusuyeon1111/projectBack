@@ -288,6 +288,7 @@ function PostForm() {
             height="400px"
             initialEditType="wysiwyg"
             previewStyle="vertical"
+            autofocus={false}
              initialValue={initialContents}
           />
           <div className="editor-buttons">
