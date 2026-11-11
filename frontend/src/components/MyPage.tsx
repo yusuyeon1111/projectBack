@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import '../css/Mypage.css';
 import axios from 'axios';
 import { MdEdit } from "react-icons/md";
@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
 import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, postStatusText, roleTextMap } from '../types';
 import { errorMessage } from '../auth';
+import ApplicationAnswersDialog from './ApplicationAnswersDialog';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -54,6 +55,8 @@ function MyPage() {
   // /api/post/postMember 응답: 선택한 글의 신청자 목록
   const [selectedPost, setSelectedPost] = useState<ApplyMember[] | null>(null);
   const [openApplicantModal, setOpenApplicantModal] = useState(false);
+  const [answersOf, setAnswersOf] = useState<{ id: number; title: string } | null>(null); // 열어 본 신청서
+  const closeAnswers = useCallback(() => setAnswersOf(null), []);
   const [selectedApplicant, setSelectedApplicant] = useState<Member | null>(null);
   const modalStyle = {
     position: 'absolute',
@@ -399,6 +402,8 @@ function MyPage() {
                 <div className='dataInner'>
                   <span className='myDate'> 신청일자 : {post.appliedAt}</span>
                   {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName]}</span></>}
+                  <span className='line'>|</span>
+                  <span className='myDate answers-link' onClick={() => setAnswersOf({ id: post.applyId, title: '내 신청서' })}>신청서 보기</span>
                 </div>
               </div>
             ))
@@ -494,6 +499,10 @@ function MyPage() {
                       신청분야: {roleTextMap[post.role]}
                     </Typography>
                   )}
+                  <Button size="small" sx={{ px: 0, minWidth: 0 }}
+                          onClick={() => setAnswersOf({ id: post.postPositionId, title: `${post.nickname}님의 신청서` })}>
+                    신청서 보기
+                  </Button>
                   {post.status === 'APPLY' && (
                     <Box sx={{ mt: 1 }}>
                       <Button size="small" variant="outlined" sx={{ mr: 1 }} onClick={() => handleAccept(post.postId, post.positionId, post.postPositionId)}>승인</Button>
@@ -563,6 +572,7 @@ function MyPage() {
           </Box>
         </Box>
       </Modal>
+      <ApplicationAnswersDialog applicationId={answersOf?.id ?? null} title={answersOf?.title} onClose={closeAnswers} />
 
     </div>
   );
