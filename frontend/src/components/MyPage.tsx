@@ -6,6 +6,7 @@ import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, 
 import { useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
 import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, postStatusText, roleTextMap } from '../types';
+import { errorMessage } from '../auth';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -173,7 +174,7 @@ function MyPage() {
         setSelectedPost(response.data);
         alert("수락되었습니다.");
       } catch (error: any) {
-        alert(error.response?.data || "에러가 발생했습니다.");
+        alert(errorMessage(error, "에러가 발생했습니다."));
       }
     };
 
@@ -188,7 +189,7 @@ function MyPage() {
         setSelectedPost(response.data);
         alert("거절되었습니다.");
       } catch (error: any) {
-        alert(error.response?.data || "에러가 발생했습니다.");
+        alert(errorMessage(error, "에러가 발생했습니다."));
       }
     };
 

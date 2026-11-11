@@ -9,6 +9,7 @@ import '../css/View.css'
 import { IoSettingsSharp } from "react-icons/io5";
 import LoginRequiredModal from './LoginRequiredModal';
 import { Post, regions } from '../types';
+import { errorMessage } from '../auth';
 
 function StudyView() {
   const { postId } = useParams(); // URL에서 postId 받아오기
@@ -125,7 +126,7 @@ function StudyView() {
       alert("스터디 신청 되었습니다.");
       setAppliedPositions([...appliedPositions, positionId]); // 성공하면 상태에 추가
     } catch (error: any) {
-      alert(error.response?.data || "신청 실패");
+      alert(errorMessage(error, "신청 실패"));
     }
   }
 

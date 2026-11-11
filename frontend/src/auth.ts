@@ -20,3 +20,9 @@ axios.interceptors.response.use(undefined, error => {
   }
   return Promise.reject(error);
 });
+
+// 서버 에러 본문은 문자열(MemberController, 신청 API)이거나 {error: 메시지}(GlobalExceptionHandler)다
+export const errorMessage = (error: any, fallback: string): string => {
+  const data = error?.response?.data;
+  return data?.error ?? (typeof data === 'string' && data ? data : fallback);
+};

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { AdminMember, PageResponse } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
+import { errorMessage } from '../../auth';
 function User() {
 const [members, setMembers] = useState<AdminMember[]>([]);
   const [filters, setFilters] = useState({ page: 0, size: 10 }); // 현재 페이지와 페이지 크기
@@ -36,7 +37,7 @@ const acceptUser = async (memberId: number) => {
     alert(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(error.response?.data ?? "요청에 실패했습니다.");
+    alert(errorMessage(error, "요청에 실패했습니다."));
   }
 }
 
@@ -50,7 +51,7 @@ const banUser = async (memberId: number) => {
     alert(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(error.response?.data ?? "요청에 실패했습니다.");
+    alert(errorMessage(error, "요청에 실패했습니다."));
   }
 }
 

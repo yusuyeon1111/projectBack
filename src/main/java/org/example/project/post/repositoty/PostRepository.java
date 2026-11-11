@@ -4,16 +4,24 @@ import io.lettuce.core.dynamic.annotation.Param;
 import org.example.project.post.entity.Post;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByAuthor(String username);
+
+    // 신청 처리(승인/거절)를 글 단위로 한 줄로 세우기 위해 신청이 달린 글 행을 잠근다
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT pp.post FROM PostPositionMember ppm JOIN ppm.postPosition pp WHERE ppm.id = :applicationId")
+    Optional<Post> findByApplicationIdForUpdate(@Param("applicationId") Long applicationId);
 
     // 조회수 증가
     @Modifying
