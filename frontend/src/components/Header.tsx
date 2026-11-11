@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { clearAuth } from "../auth";
 import axios from 'axios';
 import { IoBookmark } from "react-icons/io5";
 import { FaUserCircle } from "react-icons/fa";
@@ -55,13 +56,10 @@ function Header() {
 
   const goToLogout = async () => {
     try {
-      console.log(accessToken)
       await axios.post(`${process.env.REACT_APP_API_URL}/api/member/logout`, null, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      localStorage.removeItem("username");
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      clearAuth();
       alert("로그아웃 되었습니다.");
       navigate("/");
       window.location.reload();

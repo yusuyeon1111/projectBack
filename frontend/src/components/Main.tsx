@@ -8,7 +8,7 @@ import PostList from './PostList'
 import axios from 'axios';
 import { IoLocationSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
-import { Post, PageResponse, regions, roleTextMap } from "../types";
+import { Post, PageResponse, postStatusText, regions, roleTextMap } from "../types";
 
 interface Filters {
   category: string | null;
@@ -26,6 +26,7 @@ interface Filters {
 function Main() {
   const navigate = useNavigate();
   const [projectList, setProjectList] = useState<Post[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [type, setType] = useState('');
@@ -49,8 +50,10 @@ function Main() {
       const res = await axios.post<PageResponse<Post>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
       setProjectList(res.data.content);
       setTotalPages(res.data.totalPages);
+      setLoadError(false);
     } catch (error) {
       console.error(error);
+      setLoadError(true);
     }
   };
 
@@ -226,7 +229,7 @@ function Main() {
                   className='status'
                   data-type={
                     post.postStatus === 'END' ? 'end' : post.postStatus === 'IN_PROGRESS' ? 'active' : 'scheduled'}>
-                  {post.postStatus === 'END' ? '진행완료' : post.postStatus === 'IN_PROGRESS' ? '진행중' : '예정'}
+                  {postStatusText(post.postStatus)}
                 </span>
                 </div>
                 {post.category === 'project' && (
@@ -257,13 +260,15 @@ function Main() {
                   <span data-type="active" className='myDate'><strong>(모집중)</strong></span>
                 )}
                 <span className='myDate' style={{marginLeft:'8px'}}>
-                포지션: {[...new Set(post.positions.map(pos => roleTextMap[pos.role]))].join(", ")}
+                {post.category === 'study'
+                  ? `모집 인원: ${post.positions[0]?.count ?? 0}명`
+                  : `포지션: ${[...new Set(post.positions.map(pos => roleTextMap[pos.role]))].join(", ")}`}
               </span>
               </div>
               </div>
             ))}
           </div>
-          </> :<div className='emptyItem'><p id='emptyMent'>데이터 없음.</p></div>
+          </> :<div className='emptyItem'><p id='emptyMent'>{loadError ? '목록을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.' : '데이터 없음.'}</p></div>
           }
           </div>
           {projectList.length > 0 && (

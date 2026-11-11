@@ -8,6 +8,10 @@ export const roleTextMap: Record<string, string> = {
   etc: "기타",
 };
 
+// 스케줄러가 아직 안 돈 새 글은 postStatus가 비어 있어 예정으로 본다
+export const postStatusText = (status?: string | null) =>
+  status === 'END' ? '진행완료' : status === 'IN_PROGRESS' ? '진행중' : '예정';
+
 export const regions = [
   '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
   '강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도',
@@ -91,16 +95,14 @@ export interface ApplyPost {
   appliedAt: string;
   acceptedAt: string | null;
   rejectedAt: string | null;
-  // 프론트(참여중 탭)에서 참조하지만 ApplyResponseDto에는 없는 필드. 실제로는 AcceptPost에 있음
-  postStatus?: string;
-  startDate?: string;
-  endDate?: string;
 }
 
 // PostAcceptDto
 export interface AcceptPost {
   postId: number;
   postTitle: string;
+  category: string;
+  positionName: string;
   acceptedAt: string;
   endDate: string;
   startDate: string;

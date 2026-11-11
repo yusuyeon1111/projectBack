@@ -5,7 +5,7 @@ import { MdEdit } from "react-icons/md";
 import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
-import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, roleTextMap } from '../types';
+import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, postStatusText, roleTextMap } from '../types';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -360,7 +360,7 @@ function MyPage() {
                 )}
                 <div className='dataInner'>
                   <span className='myDate'> 작성일자 : {!post.updated ? post.created : post.updated}</span><span className='line'>|</span>
-                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}  {post.postStatus === 'END' ? '종료' : '진행중'}</span><span className='line'>|</span>
+                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}  {postStatusText(post.postStatus)}</span><span className='line'>|</span>
                   <span className='myDate'> 조회수 {post.viewCount}</span><span className='line'>|</span>
                   <span className='myDate'> ❤️ {post.likeCount}</span>
                 </div>
@@ -401,7 +401,7 @@ function MyPage() {
 
                 <div className='dataInner'>
                   <span className='myDate'> 신청일자 : {post.appliedAt}</span>
-                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName ?? ""]}</span></>}
+                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName]}</span></>}
                 </div>
               </div>
             ))
@@ -409,22 +409,18 @@ function MyPage() {
           }
           </CustomTabPanel>
           <CustomTabPanel value={value} index={2}>
-            {applyData.length > 0 ? applyData.map((post)=>(
+            {acceptData.length > 0 ? acceptData.map((post)=>(
               <div key={post.postId} className='postItem'>
                 {post.category === 'study' ?
                 <span id='studylabel'>스터디</span>
                 :<span id='projectlabel'>프로젝트</span>}
                 <span className='myTitle' onClick={() => navigate(post.category === 'study'? `/study/${post.postId}`: `/post/${post.postId}`)}>
                   {post.postTitle}</span>
-                {post.postStatus === 'END' ? (
-                  <span className='status' data-type="end">진행완료</span>
-                ) : (
-                  <span className='status' data-type="active">진행중</span>
-                )}
+                <span className='status' data-type={post.postStatus === 'END' ? 'end' : 'active'}>{postStatusText(post.postStatus)}</span>
                 <div className='dataInner'>
-                  <span className='myDate'>참여일자 : {post.acceptedAt}</span>
-                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}</span><span className='line'>|</span>
-                  <span className='myDate'> 참여분야 : {roleTextMap[post.positionName ?? ""]}</span>
+                  <span className='myDate'>참여일자 : {post.acceptedAt}</span><span className='line'>|</span>
+                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}</span>
+                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 참여분야 : {roleTextMap[post.positionName]}</span></>}
               </div>
               </div>
             )): <div><p>데이터 없음.</p></div>}
@@ -445,7 +441,7 @@ function MyPage() {
 
                 <div className='dataInner'>
                   <span className='myDate'> 작성일자 : {!post.updated ? post.created : post.updated}</span><span className='line'>|</span>
-                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}  {post.postStatus === 'END' ? '종료' : '진행중'}</span><span className='line'>|</span>
+                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}  {postStatusText(post.postStatus)}</span><span className='line'>|</span>
                   <span className='myDate'> 조회수 {post.viewCount}</span><span className='line'>|</span>
                   <span className='myDate'> ❤️ {post.likeCount}</span>
                 </div>

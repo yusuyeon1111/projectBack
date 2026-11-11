@@ -68,11 +68,11 @@ function Post() {
                     <td data-label="수정일자">{post.updated && new Date(post.updated).toLocaleString()}</td>
                     <td data-label="게시글 관리">{post.delYn === 'N' ?
                         <button onClick={() => changePostStatus(post.id, 'Y')}  className="delete-btn">
-                            <FiRefreshCw /> 게시글 비공개
+                            <MdDelete /> 게시글 비공개
                         </button>
                     :
-                        <button>
-                        <MdDelete onClick={(()=>{changePostStatus(post.id, 'N')})}/> 게시글 공개
+                        <button onClick={() => changePostStatus(post.id, 'N')}>
+                            <FiRefreshCw /> 게시글 공개
                         </button>
                     }</td>
                     </tr>

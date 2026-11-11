@@ -77,6 +77,18 @@ function StudyView() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("정말 삭제하시겠습니까?")) return;
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/post/delete/${postId}`);
+      alert("게시글이 삭제되었습니다.")
+      navigate("/");
+    } catch(error) {
+      console.error('삭제 오류:', error);
+      alert('오류가 발생했습니다. 다시 시도해 주세요.');
+    }
+  }
+
   const likeHandler = async (postId: number, nowLike: boolean) => {
     if(!username){
       setLoginModalOpen(true);
@@ -205,7 +217,7 @@ function StudyView() {
                   {showEditMenu && (
                     <div className='view-menu'>
                       <p onClick={() => setUseUpdate(true)}>수정</p>
-                      <p onClick={() => navigate("/studyform")}>삭제</p>
+                      <p onClick={handleDelete}>삭제</p>
                     </div>
                   )}
                 </div>

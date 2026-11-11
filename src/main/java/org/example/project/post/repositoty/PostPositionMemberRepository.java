@@ -66,7 +66,9 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
     SELECT new org.example.project.post.dto.PostAcceptDto(
         p.id,
         p.title,
-        ppm.appliedAt,
+        p.category,
+        pp.role,
+        ppm.acceptedAt,
         p.startDate,
         p.endDate,
         p.postStatus
