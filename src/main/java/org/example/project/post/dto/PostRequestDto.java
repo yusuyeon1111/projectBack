@@ -2,6 +2,7 @@ package org.example.project.post.dto;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.example.project.post.entity.ApplyQuestion;
 
 import java.util.Date;
 import java.util.List;
@@ -28,6 +29,8 @@ public class PostRequestDto {
     private String postStatus;
     private String username;
     private String delYn;
+    // 신청서 질문. 수정 요청에서 null이면 기존 질문을 그대로 두고, 빈 목록이면 신청서를 없앤다.
+    private List<ApplyQuestion> applyQuestions;
     // 조회용 필드
     private Integer page = 0;
     private Integer size = 10;

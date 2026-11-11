@@ -45,6 +45,7 @@ public class PostService {
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final PostLikeRepository postLikeRepository;
     private final EntityManager entityManager;
+    private final ApplyFormService applyFormService;
 
     private static final int PAGES_AHEAD = 10;
 
@@ -85,6 +86,7 @@ public class PostService {
             }
         }
         Post savedPost = postRepository.save(post);
+        applyFormService.replaceQuestions(savedPost, dto.getApplyQuestions());
         return savedPost.getId();
     }
 
@@ -97,7 +99,9 @@ public class PostService {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         boolean likedByUser = postLikeRepository.findByPostIdAndMemberId(postId, member.getId()).isPresent();
-        return new PostResponseDto(post, likedByUser);
+        PostResponseDto response = new PostResponseDto(post, likedByUser);
+        response.setApplyQuestions(applyFormService.getQuestions(postId));
+        return response;
     }
 
     // 게시글 상세보기 로그인 x
@@ -106,7 +110,9 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
         post.setViewCount(post.getViewCount() + 1);
-        return new PostResponseDto(post);
+        PostResponseDto response = new PostResponseDto(post);
+        response.setApplyQuestions(applyFormService.getQuestions(postId));
+        return response;
     }
 
     // 본인이 작성한 글만 반환, 아니면 403
@@ -154,10 +160,14 @@ public class PostService {
             }
         }
 
+        applyFormService.replaceQuestions(post, dto.getApplyQuestions());
+
         // 모집 포지션은 수정하지 않는다. 포지션에 신청 내역(PostPositionMember)이 cascade로 묶여 있어
         // 지우고 다시 만들면 신청 기록이 삭제되고 인원(count)도 0이 된다. 수정 화면에도 포지션 편집 UI가 없다.
 
-        return new PostResponseDto(post);
+        PostResponseDto response = new PostResponseDto(post);
+        response.setApplyQuestions(applyFormService.getQuestions(post.getId()));
+        return response;
     }
 
     // 게시글 삭제
