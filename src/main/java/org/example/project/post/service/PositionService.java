@@ -34,6 +34,7 @@ public class PositionService {
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final NotificationService notificationService;
+    private final ApplyFormService applyFormService;
 
     // 포지션 id, username으로 신청 여부 판단
     public List<Long> getAppliedPositions(Long postId, String username) {
@@ -58,7 +59,11 @@ public class PositionService {
             return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
         }
 
+        // 신청서 질문에 맞춰 검사한 답변. S3 확인이 들어 있어 저장 직전에 한 번만 만든다.
+        var answers = applyFormService.buildAnswers(position.getPost().getId(), member.getId(), dto.getAnswers());
+
         PostPositionMember postPositionMember = new PostPositionMember();
+        postPositionMember.setAnswers(answers);
         postPositionMember.setPostPosition(position);
         postPositionMember.setMember(member);
         postPositionMember.setStatus("APPLY");
@@ -131,6 +136,18 @@ public class PositionService {
         notificationService.notifyResult(position);
         List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(position.getPostPosition().getPost().getId());
         return list;
+    }
+
+    /** 신청서 답변은 글 작성자와 신청자 본인만 본다. 관리자도 볼 수 없다. */
+    public PostPositionMember findReadableApplication(Long applicationId, String username) {
+        PostPositionMember application = postPositionMemberRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("신청 내역이 존재하지 않습니다."));
+        boolean isAuthor = application.getPostPosition().getPost().getAuthor().equals(username);
+        boolean isApplicant = application.getMember().getUsername().equals(username);
+        if (!isAuthor && !isApplicant) {
+            throw new AccessDeniedException("이 신청서를 볼 권한이 없습니다.");
+        }
+        return application;
     }
 
     // username으로 신청한 포지션 리스트 조회
