@@ -292,7 +292,7 @@ function PostForm() {
              initialValue={initialContents}
           />
           <div className="editor-buttons">
-            <button type="button" onClick={handleRefresh} id='submitBtn'>초기화</button>
+            <button type="button" onClick={handleRefresh} className="editor-reset-btn">초기화</button>
           </div>
         </div> 
         <div className='btmBtn-container'>

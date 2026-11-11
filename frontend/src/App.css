@@ -54,21 +54,25 @@
   transform: scale(1.03);
 }
 
-/* 버튼 스타일 */
+/* 입력란 옆에 붙는 보조 버튼(추가·삭제·+). 옆 입력란과 높이·모서리를 맞춘다 */
 #graBtn {
-  font-size: 16px;
-  color: white; /* 텍스트는 흰색이 잘 어울림 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: white;
   border: none;
-  border-radius: 12px; /* 완전 둥글게 */
+  border-radius: 8px;
   cursor: pointer;
-  padding: 5px 11px;
-  background: linear-gradient(135deg, #4f9cff, #007bff); /* 그라데이션 */
-  box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* 살짝 입체감 */
-  transition: all 0.3s ease;
+  background-color: #007bff;
+  transition: background-color 0.2s ease;
 }
 
 #graBtn:hover {
-  background: linear-gradient(135deg, #5aa9ff, #1a86ff); /* hover 시 더 밝게 */
-  box-shadow: 0 6px 14px rgba(0, 123, 255, 0.4);
-  transform: translateY(-2px);
+  background-color: #0056b3;
 }

@@ -79,6 +79,21 @@ width: 100%;
   background: #f8f8f8;
 }
 
+/* 본문을 기본 양식으로 되돌리는 보조 버튼. 등록 버튼보다 눈에 덜 띄게 */
+.editor-reset-btn {
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #555;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.editor-reset-btn:hover {
+  background-color: #f1f3f5;
+}
+
 /* 스택 섹션 */
 .stack-section {
   display: flex;
@@ -129,7 +144,7 @@ width: 100%;
 }
 
 .memberLabel #graBtn {
-  flex: 0;
+  flex: none; /* flex: 0이면 기준 폭이 0이라 좌우 여백이 눌린다 */
   white-space: nowrap;
 }
 
