@@ -9,6 +9,8 @@ import '../css/View.css'
 import { IoSettingsSharp } from "react-icons/io5";
 import LoginRequiredModal from './LoginRequiredModal';
 import { Post, regions } from '../types';
+import ApplyFormBuilder, { applyQuestionsError } from './ApplyFormBuilder';
+import ApplyModal from './ApplyModal';
 import { errorMessage } from '../auth';
 
 function StudyView() {
@@ -19,6 +21,7 @@ function StudyView() {
   const [useUpdate, setUseUpdate] = useState(false);
   const [showEditMenu, setShowEditMenu] = useState(false)
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [applyingPositionId, setApplyingPositionId] = useState<number | null>(null); // 신청서 작성 중인 포지션
   const [like, setLike] = useState(false);
   const [appliedPositions, setAppliedPositions] = useState<number[]>([]);
   const navigate = useNavigate();
@@ -51,6 +54,11 @@ function StudyView() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const questionError = applyQuestionsError(post!.applyQuestions ?? []);
+    if (questionError) {
+      alert(questionError);
+      return;
+    }
     const markdown = editorRef.current!.getInstance().getMarkdown();
 
     const postData = {
@@ -119,6 +127,11 @@ function StudyView() {
       setLoginModalOpen(true);
       return;
     }
+    // 신청서가 있는 글은 작성 창을 띄우고, 제출은 ApplyModal이 한다
+    if (post?.applyQuestions?.length) {
+      setApplyingPositionId(positionId);
+      return;
+    }
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/post/apply`, {
         positionId,
@@ -133,6 +146,16 @@ function StudyView() {
   return (
     <div className="view-container">
       <LoginRequiredModal isOpen={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <ApplyModal
+        open={applyingPositionId != null}
+        positionId={applyingPositionId}
+        questions={post.applyQuestions ?? []}
+        onClose={() => setApplyingPositionId(null)}
+        onApplied={id => {
+          setAppliedPositions(prev => [...prev, id]);
+          setApplyingPositionId(null);
+        }}
+      />
         {useUpdate ? <>
         <form className='form' onSubmit={handleSubmit}>
         <p className="post-info"><strong>📌 스터디 제목:</strong></p>
@@ -197,6 +220,12 @@ function StudyView() {
             initialValue={post.content}
                   />
         </div>
+        <h3 className="post-section-title">신청서</h3>
+        <p className="sub">질문을 고쳐도 이미 들어온 신청서는 제출 당시 질문 그대로 보입니다.</p>
+        <ApplyFormBuilder
+          value={post.applyQuestions ?? []}
+          onChange={questions => setPost(prev => ({ ...prev!, applyQuestions: questions }))}
+        />
         <div className='btmBtn-container'>
             <button type='submit' id='submitBtn'>수정</button>
             <button type='button' onClick={() => setUseUpdate(false)} id='cancleBtn'>취소</button>

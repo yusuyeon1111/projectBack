@@ -52,6 +52,48 @@ export interface PostPosition {
   status: string;
 }
 
+// 신청서 질문(백엔드 ApplyQuestion). key는 질문을 고쳐도 바뀌지 않는 식별자다.
+export type ApplyQuestionType = 'TEXT' | 'TEXTAREA' | 'URL' | 'SELECT' | 'RADIO' | 'CHECKBOX' | 'FILE';
+
+export interface ApplyQuestion {
+  key: string;
+  type: ApplyQuestionType;
+  label: string;
+  required: boolean;
+  options: string[];
+}
+
+export const applyQuestionTypeText: Record<ApplyQuestionType, string> = {
+  TEXT: '짧은 글', TEXTAREA: '긴 글', URL: '링크', SELECT: '드롭다운', RADIO: '하나 선택', CHECKBOX: '여러 개 선택', FILE: '파일 첨부',
+};
+
+export const hasOptions = (type: ApplyQuestionType) => type === 'SELECT' || type === 'RADIO' || type === 'CHECKBOX';
+
+// 첨부 파일 제한. 서버(ApplyFormService)와 같은 값이어야 한다.
+export const APPLY_FILE_LIMIT = { maxSize: 10 * 1024 * 1024, maxCount: 3, extensions: ['pdf', 'jpg', 'jpeg', 'png', 'zip'] };
+
+export interface ApplyFile {
+  key: string;
+  name: string;
+  size?: number;
+}
+
+// 신청 시 보내는 답. FILE 질문은 files에, 나머지는 values에 담는다.
+export interface ApplyAnswerInput {
+  values: string[];
+  files: ApplyFile[];
+}
+
+// 저장된 답변(백엔드 ApplyAnswer). 제출 당시 질문 내용이 같이 들어 있다.
+export interface ApplyAnswer {
+  questionKey: string;
+  label: string;
+  type: ApplyQuestionType;
+  options: string[];
+  values: string[];
+  files: ApplyFile[];
+}
+
 // PostResponseDto
 export interface Post {
   id: number;
@@ -74,6 +116,7 @@ export interface Post {
   endDate: string | null;
   postStatus: string;
   likedByUser: boolean;
+  applyQuestions?: ApplyQuestion[]; // 상세 조회에만 있다
 }
 
 // PostController.listPostsNew 응답

@@ -5,7 +5,8 @@ import '@toast-ui/editor/dist/toastui-editor.css';
 import '../css/PostForm.css'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { regions } from "../types";
+import ApplyFormBuilder, { applyQuestionsError } from './ApplyFormBuilder';
+import { ApplyQuestion, regions } from "../types";
 
 interface PositionInput {
   id: number;
@@ -60,6 +61,7 @@ function PostForm() {
   const [type, setType] = useState('online');
   const [region, setRegion] = useState('nothing');
   const [showEditor, setShowEditor] = useState(false);
+  const [applyQuestions, setApplyQuestions] = useState<ApplyQuestion[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const today = new Date().toISOString().split('T')[0];
@@ -86,6 +88,11 @@ function PostForm() {
     alert("마감일은 시작일 이후로 설정해주세요.");
     return;
   }
+    const questionError = applyQuestionsError(applyQuestions);
+    if (questionError) {
+      alert(questionError);
+      return;
+    }
     const markdown = editorRef.current!.getInstance().getMarkdown();
 
     let postStatus = '';
@@ -106,7 +113,8 @@ function PostForm() {
       status:'ING',
       startDate,
       endDate,
-      postStatus:postStatus
+      postStatus:postStatus,
+      applyQuestions,
     };
     try {
     const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/create`, postData);
@@ -295,6 +303,9 @@ function PostForm() {
             <button type="button" onClick={handleRefresh} className="editor-reset-btn">초기화</button>
           </div>
         </div> 
+        <span className="label" style={{marginTop:'30px'}}>신청서</span>
+        <span className="sub"> - 신청할 때 받을 질문을 만들어 주세요. 이력서·포트폴리오 같은 파일도 받을 수 있습니다.</span>
+        <ApplyFormBuilder value={applyQuestions} onChange={setApplyQuestions} />
         <div className='btmBtn-container'>
             <button type='submit' id='submitBtn'>등록</button>
             <button type='button' onClick={() => navigate("/")} id='cancleBtn'>취소</button>

@@ -5,7 +5,8 @@ import '@toast-ui/editor/dist/toastui-editor.css';
 import '../css/PostForm.css'
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { regions } from "../types";
+import ApplyFormBuilder, { applyQuestionsError } from './ApplyFormBuilder';
+import { ApplyQuestion, regions } from "../types";
 
 interface PositionInput {
   id: number;
@@ -50,6 +51,7 @@ function PostForm() {
   const [region, setRegion] = useState('nothing');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [applyQuestions, setApplyQuestions] = useState<ApplyQuestion[]>([]);
   const today = new Date().toISOString().split('T')[0];
   const [positions, setPositions] = useState<PositionInput[]>([
       { id: Date.now(), role: "totalCount", count: 1 },
@@ -74,6 +76,11 @@ function PostForm() {
     } else {
       postStatus = "SCHEDULED"
     }
+    const questionError = applyQuestionsError(applyQuestions);
+    if (questionError) {
+      alert(questionError);
+      return;
+    }
     const markdown = editorRef.current!.getInstance().getMarkdown();
 
     const postData = {
@@ -86,7 +93,8 @@ function PostForm() {
       startDate,
       endDate,
       postStatus:postStatus,
-      status:'ING'
+      status:'ING',
+      applyQuestions,
     };
     try {
     const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/create`, postData);
@@ -214,6 +222,9 @@ function PostForm() {
             <button type="button" onClick={handleRefresh} className="editor-reset-btn">초기화</button>
           </div>
         </div> 
+        <span className="label" style={{marginTop:'30px'}}>신청서</span>
+        <span className="sub"> - 신청할 때 받을 질문을 만들어 주세요. 이력서·포트폴리오 같은 파일도 받을 수 있습니다.</span>
+        <ApplyFormBuilder value={applyQuestions} onChange={setApplyQuestions} />
         <div className='btmBtn-container'>
             <button type='submit' id='submitBtn'>등록</button>
             <button type='button' onClick={() => navigate("/")} id='cancleBtn'>취소</button>
