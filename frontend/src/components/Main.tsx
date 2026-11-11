@@ -8,7 +8,7 @@ import PostList from './PostList'
 import axios from 'axios';
 import { IoLocationSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
-import { Post, PageResponse, postStatusText, regions, roleTextMap } from "../types";
+import { Post, PageResponse, pageNumbers, postStatusText, regions, roleTextMap } from "../types";
 
 interface Filters {
   category: string | null;
@@ -279,7 +279,7 @@ function Main() {
             >
               이전
             </button>
-            {Array.from({ length: totalPages }, (_, i) => (
+            {pageNumbers(filters.page, totalPages).map(i => (
               <button
                 key={i}
                 className={filters.page === i ? "active" : ""}

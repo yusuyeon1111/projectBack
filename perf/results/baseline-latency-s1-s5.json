@@ -1,0 +1,56 @@
+{
+  "mode": "latency",
+  "rows": [
+    {
+      "scenario": "S1_latest",
+      "avg": 55337.727666666666,
+      "med": 55507.12,
+      "p95": 56943.5623,
+      "max": 57103.167
+    },
+    {
+      "scenario": "S2_popular",
+      "avg": 53126.22966666667,
+      "med": 51517.46,
+      "p95": 56663.4845,
+      "max": 57235.265
+    },
+    {
+      "scenario": "S3_category_status",
+      "avg": 31782.94366666667,
+      "med": 31201.543,
+      "p95": 32896.8235,
+      "max": 33085.188
+    },
+    {
+      "scenario": "S4_region_position",
+      "avg": 2160.75,
+      "med": 2146.361,
+      "p95": 2200.2071,
+      "max": 2206.19
+    },
+    {
+      "scenario": "S6_keyword_miss",
+      "avg": 0,
+      "med": 0,
+      "p95": 0,
+      "max": 0
+    },
+    {
+      "scenario": "S7_stack",
+      "avg": 0,
+      "med": 0,
+      "p95": 0,
+      "max": 0
+    },
+    {
+      "scenario": "S8_deep_page",
+      "avg": 0,
+      "med": 0,
+      "p95": 0,
+      "max": 0
+    }
+  ],
+  "rps": 0.03150311164689835,
+  "note": "S5는 maxDuration(10분)에 걸려 2회만 측정되어 baseline-latency-s5-s8.json의 값을 쓴다. 응답 크기는 baseline-queries.tsv 참고."
+}
