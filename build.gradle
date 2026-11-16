@@ -39,6 +39,9 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     //Redis
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    // DB 마이그레이션. MySQL 8은 flyway-core만으로는 지원하지 않아 flyway-mysql이 필요하다
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-mysql'
 }
 
 tasks.named('test') {

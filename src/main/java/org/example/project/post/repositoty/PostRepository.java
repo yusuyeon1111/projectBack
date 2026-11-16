@@ -29,6 +29,17 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Query("UPDATE Post p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id")
     void incrementViewCount(@Param("id") Long id);
 
+    // 좋아요 INSERT는 외래키 검사로 글 행에 공유락을 걸어서, 이어지는 like_count UPDATE(배타락)와
+    // 동시 요청끼리 데드락이 난다. 글 행을 먼저 배타락으로 잡아 같은 글의 좋아요를 한 줄로 세운다
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Post p WHERE p.id = :id")
+    Optional<Post> findByIdForUpdate(@Param("id") Long id);
+
+    // 엔티티 값에 +1 해서 저장하면 동시 요청끼리 서로의 증가분을 덮어쓴다. DB에서 더한다
+    @Modifying
+    @Query("UPDATE Post p SET p.likeCount = p.likeCount + :delta WHERE p.id = :id")
+    void addLikeCount(@Param("id") Long id, @Param("delta") int delta);
+
     List<Post> findByPostStatusNot(String end);
 
     @Query("""

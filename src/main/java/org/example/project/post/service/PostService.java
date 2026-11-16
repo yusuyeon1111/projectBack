@@ -91,9 +91,7 @@ public class PostService {
     // 게시글 상세보기
     @Transactional
     public PostResponseDto selectViewByIdWithUsername(Long postId, String username) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-        post.setViewCount(post.getViewCount() + 1);
+        Post post = loadAndCountView(postId);
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         boolean likedByUser = postLikeRepository.findByPostIdAndMemberId(postId, member.getId()).isPresent();
@@ -103,10 +101,15 @@ public class PostService {
     // 게시글 상세보기 로그인 x
     @Transactional
     public PostResponseDto selectViewById(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-        post.setViewCount(post.getViewCount() + 1);
+        Post post = loadAndCountView(postId);
         return new PostResponseDto(post);
+    }
+
+    // 엔티티에 +1 해서 저장하면 동시 조회끼리 덮어쓴다. DB에서 먼저 올리고 읽어야 올린 값이 응답에 보인다
+    private Post loadAndCountView(Long postId) {
+        postRepository.incrementViewCount(postId);
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
     }
 
     // 본인이 작성한 글만 반환, 아니면 403
@@ -207,24 +210,17 @@ public class PostService {
     }
 
 
+    // 좋아요 행이 실제로 생겼을 때만 수를 올린다. 연타·동시 요청에도 행 수와 like_count가 같다
+    @Transactional
     public ResponseEntity<String> likePost(Long postId, String username) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(()-> new RuntimeException("게시글을 찾을 수 없습니다."));
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(()-> new RuntimeException("사용자를 찾을 수 없습니다."));
-        boolean alreadyLiked = post.getLikes().stream()
-                .anyMatch(like -> like.getMember().getId().equals(member.getId()));
-        if (alreadyLiked) {
+        postRepository.findByIdForUpdate(postId)
+                .orElseThrow(()-> new RuntimeException("게시글을 찾을 수 없습니다."));
+        if (postLikeRepository.insertIfAbsent(postId, member.getId()) == 0) {
             return ResponseEntity.badRequest().body("이미 좋아요한 게시글입니다.");
         }
-
-        PostLike postLike = new PostLike();
-        postLike.setPost(post);
-        postLike.setMember(member);
-        post.getLikes().add(postLike);
-        post.setLikeCount(post.getLikeCount() + 1);
-        postLikeRepository.save(postLike);
-
+        postRepository.addLikeCount(postId, 1);
         return ResponseEntity.ok("좋아요 완료");
     }
 
@@ -234,15 +230,16 @@ public class PostService {
         return like;
     }
 
+    // 지운 행이 있을 때만 수를 내린다. 여러 번 보내도 결과가 같다(멱등)
     @Transactional
     public ResponseEntity<String> unLikePost(Long id, String username) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(()-> new RuntimeException("사용자를 찾을 수 없습니다."));
-        Post post = postRepository.findById(id)
-                        .orElseThrow(()-> new RuntimeException("게시글을 찾을 수 없습니다."));
-        post.setLikeCount(post.getLikeCount() - 1);
-        postLikeRepository.deleteByPostIdAndMemberId(id, member.getId());
-
+        postRepository.findByIdForUpdate(id)
+                .orElseThrow(()-> new RuntimeException("게시글을 찾을 수 없습니다."));
+        if (postLikeRepository.deleteByPostIdAndMemberId(id, member.getId()) == 1) {
+            postRepository.addLikeCount(id, -1);
+        }
         return ResponseEntity.ok("좋아요 취소 완료");
     }
 

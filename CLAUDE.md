@@ -28,7 +28,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Redis 장애 정책은 fail-closed다. 필터가 토큰 폐기 여부를 확인하지 못하면 인증하지 않고 비로그인으로 넘기며, 로그인이 필요한 API는 401 대신 503을 준다(401이면 프론트가 로그아웃시킨다). Lettuce 명령·연결 타임아웃은 1초(`RedisRepositoryConfig`, 기본 60초면 요청이 멈춘다). `RedisOutageTest`(연결 거부), `RedisHangTest`(응답 없음)가 검증한다.
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
-- JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
+- 스키마는 Flyway(`src/main/resources/db/migration`)가 관리하고 JPA는 `ddl-auto: validate`라서 엔티티와 테이블이 어긋나면 기동이 멈춘다. **엔티티를 바꾸면 `V{다음 번호}__설명.sql`을 함께 추가한다.** 이미 적용된 파일은 고치지 않는다(체크섬 불일치로 기동 실패). `V1__baseline.sql`은 Flyway 도입 전 `ddl-auto`가 만들던 스키마이고, ddl-auto로 테이블이 이미 만들어진 로컬 개발 DB에는 `baseline-on-migrate`로 실행 없이 적용 표시만 한다(운영 DB는 아직 없어서 첫 배포는 빈 DB에 V1부터 실행된다). 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
 - OSIV(`spring.jpa.open-in-view`)는 꺼져 있고, `WebMvcConfig`가 같은 인터셉터를 알림 구독(`/api/notifications/subscribe`)만 빼고 직접 건다. SSE 요청이 열려 있는 동안 DB 커넥션을 쥐지 않게 하려는 것이다. 다른 API는 여전히 OSIV에 기대어 지연 로딩할 수 있다.
 - 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
@@ -73,12 +73,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 포트폴리오 저장소라서 면접관이 커밋 로그를 읽는다는 전제로 쓴다. diff에 이미 "무엇을"이 있으니 메시지에는 "왜"를 적는다.
 
-- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style` 중 하나다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
+- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `ci`, `chore`, `style` 중 하나다. 측정해서 빨라진 변경은 `refactor`가 아니라 `perf`로 쓴다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
 - 제목은 50자 안팎으로, 의도가 드러나게 쓴다. `Update SecurityConfig.java`처럼 파일 이름만 적은 제목은 쓰지 않는다.
 - 판단이 들어간 커밋에는 본문이 필수다. 버그 수정, 설계 변경, 의존성이나 설정 변경이 여기에 해당한다. 본문은 문제, 원인, 해결 순서로 쓴다. 단순한 변경이면 본문을 생략해도 된다.
 - 커밋 하나에는 의도를 하나만 담는다. 기능 추가, 버그 수정, 리팩터링이 섞이면 나눠서 커밋한다. 작업 중에 발견한 버그는 별도의 `fix:` 커밋으로 분리해서 로그에 드러나게 한다.
 - README를 고칠 때도 내용을 적는다. 예: `docs: ERD 이미지 교체`
 - 이미 push한 이력은 rebase로 다시 쓰지 않는다.
+
+### 브랜치와 PR
+
+GitHub Flow를 쓴다. `main`은 항상 테스트가 통과하는 상태로 두고 직접 커밋하지 않는다.
+
+- 작업마다 `main`에서 브랜치를 딴다. 이름은 `<type>/<작업>` 형태의 소문자·하이픈이다. 예: `feat/sse-notification`, `fix/osiv-connection-leak`, `perf/post-list-search`
+- PR 제목은 커밋 제목과 같은 형식으로 쓰고, 본문은 `.github/pull_request_template.md`를 따른다. 성능 작업은 전후 측정값을 본문에 남긴다.
+- CI(`.github/workflows/ci.yml`)가 통과해야 병합한다.
+- 병합은 **Merge commit**으로 한다. Squash하면 작업 중 분리해 둔 `fix:` 커밋이 기능 커밋 하나에 묻혀 로그에서 사라진다.
+- 병합한 브랜치는 지운다.
 
 ```
 fix(back): 로그아웃 후에도 access token이 유효하던 문제 수정

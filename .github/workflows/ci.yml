@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request: # base를 가리지 않는다. 앞 PR 브랜치 위에 쌓은 PR에서도 돈다
+  push:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    # 테스트가 @SpringBootTest라 실제 MySQL·Redis가 필요하다
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: ci
+          MYSQL_DATABASE: project
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pci"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3306/project?serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: root
+      DB_PASSWORD: ci
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      SPRING_DATA_REDIS_USESSL: 'false' # 운영(ElastiCache)은 SSL, CI의 Redis는 평문
+      KAKAO_CLIENT_ID: ci-dummy
+      AWS_ACCESS_KEY_ID: ci-dummy
+      AWS_SECRET_ACCESS_KEY: ci-dummy
+      AWS_REGION: ap-northeast-2
+      AWS_S3_BUCKET_NAME: ci-dummy
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: JWT 테스트 키 생성
+        run: echo "JWT_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
+      - name: Test
+        run: ./gradlew test
+      - name: 실패한 테스트 리포트 보관
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-report
+          path: build/reports/tests/test
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit
+      - name: Test
+        run: npm test -- --watchAll=false
+        env:
+          CI: true
+      # ponytail: 기존 코드의 ESLint 경고 때문에 CI=true면 빌드가 실패한다. 경고를 정리하면 이 env를 지운다
+      - name: Build
+        run: npm run build
+        env:
+          CI: false
