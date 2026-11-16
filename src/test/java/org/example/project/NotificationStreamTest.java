@@ -87,6 +87,7 @@ class NotificationStreamTest {
         streams.forEach(SseStream::close);
         redisTemplate.delete(redisKeys);
         if (post != null) postRepository.findById(post.getId()).ifPresent(postRepository::delete);
+        TeamCleanup.deleteFor(jdbcTemplate, members);
         memberRepository.deleteAll(members);
         jdbcTemplate.update("DELETE FROM notification WHERE receiver LIKE ?", prefix + "%");
     }
@@ -355,6 +356,7 @@ class NotificationStreamTest {
     }
 
     private PostPosition createPost(int count) {
+        if (memberRepository.findByUsername(author).isEmpty()) member("author"); // 승인 때 팀장이 될 회원
         post = Post.builder()
                 .title("실시간 알림 테스트").author(author).category("project")
                 .created(new Date()).delYn("N").likeCount(0).viewCount(0)

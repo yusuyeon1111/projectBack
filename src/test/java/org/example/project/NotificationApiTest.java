@@ -58,6 +58,7 @@ class NotificationApiTest {
     @Autowired MemberRepository memberRepository;
     @Autowired PostPositionMemberRepository applicationRepository;
     @Autowired ApplicationEvents events;
+    @Autowired org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     final String prefix = "nt-" + UUID.randomUUID().toString().substring(0, 8) + "-";
     final String me = prefix + "me";       // 글 작성자
@@ -71,6 +72,7 @@ class NotificationApiTest {
             notificationRepository.deleteAll(notificationRepository.findByReceiverAndIdGreaterThanOrderByIdAsc(receiver, 0L));
         }
         if (post != null) postRepository.findById(post.getId()).ifPresent(postRepository::delete);
+        TeamCleanup.deleteFor(jdbcTemplate, members);
         memberRepository.deleteAll(members);
     }
 
@@ -194,8 +196,7 @@ class NotificationApiTest {
 
     @Test
     void 자기_글에_신청하면_알림을_만들지_않는다() throws Exception {
-        PostPosition position = createPost(1);
-        member(me, null);
+        PostPosition position = createPost(1); // 작성자 회원도 함께 만든다
 
         mvc.perform(post("/api/post/apply").header("Authorization", bearer(me))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"positionId\":" + position.getId() + "}"))
@@ -269,6 +270,7 @@ class NotificationApiTest {
     }
 
     private PostPosition createPost(int count) {
+        if (memberRepository.findByUsername(me).isEmpty()) member(me, "작성자"); // 승인 때 팀장이 될 회원
         post = Post.builder()
                 .title("알림 생성 테스트").author(me).category("study")
                 .created(new Date()).delYn("N").likeCount(0).viewCount(0)
