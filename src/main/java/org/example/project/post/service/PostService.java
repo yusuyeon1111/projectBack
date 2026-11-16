@@ -91,9 +91,7 @@ public class PostService {
     // 게시글 상세보기
     @Transactional
     public PostResponseDto selectViewByIdWithUsername(Long postId, String username) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-        post.setViewCount(post.getViewCount() + 1);
+        Post post = loadAndCountView(postId);
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         boolean likedByUser = postLikeRepository.findByPostIdAndMemberId(postId, member.getId()).isPresent();
@@ -103,10 +101,15 @@ public class PostService {
     // 게시글 상세보기 로그인 x
     @Transactional
     public PostResponseDto selectViewById(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
-        post.setViewCount(post.getViewCount() + 1);
+        Post post = loadAndCountView(postId);
         return new PostResponseDto(post);
+    }
+
+    // 엔티티에 +1 해서 저장하면 동시 조회끼리 덮어쓴다. DB에서 먼저 올리고 읽어야 올린 값이 응답에 보인다
+    private Post loadAndCountView(Long postId) {
+        postRepository.incrementViewCount(postId);
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
     }
 
     // 본인이 작성한 글만 반환, 아니면 403

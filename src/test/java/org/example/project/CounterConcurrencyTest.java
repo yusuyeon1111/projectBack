@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 // 좋아요 수·조회수가 동시 요청끼리 서로의 증가분을 덮어쓰지 않는지 확인한다.
@@ -99,6 +100,14 @@ class CounterConcurrencyTest {
 
         assertThat(rows()).isZero();
         assertThat(likeCount()).isZero();
+    }
+
+    @Test
+    void 동시에_조회해도_조회수가_줄지_않는다() throws Exception {
+        runConcurrently(i -> mvc.perform(get("/api/post/view/" + post.getId())));
+
+        assertThat(jdbcTemplate.queryForObject("SELECT view_count FROM post WHERE id = ?", Integer.class, post.getId()))
+                .isEqualTo(THREADS);
     }
 
     private void like(String token) throws Exception {
