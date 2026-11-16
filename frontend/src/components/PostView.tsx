@@ -107,7 +107,7 @@ function PostView() {
     }
   } catch (error) {
     console.error('등록 오류:', error);
-    alert('오류가 발생했습니다. 다시 시도해 주세요.');
+    alert(errorMessage(error, '오류가 발생했습니다. 다시 시도해 주세요.'));
   }
   };
 
@@ -119,7 +119,7 @@ function PostView() {
       navigate("/");
     } catch(error) {
       console.error('등록 오류:', error);
-      alert('오류가 발생했습니다. 다시 시도해 주세요.');
+      alert(errorMessage(error, '오류가 발생했습니다. 다시 시도해 주세요.'));
     }
   }
 
@@ -186,6 +186,8 @@ function PostView() {
           <input
             className="post-title-input"
             value={post.title}
+            required
+            maxLength={100}
             onChange={(e) => setPost(prev => ({ ...prev!, title: e.target.value }))}
           />
           <div className="date-section">
@@ -204,6 +206,7 @@ function PostView() {
                         size="small"
                         value={post.endDate}
                         onChange={(e) => setPost(prev => ({ ...prev!, endDate: e.target.value }))}
+              inputProps={{ min: post.startDate }} // 시작일 이전 선택 불가
                         className="input"
                         InputLabelProps={{ shrink: true }}
                       />
@@ -214,7 +217,9 @@ function PostView() {
               <select
                 name="projectType"
                 value={post.projectType}
-                onChange={(e) => setPost(prev => ({ ...prev!, projectType: e.target.value }))}
+                onChange={(e) => setPost(prev => ({ ...prev!, projectType: e.target.value,
+                  // 온라인이면 지역 선택지가 사라지므로 값도 지역무관으로 되돌린다
+                  region: e.target.value === 'online' ? 'nothing' : prev!.region }))}
                 className="select"
               >
                 <option value="online">온라인</option>
@@ -338,7 +343,7 @@ function PostView() {
                 </>
               )}
             </dl>
-            {post.author !== username && post.positions && post.positions.length > 0 && (
+            {post.author !== username && post.postStatus !== 'END' && post.positions && post.positions.length > 0 && (
             post.positions
               .filter(pos => pos.status !== "END" && pos.count > 0)
               .map(pos => (

@@ -7,12 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ApplyFormBuilder, { applyQuestionsError } from './ApplyFormBuilder';
 import { ApplyQuestion, regions } from "../types";
+import { errorMessage } from '../auth';
 
 interface PositionInput {
   id: number;
   role: string;
-  count: number;
-  status?: string;
+  count: number | ''; // 입력 중 칸을 비울 수 있게 ''를 허용하고, 제출은 required·min이 막는다
 }
 const initialContents = [
   "## 1. 프로젝트 개요 \n",
@@ -64,9 +64,11 @@ function PostForm() {
   const [applyQuestions, setApplyQuestions] = useState<ApplyQuestion[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const today = new Date().toISOString().split('T')[0];
+  const [submitting, setSubmitting] = useState(false);
+  // toISOString은 UTC라 오전 9시 전에는 어제가 된다. sv-SE 형식이 브라우저 시간대의 YYYY-MM-DD다
+  const today = new Date().toLocaleDateString('sv-SE');
   const [positions, setPositions] = useState<PositionInput[]>([
-    { id: Date.now(), role: "backend", count: 1 , status:"ING"},
+    { id: Date.now(), role: "backend", count: 1 },
   ]);
 
   useEffect(() => {
@@ -95,41 +97,35 @@ function PostForm() {
     }
     const markdown = editorRef.current!.getInstance().getMarkdown();
 
-    let postStatus = '';
-    if(startDate == today) {
-      postStatus = "IN_PROGRESS"
-    } else {
-      postStatus = "SCHEDULED"
-    }
-
+    // 진행 상태(postStatus)는 서버가 날짜로 정한다
     const postData = {
       title,
       content: markdown,
-      positions: positions,
+      positions: positions.map(({ role, count }) => ({ role, count })),
       techStacks : stackList,
       region,
       projectType:type,
       category:'project',
-      status:'ING',
       startDate,
       endDate,
-      postStatus:postStatus,
       applyQuestions,
     };
+    setSubmitting(true);
     try {
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/create`, postData);
-
-    if (response.status === 200 || response.status === 201) {
-      const postId = response.data;
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/post/create`, postData);
       alert('게시글이 등록되었습니다.');
-      navigate(`/post/${postId}`);
-    } else {
-      alert('등록에 실패했습니다.');
+      navigate(`/post/${response.data}`);
+    } catch (error) {
+      console.error('등록 오류:', error);
+      alert(errorMessage(error, '오류가 발생했습니다. 다시 시도해 주세요.'));
+      setSubmitting(false);
     }
-  } catch (error) {
-    console.error('등록 오류:', error);
-    alert('오류가 발생했습니다. 다시 시도해 주세요.');
-  }
+  };
+
+  const handleTypeChange = (value: string) => {
+    setType(value);
+    // 온라인으로 바꾸면 지역 선택지가 사라지므로 값도 지역무관으로 되돌린다
+    if (value === 'online') setRegion('nothing');
   };
 
   const handleRefresh = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -152,7 +148,7 @@ function PostForm() {
    const handleAdd = () => {
     setPositions([
       ...positions,
-      { id: Date.now(), role: "frontend", count: 1 , status:"ING"},
+      { id: Date.now(), role: "frontend", count: 1 },
     ]);
   };
 
@@ -160,7 +156,7 @@ function PostForm() {
     setPositions(positions.filter((pos) => pos.id !== id));
   };
 
-  const handleChange = (id: number, field: "role" | "count", value: string | number) => {
+  const handleChange = (id: number, field: "role" | "count", value: string | number | '') => {
     setPositions(
       positions.map((pos) =>
         pos.id === id ? { ...pos, [field]: value } : pos
@@ -174,7 +170,8 @@ function PostForm() {
         <div className='form-top'>
         <label>
           <span className="label">프로젝트명</span>
-          <input name="title" className="input" value={title}  onChange={(e) => setTitle(e.target.value)}/>
+          <input name="title" className="input" value={title} required maxLength={100}
+            onChange={(e) => setTitle(e.target.value)}/>
         </label>
         <div className="date-section">
           <label>
@@ -209,7 +206,7 @@ function PostForm() {
               <select
                 name="projectType"
                 value={type}
-                onChange={(e) => setType(e.target.value)}
+                onChange={(e) => handleTypeChange(e.target.value)}
                 className="select"
               >
                 <option value="online">온라인</option>
@@ -248,8 +245,9 @@ function PostForm() {
                 type="number"
                 className="input small"
                 min="1"
+                required
                 value={pos.count}
-                onChange={(e) => handleChange(pos.id, "count", Number(e.target.value))}
+                onChange={(e) => handleChange(pos.id, "count", e.target.value === '' ? '' : Number(e.target.value))}
               />
               <button type="button" onClick={handleAdd} id='graBtn'>
                 추가
@@ -307,7 +305,7 @@ function PostForm() {
         <span className="sub"> - 신청할 때 받을 질문을 만들어 주세요. 이력서·포트폴리오 같은 파일도 받을 수 있습니다.</span>
         <ApplyFormBuilder value={applyQuestions} onChange={setApplyQuestions} />
         <div className='btmBtn-container'>
-            <button type='submit' id='submitBtn'>등록</button>
+            <button type='submit' id='submitBtn' disabled={submitting}>등록</button>
             <button type='button' onClick={() => navigate("/")} id='cancleBtn'>취소</button>
         </div> 
       </form>
