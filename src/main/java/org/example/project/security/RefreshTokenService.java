@@ -26,7 +26,8 @@ import java.util.UUID;
  * 재발급할 때마다 refresh token을 새로 주고 이전 것은 못 쓰게 한다. 기기(로그인)마다 지금 유효한 refresh token의 jti를
  * Redis 해시 RTS:{username}의 필드 {sid}에 둔다. 해시라서 차단은 키 하나를 지우면 모든 기기가 끊긴다.
  *
- * - 이미 바뀐 refresh token이 다시 오면 탈취로 보고 그 기기의 세션을 끊는다(재사용 탐지).
+ * - 이미 바뀐 refresh token이 다시 오면 탈취로 보고 그 기기의 세션을 끊는다(재사용 탐지). 그 기기로 이미 발급된
+ *   access token도 최대 2시간 유효하므로 RVK:{sid}로 표시해 필터에서 막는다.
  * - 단, 탭 여러 개가 같은 토큰으로 거의 동시에 재발급하면 정상 사용자도 재사용으로 걸린다. 그래서 바꾼 직후
  *   GRACE 동안은 같은 이전 토큰에 방금 만든 토큰 쌍을 그대로 돌려준다(RTG:{이전 jti}).
  * - 비교와 교체가 따로 실행되면 동시 요청 둘 다 "현재 토큰이 맞다"를 보고 각자 회전한다. Lua 스크립트로 한 번에 실행한다.
@@ -50,6 +51,7 @@ public class RefreshTokenService {
             if issued then return issued end
             if current then
               redis.call('HDEL', KEYS[1], ARGV[1])
+              redis.call('SET', KEYS[3], '1', 'PX', ARGV[7])
               return 'REUSED'
             end
             return 'NONE'
@@ -59,6 +61,11 @@ public class RefreshTokenService {
     private final StringRedisTemplate redis;
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
+
+    // 이 기기(sid)로 발급된 access token을 막는 표시. access token 수명만큼만 두면 그 뒤엔 남은 토큰이 없다
+    public static String revokedKey(String sid) {
+        return "RVK:" + sid;
+    }
 
     static String sessionsKey(String username) {
         return "RTS:" + username;
@@ -91,12 +98,13 @@ public class RefreshTokenService {
         JwtToken next = jwtTokenProvider.generateToken(auth, sid, nextJti);
 
         String result = redis.execute(ROTATE,
-                List.of(sessionsKey(username), "RTG:" + claims.getId()),
+                List.of(sessionsKey(username), "RTG:" + claims.getId(), revokedKey(sid)),
                 sid, claims.getId(), nextJti,
-                String.valueOf(JwtTokenProvider.REFRESH_TIME), toJson(next), String.valueOf(GRACE.toMillis()));
+                String.valueOf(JwtTokenProvider.REFRESH_TIME), toJson(next), String.valueOf(GRACE.toMillis()),
+                String.valueOf(JwtTokenProvider.ACCESS_TIME));
 
         if ("REUSED".equals(result)) {
-            log.warn("이미 교체된 refresh token 재사용 감지 - 해당 기기 세션 종료: username={}, sid={}", username, sid);
+            log.warn("이미 교체된 refresh token 재사용 감지 - 해당 기기 세션과 access token 차단: username={}, sid={}", username, sid);
             return Optional.empty();
         }
         if ("NONE".equals(result)) return Optional.empty(); // 로그아웃·차단으로 세션이 없다

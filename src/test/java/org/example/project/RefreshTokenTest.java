@@ -107,6 +107,21 @@ class RefreshTokenTest {
     }
 
     @Test
+    void 재사용이_감지되면_그_기기의_access_token도_바로_막히고_다른_기기는_유지된다() throws Exception {
+        String old = signIn().get("refreshToken").asText();
+        String access = reissueOk(old).get("accessToken").asText(); // 탈취자든 정상 사용자든 이 기기의 최신 토큰
+        String otherDevice = signIn().get("accessToken").asText();
+        expireGrace(old);
+
+        reissue(old); // 재사용 감지
+
+        mvc.perform(get("/api/member/myPage").header("Authorization", "Bearer " + access))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/member/myPage").header("Authorization", "Bearer " + otherDevice))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 기기마다_세션이_따로라서_한_기기의_재발급이_다른_기기를_끊지_않는다() throws Exception {
         String phone = signIn().get("refreshToken").asText();
         String laptop = signIn().get("refreshToken").asText();
