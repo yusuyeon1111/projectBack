@@ -43,3 +43,8 @@ perf/results/load-*.json
 
 # Claude Code 작업용 worktree
 .claude/worktrees/
+
+# 환경 변수 (비밀값)
+.env
+.env.*
+!.env.example
