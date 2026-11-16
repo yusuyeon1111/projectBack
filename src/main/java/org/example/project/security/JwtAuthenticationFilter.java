@@ -11,6 +11,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends GenericFilterBean {
@@ -30,14 +32,19 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
         String token = resolveToken(httpRequest);
         // 토큰 유효성 검사
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        // refresh token은 서명이 맞아도 권한 정보가 없어 인증에 쓰지 않는다(재발급 API 전용)
+        if (token != null && jwtTokenProvider.validateToken(token) && jwtTokenProvider.parseRefreshToken(token) == null) {
             // 로그아웃 여부 확인
             String isLogout = (String) redisTemplate.opsForValue().get(token);
             // 인증 객체 생성 및 등록
             if(ObjectUtils.isEmpty(isLogout)) {
                 Authentication authentication = jwtTokenProvider.getAuthentication(token);
-                // 차단된 회원은 기존 토큰도 인증하지 않는다
-                if (!Boolean.TRUE.equals(redisTemplate.hasKey("BAN:" + authentication.getName()))) {
+                // 차단된 회원이나 refresh token 재사용으로 끊긴 기기의 토큰은 인증하지 않는다. 키 둘을 EXISTS 한 번으로 본다
+                List<String> blocked = new ArrayList<>(List.of("BAN:" + authentication.getName()));
+                String sid = jwtTokenProvider.getSid(token);
+                if (sid != null) blocked.add(RefreshTokenService.revokedKey(sid));
+                Long hits = redisTemplate.countExistingKeys(blocked);
+                if (hits == null || hits == 0) {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }

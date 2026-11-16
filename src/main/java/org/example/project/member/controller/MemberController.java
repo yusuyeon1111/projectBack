@@ -13,6 +13,7 @@ import org.example.project.member.service.MemberService;
 import org.example.project.post.dto.*;
 import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
+import org.example.project.security.RefreshTokenService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -47,6 +48,7 @@ public class MemberController {
     private final MemberService memberService;
    private final PostService postService;
    private final PositionService positionService;
+   private final RefreshTokenService refreshTokenService;
     @PostMapping("/signup")
     public ResponseEntity<Member> signUp(@Valid @RequestBody SignUpDto signUpDto) {
        return ResponseEntity.ok(memberService.signUp(signUpDto));
@@ -64,6 +66,15 @@ public class MemberController {
         } catch (DisabledException ex) {
             return error(HttpStatus.FORBIDDEN, "비활성화된 계정입니다.");
         }
+    }
+
+    // access token이 만료됐을 때 refresh token으로 새 토큰 쌍을 받는다. 실패는 모두 401(다시 로그인)
+    @PostMapping("/reissue")
+    public ResponseEntity<?> reissue(@RequestBody Map<String, String> body) {
+        return refreshTokenService.reissue(body.get("refreshToken"))
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "로그인이 만료되었습니다. 다시 로그인해주세요.")));
     }
 
     @PostMapping("/logout")

@@ -58,7 +58,7 @@ class LoginTest {
     @AfterEach
     void cleanUp() {
         memberRepository.delete(member);
-        redis.delete(List.of("LOGIN_FAIL:" + username, "LOGIN_FAIL:" + nobody, "RT:" + username));
+        redis.delete(List.of("LOGIN_FAIL:" + username, "LOGIN_FAIL:" + nobody, "RTS:" + username));
     }
 
     @Test

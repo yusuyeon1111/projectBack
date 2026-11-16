@@ -27,7 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REDIS_HOST`, `REDIS_PORT`, `JWT_SECRET`(Base64 인코딩된 HMAC 키), `KAKAO_CLIENT_ID`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`.
 
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
-- JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
+- 스키마는 Flyway(`src/main/resources/db/migration`)가 관리하고 JPA는 `ddl-auto: validate`라서 엔티티와 테이블이 어긋나면 기동이 멈춘다. **엔티티를 바꾸면 `V{다음 번호}__설명.sql`을 함께 추가한다.** 이미 적용된 파일은 고치지 않는다(체크섬 불일치로 기동 실패). `V1__baseline.sql`은 Flyway 도입 전 `ddl-auto`가 만들던 스키마이고, ddl-auto로 테이블이 이미 만들어진 로컬 개발 DB에는 `baseline-on-migrate`로 실행 없이 적용 표시만 한다(운영 DB는 아직 없어서 첫 배포는 빈 DB에 V1부터 실행된다). 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
 - OSIV(`spring.jpa.open-in-view`)는 꺼져 있고, `WebMvcConfig`가 같은 인터셉터를 알림 구독(`/api/notifications/subscribe`)만 빼고 직접 건다. SSE 요청이 열려 있는 동안 DB 커넥션을 쥐지 않게 하려는 것이다. 다른 API는 여전히 OSIV에 기대어 지연 로딩할 수 있다.
 - 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
@@ -39,8 +39,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. 공개 API(회원가입·로그인·아이디/이메일 중복 체크, 게시글 목록·비로그인 상세, OAuth2 경로)만 `permitAll`이고 나머지는 인증 필요, `/api/admin/**`은 `ROLE_ADMIN`. 미인증 요청은 401(`HttpStatusEntryPoint`). **사용자 식별은 항상 컨트롤러의 `Principal`(토큰 subject = 회원 username)로 하고, 요청 본문·파라미터의 username은 믿지 않는다.** 글 수정·삭제와 신청 승인·거절은 `PostService.findOwnedPost` 등으로 작성자 본인인지 확인한다. 이 규칙은 `SecurityAccessTest`가 검증한다.
 - `JwtAuthenticationFilter`: `Authorization: Bearer <token>` 헤더를 파싱해 `SecurityContext`에 인증을 채운다. 토큰 자체가 Redis 키로 존재하면(`logout` 값) 블랙리스트로 간주해 인증을 건너뛴다. `/api/post/list`는 필터를 아예 통과시킨다.
-- `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. `roles` 클레임에 권한을 콤마로 저장한다.
-- Redis 키 규약: `RT:{username}` → refresh token, `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
+- `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. access token은 `roles`(콤마 구분)와 `sid`, refresh token은 `sid`·`jti`·`typ=refresh`를 담고 권한은 담지 않는다. 필터는 refresh token을 인증에 쓰지 않는다.
+- Refresh Token 회전(`RefreshTokenService`): 로그인(일반·카카오)마다 기기 세션 `sid`를 만들고, `POST /api/member/reissue`가 새 토큰 쌍을 주며 이전 refresh token을 무효로 한다. 이미 바뀐 토큰이 다시 오면 재사용(탈취)으로 보고 그 기기 세션을 지우고, 그 기기로 발급된 access token도 `RVK:{sid}`로 막는다. 탭 여러 개의 동시 재발급을 위해 바꾼 뒤 10초 동안은 같은 이전 토큰에 방금 만든 쌍을 그대로 준다. 비교·교체는 Lua 스크립트 하나로 원자 실행한다. 권한·차단 여부는 재발급 때 DB에서 읽는다. `RefreshTokenTest`가 검증한다.
+- Redis 키 규약: `RTS:{username}` → 해시(필드 `sid` → 현재 refresh token의 `jti`, 7일 TTL, 로그아웃은 필드 삭제, 차단은 키 삭제), `RTG:{이전 jti}` → 재발급 유예용 토큰 쌍 JSON(10초), `RVK:{sid}` → 재사용이 감지된 기기의 access token 차단(access token 수명만큼 TTL, 필터가 `BAN:`과 함께 EXISTS 한 번으로 확인), `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
 - 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후, 회원 username과 DB 권한으로 토큰을 만들어 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다. (OAuth2 인증 객체의 이름은 카카오 숫자 id라서 그대로 쓰면 안 된다.)
 - 계정 비활성화는 `Member.delYn = 'Y'`로 표현한다(soft delete). 로그인·OAuth 양쪽에서 이 값을 검사한다.
 
@@ -71,12 +72,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 포트폴리오 저장소라서 면접관이 커밋 로그를 읽는다는 전제로 쓴다. diff에 이미 "무엇을"이 있으니 메시지에는 "왜"를 적는다.
 
-- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style` 중 하나다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
+- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `ci`, `chore`, `style` 중 하나다. 측정해서 빨라진 변경은 `refactor`가 아니라 `perf`로 쓴다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
 - 제목은 50자 안팎으로, 의도가 드러나게 쓴다. `Update SecurityConfig.java`처럼 파일 이름만 적은 제목은 쓰지 않는다.
 - 판단이 들어간 커밋에는 본문이 필수다. 버그 수정, 설계 변경, 의존성이나 설정 변경이 여기에 해당한다. 본문은 문제, 원인, 해결 순서로 쓴다. 단순한 변경이면 본문을 생략해도 된다.
 - 커밋 하나에는 의도를 하나만 담는다. 기능 추가, 버그 수정, 리팩터링이 섞이면 나눠서 커밋한다. 작업 중에 발견한 버그는 별도의 `fix:` 커밋으로 분리해서 로그에 드러나게 한다.
 - README를 고칠 때도 내용을 적는다. 예: `docs: ERD 이미지 교체`
 - 이미 push한 이력은 rebase로 다시 쓰지 않는다.
+
+### 브랜치와 PR
+
+GitHub Flow를 쓴다. `main`은 항상 테스트가 통과하는 상태로 두고 직접 커밋하지 않는다.
+
+- 작업마다 `main`에서 브랜치를 딴다. 이름은 `<type>/<작업>` 형태의 소문자·하이픈이다. 예: `feat/sse-notification`, `fix/osiv-connection-leak`, `perf/post-list-search`
+- PR 제목은 커밋 제목과 같은 형식으로 쓰고, 본문은 `.github/pull_request_template.md`를 따른다. 성능 작업은 전후 측정값을 본문에 남긴다.
+- CI(`.github/workflows/ci.yml`)가 통과해야 병합한다.
+- 병합은 **Merge commit**으로 한다. Squash하면 작업 중 분리해 둔 `fix:` 커밋이 기능 커밋 하나에 묻혀 로그에서 사라진다.
+- 병합한 브랜치는 지운다.
 
 ```
 fix(back): 로그아웃 후에도 access token이 유효하던 문제 수정

@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -36,31 +37,40 @@ public class JwtTokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // JWT Access Token과 Refrech Token 생성
+    // 테스트·내부용: 저장하지 않는 새 로그인 세션으로 토큰을 만든다. 실제 로그인은 RefreshTokenService.issue를 쓴다
     public JwtToken generateToken(Authentication authentication) {
+        return generateToken(authentication, UUID.randomUUID().toString(), UUID.randomUUID().toString());
+    }
+
+    /**
+     * Access Token과 Refresh Token을 만든다.
+     * sid는 로그인 한 번(기기 하나)을 가리키고 재발급해도 유지된다. jti는 refresh token 한 장마다 새로 붙는다.
+     * 둘 다 있어야 기기별로 "지금 유효한 refresh token이 이것인지"를 Redis에서 확인할 수 있다.
+     */
+    public JwtToken generateToken(Authentication authentication, String sid, String refreshJti) {
         String authorities = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
         long now = (new Date().getTime());
 
-        Date assessTokenExpiresIn = new Date(now + ACCESS_TIME);
-        Date refreshTokenExpiresIn = new Date(now + REFRESH_TIME);
-
-        // Access Token 생성
         String accessToken = Jwts.builder()
-                .setSubject(authentication.getName()) // 사용자 식별자 (주로 username)
-                .claim("roles",authorities)            // 권한 정보를 "auth"라는 이름으로 저장
-                .setExpiration(assessTokenExpiresIn)  // 만료 시간 설정
-                .signWith(key, SignatureAlgorithm.HS256) // 비밀키와 서명 알고리즘 지정
-                .compact();
-
-        // Refresh Token 생성 사용자 정보나 권한을 넣지 않고 유효 기간과 서명만 설정
-        String refreshToken = Jwts.builder()
-                .setExpiration(refreshTokenExpiresIn)
+                .setSubject(authentication.getName()) // 회원 username
+                .claim("roles", authorities)
+                .claim("sid", sid) // 로그아웃 때 이 기기의 refresh token만 지우려고 넣는다
+                .setExpiration(new Date(now + ACCESS_TIME))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
 
-        // 토큰 DTO 반환
+        // 권한은 넣지 않는다. 재발급 때 DB에서 다시 읽어 차단·권한 변경이 바로 반영되게 한다
+        String refreshToken = Jwts.builder()
+                .setSubject(authentication.getName())
+                .setId(refreshJti)
+                .claim("sid", sid)
+                .claim("typ", "refresh")
+                .setExpiration(new Date(now + REFRESH_TIME))
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+
         return JwtToken.builder()
                 .grantType("Bearer")
                 .accessToken(accessToken)
@@ -68,6 +78,24 @@ public class JwtTokenProvider {
                 .refreshTokenExpiresIn(REFRESH_TIME)
                 .roles(Arrays.asList(authorities.split(",")))
                 .build();
+    }
+
+    // 서명이 맞고 만료되지 않은 refresh token이면 claims, 아니면 null. access token은 typ가 없어 걸러진다
+    public Claims parseRefreshToken(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            boolean valid = "refresh".equals(claims.get("typ")) && claims.getSubject() != null
+                    && claims.getId() != null && claims.get("sid") != null;
+            return valid ? claims : null;
+        } catch (JwtException | IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    // access token의 sid. 이 기능 전에 발급된 토큰에는 없다
+    public String getSid(String accessToken) {
+        Object sid = extractClaims(accessToken).get("sid");
+        return sid == null ? null : sid.toString();
     }
 
     // JWT 토큰 → 인증 객체(Authentication)로 변환

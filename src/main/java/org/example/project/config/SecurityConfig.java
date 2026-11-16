@@ -45,7 +45,7 @@ public class SecurityConfig {
         // 공개 API만 명시하고 나머지는 모두 인증 필요. 사용자 식별은 요청값이 아닌 토큰(Principal)으로 한다.
         http.authorizeHttpRequests(auth -> auth
                 .requestMatchers("/", "/error", "/oauth2/**", "/login/oauth2/**").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/member/signup", "/api/member/signin", "/api/post/list").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/member/signup", "/api/member/signin", "/api/member/reissue", "/api/post/list").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/member/idCheck", "/api/member/emlCheck", "/api/post/view/**").permitAll()
                 // EventSource는 Authorization 헤더를 못 붙여서 1회용 티켓으로 컨트롤러에서 인증한다
                 .requestMatchers(HttpMethod.GET, "/api/notifications/subscribe").permitAll()
