@@ -86,6 +86,12 @@ class PostValidationTest {
     }
 
     @Test
+    void 마감일_당일은_아직_진행중이다() throws Exception {
+        long id = createId(body("오늘 하루", today, today, "backend", 1));
+        assertThat(view(id).get("postStatus").asText()).isEqualTo("IN_PROGRESS");
+    }
+
+    @Test
     void 수정에서도_마감일이_시작일보다_빠르면_400이고_상태를_다시_계산한다() throws Exception {
         long id = createId(body("t", "2099-01-01", "2099-12-31", "backend", 1));
         assertThat(view(id).get("postStatus").asText()).isEqualTo("SCHEDULED");
