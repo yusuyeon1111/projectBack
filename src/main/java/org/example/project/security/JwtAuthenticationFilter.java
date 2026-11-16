@@ -30,7 +30,8 @@ public class JwtAuthenticationFilter extends GenericFilterBean {
 
         String token = resolveToken(httpRequest);
         // 토큰 유효성 검사
-        if (token != null && jwtTokenProvider.validateToken(token)) {
+        // refresh token은 서명이 맞아도 권한 정보가 없어 인증에 쓰지 않는다(재발급 API 전용)
+        if (token != null && jwtTokenProvider.validateToken(token) && jwtTokenProvider.parseRefreshToken(token) == null) {
             // 로그아웃 여부 확인
             String isLogout = (String) redisTemplate.opsForValue().get(token);
             // 인증 객체 생성 및 등록

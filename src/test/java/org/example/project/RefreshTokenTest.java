@@ -144,6 +144,13 @@ class RefreshTokenTest {
         assertThat(reissue("not-a-jwt").getResponse().getStatus()).isEqualTo(401);
     }
 
+    @Test
+    void refresh_token으로는_API를_호출할_수_없다() throws Exception {
+        String refresh = signIn().get("refreshToken").asText();
+
+        mvc.perform(get("/api/member/myPage").header("Authorization", "Bearer " + refresh))
+                .andExpect(status().isUnauthorized());
+    }
 
     private JsonNode signIn() throws Exception {
         return body(mvc.perform(post("/api/member/signin").contentType(MediaType.APPLICATION_JSON)
