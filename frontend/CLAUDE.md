@@ -42,7 +42,7 @@ CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경�
 - 레이아웃 없음: `/signin`, `/membersignup`, `/oauth2/success`
 - `<AdminLayout/>`(`components/Admin/Layout.tsx`) 아래: `/admin`
 
-**인증**: 서버 측 세션 없음. 로그인(`SignIn.tsx`) 또는 OAuth2 콜백(`OAuth2Success.tsx`, 쿼리스트링으로 토큰 수신)이 `localStorage`에 `accessToken`, `refreshToken`, `username`, `role`을 저장. `src/auth.ts`의 axios 전역 인터셉터가 모든 요청에 `Authorization: Bearer` 헤더를 붙이고, 401이면 저장값을 지우고 `/signin`으로 보낸다(`index.tsx`에서 import). 백엔드는 토큰으로 사용자를 식별하므로 요청에 username을 실어 보낼 필요가 없다. 로그아웃 등 인증값 정리는 `clearAuth()`를 쓴다. 관리자 판별은 `role === 'ROLE_ADMIN'`.
+**인증**: 서버 측 세션 없음. 로그인(`SignIn.tsx`) 또는 OAuth2 콜백(`OAuth2Success.tsx`, 쿼리스트링으로 토큰 수신)이 `localStorage`에 `accessToken`, `refreshToken`, `username`, `role`을 저장. `src/auth.ts`의 axios 전역 인터셉터가 모든 요청에 `Authorization: Bearer` 헤더를 붙이고, 401이면 `/api/member/reissue`로 토큰을 새로 받아 원래 요청을 한 번 다시 보내고, 재발급도 거절되면 저장값을 지우고 `/signin`으로 보낸다(`index.tsx`에서 import). 동시에 난 401은 재발급 요청 하나를 같이 기다린다(서버가 refresh token을 한 번 쓰면 바꾸므로). `src/auth.test.ts`가 검증한다. 백엔드는 토큰으로 사용자를 식별하므로 요청에 username을 실어 보낼 필요가 없다. 로그아웃 등 인증값 정리는 `clearAuth()`를 쓴다. 관리자 판별은 `role === 'ROLE_ADMIN'`.
 
 **게시글 = project / study 두 종류**: 같은 `/api/post/*` 엔드포인트를 쓰되 `category` 필드로 구분. 그래서 UI가 거의 복제된 쌍으로 존재함:
 - `PostForm.tsx` (category `'project'`, 등록 후 `/post/:id`) ↔ `StudyForm.tsx` (category `'study'`, 등록 후 `/study/:id`)
