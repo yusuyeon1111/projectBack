@@ -14,6 +14,7 @@ import org.example.project.member.repository.MemberRepository;
 import org.example.project.notification.service.SseEmitterRegistry;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.security.JwtTokenProvider;
+import org.example.project.security.RefreshTokenService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,6 +42,7 @@ public class MemberService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final RefreshTokenService refreshTokenService;
     Date date = new Date();
     @Transactional
     public Member signUp(SignUpDto signUpDto) {
@@ -80,9 +82,7 @@ public class MemberService {
 
         Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
 
-        if(redisTemplate.opsForValue().get("RT:"+authentication.getName())!=null) {
-            redisTemplate.delete("RT:"+authentication.getName());
-        }
+        refreshTokenService.revoke(authentication.getName(), jwtTokenProvider.getSid(accessToken));
 
         Long expiration = jwtTokenProvider.getExpiration(accessToken);
         redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
@@ -211,7 +211,7 @@ public class MemberService {
         memberRepository.save(member);
         // 이미 발급된 access token은 서명만으로 통과하므로, 남은 최대 수명 동안 필터에서 막는다
         redisTemplate.opsForValue().set("BAN:" + member.getUsername(), "ban", JwtTokenProvider.ACCESS_TIME, TimeUnit.MILLISECONDS);
-        redisTemplate.delete("RT:" + member.getUsername());
+        refreshTokenService.revokeAll(member.getUsername());
         sseEmitterRegistry.closeAll(member.getUsername());
         return "계정이 비활성화 되었습니다.";
     }
@@ -237,10 +237,6 @@ public class MemberService {
 
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        JwtToken token = jwtTokenProvider.generateToken(authentication);
-
-        redisTemplate.opsForValue().set("RT:"+authentication.getName(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
-
-        return token;
+        return refreshTokenService.issue(authentication);
     }
 }
