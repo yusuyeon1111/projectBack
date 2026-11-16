@@ -14,6 +14,7 @@ import org.example.project.member.repository.MemberRepository;
 import org.example.project.notification.service.SseEmitterRegistry;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.security.JwtTokenProvider;
+import org.example.project.security.LoginAttemptLimiter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,6 +42,7 @@ public class MemberService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final LoginAttemptLimiter loginAttemptLimiter;
     Date date = new Date();
     @Transactional
     public Member signUp(SignUpDto signUpDto) {
@@ -233,8 +235,10 @@ public class MemberService {
      * 차단 회원은 CustomerUserDetailsService가 disabled로 표시해 DisabledException이 난다.
      */
     public JwtToken signIn(@Valid SignInDto signInDto) {
+        loginAttemptLimiter.acquire(signInDto.getUsername());
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(
                 new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword()));
+        loginAttemptLimiter.reset(signInDto.getUsername());
 
         JwtToken token = jwtTokenProvider.generateToken(authentication);
 

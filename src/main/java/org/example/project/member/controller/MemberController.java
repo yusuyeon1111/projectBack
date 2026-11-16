@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import com.amazonaws.services.s3.AmazonS3;
@@ -58,6 +59,8 @@ public class MemberController {
         } catch (BadCredentialsException ex) {
             // 없는 아이디와 틀린 비밀번호를 같은 응답으로 돌려 아이디 존재 여부를 알 수 없게 한다
             return error(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다.");
+        } catch (LockedException ex) {
+            return error(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
         } catch (DisabledException ex) {
             return error(HttpStatus.FORBIDDEN, "비활성화된 계정입니다.");
         }

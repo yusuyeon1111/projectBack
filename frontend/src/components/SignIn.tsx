@@ -49,8 +49,8 @@ function Signin() {
           if (axios.isAxiosError(error) && error.response) {
               if (error.response.status === 401) {
                   alert("아이디 또는 비밀번호가 잘못되었습니다.");
-              } else if (error.response.status === 403) {
-                  alert(error.response.data.error); // 계정 비활성 등
+              } else if (error.response.status === 403 || error.response.status === 429) {
+                  alert(error.response.data.error); // 계정 비활성, 시도 횟수 초과
               } else {
                   alert("로그인 실패");
               }
