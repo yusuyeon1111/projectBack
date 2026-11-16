@@ -14,6 +14,9 @@ import org.example.project.post.dto.*;
 import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
 import org.example.project.security.RefreshTokenService;
+import org.example.project.exception.GlobalExceptionHandler;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -56,6 +59,8 @@ public class MemberController {
         try {
             JwtToken token = memberService.signIn(signInDto);
             return ResponseEntity.ok(token);
+        } catch (DataAccessResourceFailureException | QueryTimeoutException ex) {
+            throw ex; // 아래 핸들러가 503으로 바꾼다
         } catch (RuntimeException ex) {
             // 로그인 실패 시 메시지 반환
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -155,6 +160,12 @@ public class MemberController {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
+    // 이 컨트롤러의 RuntimeException(400) 핸들러가 전역 핸들러보다 먼저 잡으므로 여기서도 503으로 바꾼다
+    @ExceptionHandler({DataAccessResourceFailureException.class, QueryTimeoutException.class})
+    public ResponseEntity<Map<String, String>> handleUnavailable(RuntimeException ex) {
+        return GlobalExceptionHandler.unavailable();
     }
 
     @ExceptionHandler(RuntimeException.class)

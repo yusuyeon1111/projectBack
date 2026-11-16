@@ -19,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.example.project.exception.GlobalExceptionHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -53,7 +54,17 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
         );
         // 미인증 요청은 OAuth 로그인 페이지로 302 리다이렉트하지 말고 401로 응답
-        http.exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
+        // 토큰이 있었지만 Redis 장애로 확인하지 못한 경우는 401이 아니라 503이다. 401이면 프론트가 로그아웃시킨다
+        HttpStatusEntryPoint unauthorized = new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED);
+        http.exceptionHandling(e -> e.authenticationEntryPoint((request, response, ex) -> {
+            if (request.getAttribute(JwtAuthenticationFilter.REDIS_UNAVAILABLE) == null) {
+                unauthorized.commence(request, response, ex);
+                return;
+            }
+            response.setStatus(HttpStatus.SERVICE_UNAVAILABLE.value());
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\":\"" + GlobalExceptionHandler.UNAVAILABLE_MESSAGE + "\"}");
+        }));
         http.sessionManagement((session)->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 세션정책설정
                 .oauth2Login(oauth2 -> oauth2
                         .userInfoEndpoint(info -> info.userService(customerOAuth2UserService))

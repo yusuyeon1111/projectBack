@@ -1,5 +1,7 @@
 package org.example.project.exception;
 
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,6 +13,18 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    public static final String UNAVAILABLE_MESSAGE = "일시적인 장애로 요청을 처리하지 못했습니다. 잠시 후 다시 시도해주세요.";
+
+    // Redis·DB 연결 실패와 명령 시간 초과. 요청이 잘못된 게 아니므로 400/403이 아니라 503이다
+    public static ResponseEntity<Map<String, String>> unavailable() {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", UNAVAILABLE_MESSAGE));
+    }
+
+    @ExceptionHandler({DataAccessResourceFailureException.class, QueryTimeoutException.class})
+    public ResponseEntity<Map<String, String>> handleUnavailable(RuntimeException ex) {
+        return unavailable();
+    }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException ex) {
