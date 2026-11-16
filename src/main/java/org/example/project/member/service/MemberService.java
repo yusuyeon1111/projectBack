@@ -14,6 +14,7 @@ import org.example.project.member.repository.MemberRepository;
 import org.example.project.notification.service.SseEmitterRegistry;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.security.JwtTokenProvider;
+import org.example.project.security.LoginAttemptLimiter;
 import org.example.project.security.RefreshTokenService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +43,7 @@ public class MemberService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final LoginAttemptLimiter loginAttemptLimiter;
     private final RefreshTokenService refreshTokenService;
     Date date = new Date();
     @Transactional
@@ -227,15 +229,16 @@ public class MemberService {
         return new MemberResponseDto(member);
     }
 
+    /**
+     * 비밀번호 확인은 AuthenticationManager(DaoAuthenticationProvider)에 맡긴다. 없는 아이디도 더미 해시와 비교해
+     * 응답 시간이 같고, 없는 아이디와 틀린 비밀번호가 같은 BadCredentialsException이 되어 아이디 존재 여부가 드러나지 않는다.
+     * 차단 회원은 CustomerUserDetailsService가 disabled로 표시해 DisabledException이 난다.
+     */
     public JwtToken signIn(@Valid SignInDto signInDto) {
-        Member member = memberRepository.findByUsernameAndDelYn(signInDto.getUsername(), "N")
-                .orElseThrow(()-> new RuntimeException("비활성화된 계정입니다."));
-        if (!passwordEncoder.matches(signInDto.getPassword(), member.getPassword())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
-        }
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword());
-
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        loginAttemptLimiter.acquire(signInDto.getUsername());
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(
+                new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword()));
+        loginAttemptLimiter.reset(signInDto.getUsername());
 
         return refreshTokenService.issue(authentication);
     }
