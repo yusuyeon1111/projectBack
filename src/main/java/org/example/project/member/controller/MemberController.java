@@ -16,6 +16,8 @@ import org.example.project.post.service.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import com.amazonaws.services.s3.AmazonS3;
@@ -52,12 +54,12 @@ public class MemberController {
     @PostMapping("/signin")
     public ResponseEntity<?> signIn(@Valid @RequestBody SignInDto signInDto) {
         try {
-            JwtToken token = memberService.signIn(signInDto);
-            return ResponseEntity.ok(token);
-        } catch (RuntimeException ex) {
-            // 로그인 실패 시 메시지 반환
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", ex.getMessage()));
+            return ResponseEntity.ok(memberService.signIn(signInDto));
+        } catch (BadCredentialsException ex) {
+            // 없는 아이디와 틀린 비밀번호를 같은 응답으로 돌려 아이디 존재 여부를 알 수 없게 한다
+            return error(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호가 올바르지 않습니다.");
+        } catch (DisabledException ex) {
+            return error(HttpStatus.FORBIDDEN, "비활성화된 계정입니다.");
         }
     }
 
@@ -131,6 +133,10 @@ public class MemberController {
 
         String fileUrl = "https://" + bucketName + ".s3." + region + ".amazonaws.com/" + objectKey;
         return Map.of("url", url.toString(), "key", objectKey, "fileUrl", fileUrl );
+    }
+
+    private static ResponseEntity<Map<String, String>> error(HttpStatus status, String message) {
+        return ResponseEntity.status(status).body(Map.of("error", message));
     }
 
     private String resolveToken(String token) {
