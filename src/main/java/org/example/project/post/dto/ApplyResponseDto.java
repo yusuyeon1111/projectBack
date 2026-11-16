@@ -1,5 +1,6 @@
 package org.example.project.post.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,8 +20,11 @@ public class ApplyResponseDto {
     private String postTitle; // 글 제목
     private String category; // 글 카테고리
     private Long getMemberCount;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime appliedAt; // 신청일자
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime acceptedAt; // 수락일자
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime rejectedAt; // 거절일자
     public ApplyResponseDto(
             Long applyId,

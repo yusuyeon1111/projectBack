@@ -15,11 +15,13 @@ import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import java.net.URL;
+import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -76,12 +78,14 @@ public class MemberController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<MemberResponseDto> update(@Valid @RequestBody UpdateMemberDto updateMemberDto) {
+    public ResponseEntity<MemberResponseDto> update(@Valid @RequestBody UpdateMemberDto updateMemberDto, Principal principal) {
+       updateMemberDto.setUsername(principal.getName()); // 본문의 username은 무시하고 본인만 수정
        return ResponseEntity.ok(memberService.updateInfo(updateMemberDto));
     }
 
     @GetMapping("/myPage")
-    public MyPageResponseDto myPage(@RequestParam String username) {
+    public MyPageResponseDto myPage(Principal principal) {
+       String username = principal.getName();
        MemberResponseDto member = memberService.selectMypageById(username);
        List<PostResponseDto> posts = postService.findMyPosts(username);
        List<ApplyResponseDto> apply = positionService.findApplyPost(username);
@@ -97,13 +101,14 @@ public class MemberController {
     }
 
     @GetMapping("/getUserInfo/{memberId}")
-    public ResponseEntity<MemberResponseDto> getUserInfo(@PathVariable Long memberId) {
-        MemberResponseDto member = memberService.selectById(memberId);
+    public ResponseEntity<MemberResponseDto> getUserInfo(@PathVariable Long memberId, Principal principal) {
+        MemberResponseDto member = memberService.selectById(memberId, principal.getName());
         return ResponseEntity.ok(member);
     }
 
     @GetMapping("/presigned-url")
-    public Map<String, String> presignedUrl(@RequestParam String filename, @RequestParam String username) {
+    public Map<String, String> presignedUrl(@RequestParam String filename, Principal principal) {
+        String username = principal.getName();
         String bucketName = "aws-practice-img-suyeon";
         String objectKey = "uploads/"+username+"/"+filename;
 
@@ -133,6 +138,12 @@ public class MemberController {
             return token.substring(7);
         }
         return null;
+    }
+
+    // 아래 RuntimeException(400) 핸들러에 권한 거부까지 묻히지 않도록 403으로 분리
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
     }
 
     @ExceptionHandler(RuntimeException.class)

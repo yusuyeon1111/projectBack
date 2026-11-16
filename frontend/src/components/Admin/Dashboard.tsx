@@ -19,16 +19,17 @@ function Dashboard() {
   },[])
 
   const fetchPosts = async () => {
+    const year = new Date().getFullYear();
     try {
       const res = await axios.get<AdminChart>(`${process.env.REACT_APP_API_URL}/api/admin/chartAll`, {
-        params: { year: 2025 },
+        params: { year },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
       });
       setStatusData(res.data.postStsStatus)
       const position = await axios.get<PositionStats[]>(`${process.env.REACT_APP_API_URL}/api/admin/chartPosition`, {
-        params: { year: 2025 },
+        params: { year },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
@@ -37,7 +38,7 @@ function Dashboard() {
       console.log(position.data)
 
       const post = await axios.get<CategoryStats[]>(`${process.env.REACT_APP_API_URL}/api/admin/chartPost`, {
-        params: { year: 2025 },
+        params: { year },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
@@ -46,7 +47,7 @@ function Dashboard() {
       setChartData(chartData);
 
       const member = await axios.get<CategoryStats[]>(`${process.env.REACT_APP_API_URL}/api/admin/chartPre`, {
-        params: { year: 2025 },
+        params: { year },
         headers: {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }

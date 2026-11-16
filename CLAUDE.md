@@ -19,6 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 린트/포맷터 설정은 없다.
 
+목록 검색 성능 측정은 `perf/`에 있다(더미 데이터 `seed.sql`, k6 시나리오, 결과 기록 `perf/README.md`). 측정은 `project_perf` 스키마와 8081 포트의 별도 앱으로 하고, 개선할 때마다 같은 시나리오로 다시 재서 README에 전후를 남긴다.
+
 ### 실행에 필요한 환경변수
 
 `application.yml`은 모든 비밀값을 환경변수로 읽는다. 프로필 분리(`application-local.yml` 등)가 없으므로 로컬에서도 전부 지정해야 한다:
@@ -26,7 +28,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
 - JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
-- 유일한 테스트 `ProjectApplicationTests.contextLoads`는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
+- OSIV(`spring.jpa.open-in-view`)는 꺼져 있고, `WebMvcConfig`가 같은 인터셉터를 알림 구독(`/api/notifications/subscribe`)만 빼고 직접 건다. SSE 요청이 열려 있는 동안 DB 커넥션을 쥐지 않게 하려는 것이다. 다른 API는 여전히 OSIV에 기대어 지연 로딩할 수 있다.
+- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
 ## 아키텍처
 
@@ -34,23 +37,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 인증 흐름 (JWT + Redis)
 
-- `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. `/api/post/**`, `/api/member/**`, `/oauth2/**`는 `permitAll`, `/api/admin/**`은 `ROLE_ADMIN`. 즉 post/member 엔드포인트는 **Spring Security 레벨에서 인증을 강제하지 않으며** 대부분 `username`을 요청 파라미터/바디로 받아 동작한다. 새 엔드포인트를 추가할 때 이 점을 의식할 것.
+- `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. 공개 API(회원가입·로그인·아이디/이메일 중복 체크, 게시글 목록·비로그인 상세, OAuth2 경로)만 `permitAll`이고 나머지는 인증 필요, `/api/admin/**`은 `ROLE_ADMIN`. 미인증 요청은 401(`HttpStatusEntryPoint`). **사용자 식별은 항상 컨트롤러의 `Principal`(토큰 subject = 회원 username)로 하고, 요청 본문·파라미터의 username은 믿지 않는다.** 글 수정·삭제와 신청 승인·거절은 `PostService.findOwnedPost` 등으로 작성자 본인인지 확인한다. 이 규칙은 `SecurityAccessTest`가 검증한다.
 - `JwtAuthenticationFilter`: `Authorization: Bearer <token>` 헤더를 파싱해 `SecurityContext`에 인증을 채운다. 토큰 자체가 Redis 키로 존재하면(`logout` 값) 블랙리스트로 간주해 인증을 건너뛴다. `/api/post/list`는 필터를 아예 통과시킨다.
 - `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. `roles` 클레임에 권한을 콤마로 저장한다.
-- Redis 키 규약: `RT:{username}` → refresh token, `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL).
-- 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후 토큰을 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다.
+- Redis 키 규약: `RT:{username}` → refresh token, `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
+- 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후, 회원 username과 DB 권한으로 토큰을 만들어 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다. (OAuth2 인증 객체의 이름은 카카오 숫자 id라서 그대로 쓰면 안 된다.)
 - 계정 비활성화는 `Member.delYn = 'Y'`로 표현한다(soft delete). 로그인·OAuth 양쪽에서 이 값을 검사한다.
 
 ### 도메인 모델
 
 - `Member` ↔ `MemberProfile`(1:1, cascade ALL) + `member_roles` ElementCollection.
-- `Post` → `PostPosition`(모집 포지션, 1:N) → `PostPositionMember`(지원 내역, status: `apply`/`accept`/`reject`). `Post` → `PostStack`, `PostLike`.
+- `Post` → `PostPosition`(모집 포지션, 1:N) → `PostPositionMember`(지원 내역, status: `APPLY`/`ACCEPT`/`REJECT`, (포지션, 회원) 유니크 제약으로 중복 신청 방지). `Post` → `PostStack`, `PostLike`.
+- 신청 승인·거절(`PositionService`)은 `PostRepository.findByApplicationIdForUpdate`로 글 행을 비관적 락으로 잠근 뒤 정원을 확인한다. **이 락은 트랜잭션의 첫 조회여야 한다.** MySQL REPEATABLE READ는 첫 일반 조회 시점의 스냅샷을 읽으므로, 잠금 전에 조회가 있으면 다른 트랜잭션이 커밋한 승인 수를 못 봐서 정원을 넘긴다. 정원 초과·이미 처리된 신청은 `IllegalStateException` → 409.
 - `Post.postStatus`(`SCHEDULED`/`IN_PROGRESS`/`END`)는 `PostStatusScheduler`가 매일 00:00 및 앱 기동 시 `startDate`/`endDate` 기준으로 일괄 갱신한다. `Post.delYn`은 관리자 숨김 처리용.
 - 통계/차트 쿼리(`countMemberPerMonth` 등)는 리포지토리에 JPQL로 작성되어 `Object[]`를 반환하고 서비스에서 DTO로 매핑한다.
 
+### 알림 (SSE)
+
+- 포지션 신청 → 글 작성자, 승인·거절 → 신청자에게 알림을 만든다(`NotificationService`, `notification` 테이블). 글 제목·카테고리·역할은 만든 시점 값을 복사해 둔다. 알림 행은 승인·거절과 같은 트랜잭션에서 저장되므로 409로 롤백되면 남지 않는다.
+- 실시간 전송은 `NotificationCreatedEvent`를 `@TransactionalEventListener(AFTER_COMMIT)`로 받아 `SseEmitterRegistry`(회원별 열린 연결, 서버 메모리)로 보낸다. 커밋된 알림만 나간다. 연결이 서버 메모리에 있어 **서버가 한 대일 때만 맞다**(여러 대면 Redis Pub/Sub 필요).
+- 구독 인증: `EventSource`는 헤더를 못 붙이므로 `POST /api/notifications/ticket`(Bearer)으로 1회용 티켓을 받고 `GET /api/notifications/subscribe?ticket=`로 연다. 구독 경로는 `permitAll`이고 컨트롤러가 티켓·`BAN:` 키를 확인한다.
+- 재연결: 티켓이 1회용이라 브라우저 자동 재연결은 실패한다. 프론트(`useNotifications`)가 에러 시 직접 닫고 새 티켓 + `lastEventId` 쿼리로 다시 붙으면 서버가 그 이후 알림을 다시 보낸다. 로그아웃·차단 시 서버가 그 회원의 연결을 닫는다.
+
 ### 예외 처리
 
-`GlobalExceptionHandler`가 `RuntimeException` → 403, `BadCredentialsException` → 401로 변환한다. 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
+`GlobalExceptionHandler`가 `RuntimeException` → 403, `IllegalStateException` → 409, `BadCredentialsException` → 401로 변환한다(본문은 `{error: 메시지}`, 프론트는 `auth.ts`의 `errorMessage`로 꺼낸다). 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
 
 ### S3 업로드
 
@@ -60,12 +71,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 포트폴리오 저장소라서 면접관이 커밋 로그를 읽는다는 전제로 쓴다. diff에 이미 "무엇을"이 있으니 메시지에는 "왜"를 적는다.
 
-- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `style` 중 하나다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
+- 형식은 `<type>(<scope>): <제목>`, 빈 줄, 본문 순서다. type은 `feat`, `fix`, `perf`, `refactor`, `test`, `docs`, `ci`, `chore`, `style` 중 하나다. 측정해서 빨라진 변경은 `refactor`가 아니라 `perf`로 쓴다. scope는 `back` 또는 `front`이고, 양쪽을 다 바꾸면 생략한다. 제목과 본문은 한국어로 쓴다.
 - 제목은 50자 안팎으로, 의도가 드러나게 쓴다. `Update SecurityConfig.java`처럼 파일 이름만 적은 제목은 쓰지 않는다.
 - 판단이 들어간 커밋에는 본문이 필수다. 버그 수정, 설계 변경, 의존성이나 설정 변경이 여기에 해당한다. 본문은 문제, 원인, 해결 순서로 쓴다. 단순한 변경이면 본문을 생략해도 된다.
 - 커밋 하나에는 의도를 하나만 담는다. 기능 추가, 버그 수정, 리팩터링이 섞이면 나눠서 커밋한다. 작업 중에 발견한 버그는 별도의 `fix:` 커밋으로 분리해서 로그에 드러나게 한다.
 - README를 고칠 때도 내용을 적는다. 예: `docs: ERD 이미지 교체`
 - 이미 push한 이력은 rebase로 다시 쓰지 않는다.
+
+### 브랜치와 PR
+
+GitHub Flow를 쓴다. `main`은 항상 테스트가 통과하는 상태로 두고 직접 커밋하지 않는다.
+
+- 작업마다 `main`에서 브랜치를 딴다. 이름은 `<type>/<작업>` 형태의 소문자·하이픈이다. 예: `feat/sse-notification`, `fix/osiv-connection-leak`, `perf/post-list-search`
+- PR 제목은 커밋 제목과 같은 형식으로 쓰고, 본문은 `.github/pull_request_template.md`를 따른다. 성능 작업은 전후 측정값을 본문에 남긴다.
+- CI(`.github/workflows/ci.yml`)가 통과해야 병합한다.
+- 병합은 **Merge commit**으로 한다. Squash하면 작업 중 분리해 둔 `fix:` 커밋이 기능 커밋 하나에 묻혀 로그에서 사라진다.
+- 병합한 브랜치는 지운다.
 
 ```
 fix(back): 로그아웃 후에도 access token이 유효하던 문제 수정

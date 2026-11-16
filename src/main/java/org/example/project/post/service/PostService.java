@@ -1,6 +1,5 @@
 package org.example.project.post.service;
 
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,16 +14,24 @@ import org.example.project.post.repositoty.PostLikeRepository;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.post.repositoty.PostPositionRepository;
 import org.example.project.post.repositoty.PostRepository;
+import org.example.project.post.repositoty.PostSearchSpec;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.JpaSort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +44,9 @@ public class PostService {
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final PostLikeRepository postLikeRepository;
+    private final EntityManager entityManager;
+
+    private static final int PAGES_AHEAD = 10;
 
     // 게시글 작성
     @Transactional
@@ -99,11 +109,20 @@ public class PostService {
         return new PostResponseDto(post);
     }
 
+    // 본인이 작성한 글만 반환, 아니면 403
+    public Post findOwnedPost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+        if (!post.getAuthor().equals(username)) {
+            throw new AccessDeniedException("본인이 작성한 글만 처리할 수 있습니다.");
+        }
+        return post;
+    }
+
     // 게시글 수정
     @Transactional
-    public PostResponseDto updatePost(@Valid PostRequestDto dto) {
-        Post post = postRepository.findById(dto.getId())
-                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+    public PostResponseDto updatePost(@Valid PostRequestDto dto, String username) {
+        Post post = findOwnedPost(dto.getId(), username);
 
         if (dto.getContent() != null) {
             post.setContent(dto.getContent());
@@ -135,52 +154,48 @@ public class PostService {
             }
         }
 
-        // 모집 포지션 업데이트
-        if (dto.getPositions() != null) {
-            post.getPositions().clear(); // 기존 데이터 삭제
-            for (PostRequestDto.PostPositionDto positionDto : dto.getPositions()) {
-                PostPosition position = new PostPosition();
-                position.setPost(post);
-                position.setRole(positionDto.getRole());
-                post.getPositions().add(position); // 리스트에 추가
-            }
-        }
+        // 모집 포지션은 수정하지 않는다. 포지션에 신청 내역(PostPositionMember)이 cascade로 묶여 있어
+        // 지우고 다시 만들면 신청 기록이 삭제되고 인원(count)도 0이 된다. 수정 화면에도 포지션 편집 UI가 없다.
 
         return new PostResponseDto(post);
     }
 
     // 게시글 삭제
-    public void deletePost(Long postId) {
-        if(!postRepository.existsById(postId)) {
-            throw new EntityNotFoundException("게시글이 존재하지 않습니다.");
-        }
-        postRepository.deleteById(postId);
+    public void deletePost(Long postId, String username) {
+        postRepository.delete(findOwnedPost(postId, username));
     }
 
-    // 게시글 전체 리스트 조회
+    // 게시글 전체 리스트 조회. DTO 변환 중 지연 로딩이 일어나므로 OSIV에 기대지 않고 트랜잭션 안에서 끝낸다.
+    //
+    // 전체 건수는 세지 않는다. 프론트는 건수를 보여 주지 않고 페이지 버튼만 그리므로 "뒤에 몇 페이지가 더 있는지"면 충분하다.
+    // count는 조건에 맞는 글을 전부 읽어야 해서, 목록은 몇 ms인데 count 때문에 1~3초가 걸렸다.
+    // 대신 현재 페이지부터 PAGES_AHEAD 페이지 분량 + 1건의 id만 정렬 인덱스로 읽고, 앞쪽 한 페이지만 엔티티로 가져온다.
+    // 그래서 응답의 totalElements는 정확한 전체 건수가 아니라 "적어도 이만큼은 있다"는 값이다.
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public Page<PostResponseDto> getPostList(PostRequestDto dto) {
-        Sort sort;
-        if ("popular".equalsIgnoreCase(dto.getSortType())) {
-            sort = Sort.by(Sort.Direction.DESC, "likeCount");
-        } else {
-            sort = JpaSort.unsafe(Sort.Direction.DESC, "COALESCE(p.updated, p.created)");
-        }
+        Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize(), PostSearchSpec.sort(dto.getSortType()));
+        List<Long> ids = findPostIds(PostSearchSpec.of(dto), pageable, dto.getSize() * PAGES_AHEAD + 1);
+        List<Long> pageIds = ids.subList(0, Math.min(dto.getSize(), ids.size()));
 
-        Pageable pageable = PageRequest.of(dto.getPage(), dto.getSize(), sort);
+        Map<Long, Post> posts = postRepository.findAllById(pageIds).stream()
+                .collect(Collectors.toMap(Post::getId, Function.identity()));
+        List<PostResponseDto> content = pageIds.stream()
+                .map(posts::get).filter(Objects::nonNull) // 두 조회 사이에 지워진 글
+                .map(PostResponseDto::new).toList();
+        return new PageImpl<>(content, pageable, pageable.getOffset() + ids.size());
+    }
 
-        Page<Post> postPage = postRepository.findPostsWithFilter(
-                dto.getCategory(),
-                dto.getStatus(),
-                dto.getPostStatus(),
-                dto.getProjectType(),
-                dto.getRegion(),
-                dto.getPosition(),
-                dto.getKeyword(),
-                dto.getStackKeyword(),
-                pageable
-        );
-
-        return postPage.map(PostResponseDto::new);
+    private List<Long> findPostIds(Specification<Post> spec, Pageable pageable, int limit) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Post> root = query.from(Post.class);
+        query.select(root.get("id"))
+                .where(spec.toPredicate(root, query, cb))
+                .orderBy(QueryUtils.toOrders(pageable.getSort(), root, cb));
+        return entityManager.createQuery(query)
+                .setFirstResult((int) pageable.getOffset())
+                .setMaxResults(limit)
+                .getResultList();
     }
 
     public List<PostResponseDto> findMyPosts(String username) {

@@ -11,7 +11,9 @@ import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -49,7 +51,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             Map<String, Object> kakaoAccount = (Map<String, Object>) oAuth2User.getAttributes().get("kakao_account");
             Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
             email = (String) kakaoAccount.get("email");
-            System.out.println("실행"+email);
             name = (String) profile.get("nickname");
         } else if ("naver".equals(registrationId)) {
             email = (String) oAuth2User.getAttributes().get("email");
@@ -96,8 +97,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
 
         // JWT 토큰 생성 및 Redis 저장
-        JwtToken token = jwtTokenProvider.generateToken(authentication);
-        redisTemplate.opsForValue().set("RT:" + authentication.getName(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
+        // OAuth2 인증 객체의 이름은 카카오 숫자 id라서, 토큰 subject를 회원 username으로 맞추고 권한도 DB 기준으로 넣는다.
+        Authentication memberAuth = new UsernamePasswordAuthenticationToken(
+                member.getUsername(), null,
+                member.getRoles().stream().map(SimpleGrantedAuthority::new).toList());
+        JwtToken token = jwtTokenProvider.generateToken(memberAuth);
+        redisTemplate.opsForValue().set("RT:" + member.getUsername(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
 
         // 리다이렉트 URL 생성
         String redirectUri = UriComponentsBuilder

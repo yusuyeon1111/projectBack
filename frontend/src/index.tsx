@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+import './auth';
 import App from './App';
 import SignIn from './components/SignIn';
 import OAuth2Success from './components/OAuth2Success';

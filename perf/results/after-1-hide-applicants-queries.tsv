@@ -1,0 +1,9 @@
+scenario	statements	sql_ms	resp_ms	resp_bytes	total_elements
+S1_latest	12	122924	123807	5146	1000000
+S2_popular	12	55424	55483	5475	1000000
+S3_category_status	12	33399	33442	4772	420000
+S4_region_position	12	2469	2491	5453	7846
+S5_keyword_hit	12	24383	24464	5173	100000
+S6_keyword_miss	1	5496	5537	65	0
+S7_stack	12	10383	10441	5387	100000
+S8_deep_page	12	117431	117489	5351	1000000

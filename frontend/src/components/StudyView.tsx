@@ -9,6 +9,7 @@ import '../css/View.css'
 import { IoSettingsSharp } from "react-icons/io5";
 import LoginRequiredModal from './LoginRequiredModal';
 import { Post, regions } from '../types';
+import { errorMessage } from '../auth';
 
 function StudyView() {
   const { postId } = useParams(); // URL에서 postId 받아오기
@@ -25,10 +26,10 @@ function StudyView() {
     const fetchPost = async () => {
       try {
         const response = username
-          ? await axios.get<Post>(`${process.env.REACT_APP_API_URL}/api/post/viewUsername/${postId}?username=${username}`)
+          ? await axios.get<Post>(`${process.env.REACT_APP_API_URL}/api/post/viewUsername/${postId}`)
           : await axios.get<Post>(`${process.env.REACT_APP_API_URL}/api/post/view/${postId}`);
         if (username) {
-          axios.get<number[]>(`${process.env.REACT_APP_API_URL}/api/post/applied/${postId}?username=${username}`)
+          axios.get<number[]>(`${process.env.REACT_APP_API_URL}/api/post/applied/${postId}`)
             .then(res => setAppliedPositions(res.data));
         }
         setPost(response.data);
@@ -77,6 +78,18 @@ function StudyView() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm("정말 삭제하시겠습니까?")) return;
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/post/delete/${postId}`);
+      alert("게시글이 삭제되었습니다.")
+      navigate("/");
+    } catch(error) {
+      console.error('삭제 오류:', error);
+      alert('오류가 발생했습니다. 다시 시도해 주세요.');
+    }
+  }
+
   const likeHandler = async (postId: number, nowLike: boolean) => {
     if(!username){
       setLoginModalOpen(true);
@@ -87,13 +100,12 @@ function StudyView() {
           await axios.post(`${process.env.REACT_APP_API_URL}/api/post/like`, null, {
           params: {
             postId: postId,
-            username: username
           }
         });
         setLike(true);
         } else {
           await axios.delete(`${process.env.REACT_APP_API_URL}/api/post/unLike`, {
-          params: { id: postId, username: username }
+          params: { id: postId }
         });
         setLike(false);
         }
@@ -110,12 +122,11 @@ function StudyView() {
     try {
       await axios.post(`${process.env.REACT_APP_API_URL}/api/post/apply`, {
         positionId,
-        username,
       });
       alert("스터디 신청 되었습니다.");
       setAppliedPositions([...appliedPositions, positionId]); // 성공하면 상태에 추가
     } catch (error: any) {
-      alert(error.response?.data || "신청 실패");
+      alert(errorMessage(error, "신청 실패"));
     }
   }
 
@@ -205,7 +216,7 @@ function StudyView() {
                   {showEditMenu && (
                     <div className='view-menu'>
                       <p onClick={() => setUseUpdate(true)}>수정</p>
-                      <p onClick={() => navigate("/studyform")}>삭제</p>
+                      <p onClick={handleDelete}>삭제</p>
                     </div>
                   )}
                 </div>

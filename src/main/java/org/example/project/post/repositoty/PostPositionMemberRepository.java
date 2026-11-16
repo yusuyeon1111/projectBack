@@ -18,6 +18,8 @@ import java.util.List;
 public interface PostPositionMemberRepository extends JpaRepository<PostPositionMember, Long> {
     boolean existsByPostPositionAndMember(PostPosition position, Member member);
 
+    boolean existsByMember_IdAndPostPosition_Post_Author(Long memberId, String author);
+
     List<PostPositionMember> findByMemberUsernameAndPostPosition_Post_Id(String username, Long postId);
 
     @Query("""
@@ -66,7 +68,9 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
     SELECT new org.example.project.post.dto.PostAcceptDto(
         p.id,
         p.title,
-        ppm.appliedAt,
+        p.category,
+        pp.role,
+        ppm.acceptedAt,
         p.startDate,
         p.endDate,
         p.postStatus

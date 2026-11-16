@@ -1,8 +1,9 @@
 import axios from 'axios';
 import React, { useState, useEffect } from "react";
-import { Post as PostType, PageResponse } from "../../types";
+import { Post as PostType, PageResponse, pageNumbers } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
+import { errorMessage } from '../../auth';
 function Post() {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [totalPages, setTotalPages] = useState(0);
@@ -37,7 +38,7 @@ function Post() {
     alert(res.data);
     fetchPosts(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(error.response?.data ?? "요청에 실패했습니다.");
+    alert(errorMessage(error, "요청에 실패했습니다."));
   }
 }
   return (
@@ -68,11 +69,11 @@ function Post() {
                     <td data-label="수정일자">{post.updated && new Date(post.updated).toLocaleString()}</td>
                     <td data-label="게시글 관리">{post.delYn === 'N' ?
                         <button onClick={() => changePostStatus(post.id, 'Y')}  className="delete-btn">
-                            <FiRefreshCw /> 게시글 비공개
+                            <MdDelete /> 게시글 비공개
                         </button>
                     :
-                        <button>
-                        <MdDelete onClick={(()=>{changePostStatus(post.id, 'N')})}/> 게시글 공개
+                        <button onClick={() => changePostStatus(post.id, 'N')}>
+                            <FiRefreshCw /> 게시글 공개
                         </button>
                     }</td>
                     </tr>
@@ -90,7 +91,7 @@ function Post() {
               이전
             </button>
     
-            {Array.from({ length: totalPages }, (_, i) => (
+            {pageNumbers(filters.page, totalPages).map(i => (
               <button
                 key={i}
                 className={filters.page === i ? "active" : ""}
