@@ -39,8 +39,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. 공개 API(회원가입·로그인·아이디/이메일 중복 체크, 게시글 목록·비로그인 상세, OAuth2 경로)만 `permitAll`이고 나머지는 인증 필요, `/api/admin/**`은 `ROLE_ADMIN`. 미인증 요청은 401(`HttpStatusEntryPoint`). **사용자 식별은 항상 컨트롤러의 `Principal`(토큰 subject = 회원 username)로 하고, 요청 본문·파라미터의 username은 믿지 않는다.** 글 수정·삭제와 신청 승인·거절은 `PostService.findOwnedPost` 등으로 작성자 본인인지 확인한다. 이 규칙은 `SecurityAccessTest`가 검증한다.
 - `JwtAuthenticationFilter`: `Authorization: Bearer <token>` 헤더를 파싱해 `SecurityContext`에 인증을 채운다. 토큰 자체가 Redis 키로 존재하면(`logout` 값) 블랙리스트로 간주해 인증을 건너뛴다. `/api/post/list`는 필터를 아예 통과시킨다.
-- `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. `roles` 클레임에 권한을 콤마로 저장한다.
-- Redis 키 규약: `RT:{username}` → refresh token, `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
+- `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. access token은 `roles`(콤마 구분)와 `sid`, refresh token은 `sid`·`jti`·`typ=refresh`를 담고 권한은 담지 않는다. 필터는 refresh token을 인증에 쓰지 않는다.
+- Refresh Token 회전(`RefreshTokenService`): 로그인(일반·카카오)마다 기기 세션 `sid`를 만들고, `POST /api/member/reissue`가 새 토큰 쌍을 주며 이전 refresh token을 무효로 한다. 이미 바뀐 토큰이 다시 오면 재사용(탈취)으로 보고 그 기기 세션을 지운다. 탭 여러 개의 동시 재발급을 위해 바꾼 뒤 10초 동안은 같은 이전 토큰에 방금 만든 쌍을 그대로 준다. 비교·교체는 Lua 스크립트 하나로 원자 실행한다. 권한·차단 여부는 재발급 때 DB에서 읽는다. `RefreshTokenTest`가 검증한다.
+- Redis 키 규약: `RTS:{username}` → 해시(필드 `sid` → 현재 refresh token의 `jti`, 7일 TTL, 로그아웃은 필드 삭제, 차단은 키 삭제), `RTG:{이전 jti}` → 재발급 유예용 토큰 쌍 JSON(10초), `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
 - 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후, 회원 username과 DB 권한으로 토큰을 만들어 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다. (OAuth2 인증 객체의 이름은 카카오 숫자 id라서 그대로 쓰면 안 된다.)
 - 계정 비활성화는 `Member.delYn = 'Y'`로 표현한다(soft delete). 로그인·OAuth 양쪽에서 이 값을 검사한다.
 
