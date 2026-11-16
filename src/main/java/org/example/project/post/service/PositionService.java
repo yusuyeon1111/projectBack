@@ -47,10 +47,16 @@ public class PositionService {
     // 포지션 신청. 동시 중복 신청은 DB 유니크 제약(uk_position_member)이 막는다.
     // save가 바로 커밋되어야 제약 위반을 여기서 잡을 수 있으므로 메서드 트랜잭션을 두지 않는다.
     public ResponseEntity<String> applyPostPosition(ApplyPositionRequestDto dto) {
-        PostPosition position = postPositionRepository.findById(dto.getPositionId())
+        PostPosition position = postPositionRepository.findWithPostById(dto.getPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
         if ("END".equals(position.getStatus())) {
             return ResponseEntity.badRequest().body("모집이 마감된 포지션입니다.");
+        }
+        if ("END".equals(position.getPost().getPostStatus())) {
+            return ResponseEntity.badRequest().body("진행 기간이 끝난 글입니다.");
+        }
+        if (dto.getUsername().equals(position.getPost().getAuthor())) {
+            return ResponseEntity.badRequest().body("내가 쓴 글에는 신청할 수 없습니다.");
         }
         Member member = memberRepository.findByUsername(dto.getUsername())
                 .orElseThrow(()-> new RuntimeException("사용자가 존재하지 않습니다."));

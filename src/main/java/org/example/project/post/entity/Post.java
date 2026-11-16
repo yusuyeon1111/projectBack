@@ -88,4 +88,15 @@ public class Post {
 
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> likes = new ArrayList<>();
+
+    /** 시작일·마감일로 진행 상태를 정한다. 등록·수정과 PostStatusScheduler가 같은 규칙을 쓴다. */
+    public void refreshPostStatus(Date now) {
+        if (startDate != null && startDate.after(now)) {
+            postStatus = "SCHEDULED"; // 시작 전
+        } else if (endDate != null && endDate.before(now)) {
+            postStatus = "END"; // 종료됨
+        } else {
+            postStatus = "IN_PROGRESS"; // 시작 후, 종료 전
+        }
+    }
 }

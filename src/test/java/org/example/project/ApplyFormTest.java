@@ -69,7 +69,7 @@ class ApplyFormTest {
         applicant = member("applicant");
         stranger = member("stranger");
         String body = """
-                {"title":"신청서 테스트","category":"study","content":"c","projectType":"online","region":"nothing",
+                {"title":"신청서 테스트","category":"study","content":"c","startDate":"2099-01-01","endDate":"2099-12-31","projectType":"online","region":"nothing",
                  "positions":[{"role":"totalCount","count":2,"status":"ING"}],
                  "applyQuestions":[
                    {"type":"TEXT","label":" 자기소개 ","required":true},
@@ -102,7 +102,8 @@ class ApplyFormTest {
     @Test
     void 선택지_없는_선택형_질문은_400() throws Exception {
         String body = """
-                {"title":"t","category":"study","projectType":"online","region":"nothing","positions":[],
+                {"title":"t","category":"study","projectType":"online","region":"nothing","startDate":"2099-01-01","endDate":"2099-12-31",
+                 "positions":[{"role":"totalCount","count":1}],
                  "applyQuestions":[{"type":"RADIO","label":"경험","required":true,"options":[]}]}""";
         call(post("/api/post/create"), author, body).andExpect(status().isBadRequest());
     }

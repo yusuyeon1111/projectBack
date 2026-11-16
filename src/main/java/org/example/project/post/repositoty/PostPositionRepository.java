@@ -2,17 +2,23 @@ package org.example.project.post.repositoty;
 
 import io.lettuce.core.dynamic.annotation.Param;
 import org.example.project.post.entity.PostPosition;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PostPositionRepository extends JpaRepository<PostPosition, Long> {
     long countByPostIdAndStatus(Long postId, String status);
 
     long countByPostId(Long postId);
+
+    // 신청은 트랜잭션 없이 돌아서 지연 로딩을 못 하므로 글(작성자·진행 상태)을 함께 읽는다
+    @EntityGraph(attributePaths = "post")
+    Optional<PostPosition> findWithPostById(Long id);
 
     @Query("""
         SELECT FUNCTION('MONTH', p.created) as month, SUM(pp.count) as count
