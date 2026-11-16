@@ -152,4 +152,19 @@ class SecurityAccessTest {
             memberRepository.delete(applicant);
         }
     }
+
+    @Test
+    void 회원가입_응답에_비밀번호_해시가_없다() throws Exception {
+        String username = "leak-signup-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        try {
+            mvc.perform(post("/api/member/signup").contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                            .content("{\"username\":\"" + username + "\",\"password\":\"Test1234!\",\"nickname\":\"" + username
+                                    + "\",\"email\":\"" + username + "@test.com\",\"name\":\"n\",\"preferredTechStacks\":[]}"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().string(not(containsString("password"))))
+                    .andExpect(content().string(not(containsString("$2a$"))));
+        } finally {
+            memberRepository.findByUsername(username).ifPresent(memberRepository::delete);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package org.example.project.member.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import org.example.project.post.entity.PostLike;
@@ -30,6 +31,8 @@ public class Member implements UserDetails {
     @Column(name = "member_id")
     private Long id;
 
+    // 엔티티를 그대로 응답하는 곳(회원가입)에서 해시가 새어 나가지 않게 직렬화에서 뺀다
+    @JsonIgnore
     @Column( length = 100)
     private String password;
 
