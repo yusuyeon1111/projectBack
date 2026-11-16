@@ -19,6 +19,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
+import org.example.project.team.service.TeamService;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.query.QueryUtils;
@@ -45,6 +46,7 @@ public class PostService {
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final PostLikeRepository postLikeRepository;
     private final EntityManager entityManager;
+    private final TeamService teamService;
 
     private static final int PAGES_AHEAD = 10;
 
@@ -165,7 +167,10 @@ public class PostService {
 
     // 게시글 삭제
     public void deletePost(Long postId, String username) {
-        postRepository.delete(findOwnedPost(postId, username));
+        Post post = findOwnedPost(postId, username);
+        // ponytail: 확인과 삭제 사이에 같은 작성자가 첫 승인을 하면 글 없는 팀이 남는다. 작성자 한 사람의 동시 조작이라 잠그지 않았다
+        teamService.checkDeletable(post.getId());
+        postRepository.delete(post);
     }
 
     // 게시글 전체 리스트 조회. DTO 변환 중 지연 로딩이 일어나므로 OSIV에 기대지 않고 트랜잭션 안에서 끝낸다.
