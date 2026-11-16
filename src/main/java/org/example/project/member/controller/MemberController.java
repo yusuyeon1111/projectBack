@@ -14,6 +14,9 @@ import org.example.project.post.dto.*;
 import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
 import org.example.project.security.RefreshTokenService;
+import org.example.project.exception.GlobalExceptionHandler;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -66,6 +69,7 @@ public class MemberController {
         } catch (DisabledException ex) {
             return error(HttpStatus.FORBIDDEN, "비활성화된 계정입니다.");
         }
+        // Redis 장애(시도 횟수 확인, 토큰 저장)는 잡지 않아 아래 핸들러가 503으로 바꾼다
     }
 
     // access token이 만료됐을 때 refresh token으로 새 토큰 쌍을 받는다. 실패는 모두 401(다시 로그인)
@@ -164,6 +168,12 @@ public class MemberController {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    }
+
+    // 이 컨트롤러의 RuntimeException(400) 핸들러가 전역 핸들러보다 먼저 잡으므로 여기서도 503으로 바꾼다
+    @ExceptionHandler({DataAccessResourceFailureException.class, QueryTimeoutException.class})
+    public ResponseEntity<Map<String, String>> handleUnavailable(RuntimeException ex) {
+        return GlobalExceptionHandler.unavailable();
     }
 
     @ExceptionHandler(RuntimeException.class)
