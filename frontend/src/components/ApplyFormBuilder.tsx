@@ -3,11 +3,10 @@ import '../css/ApplyForm.css';
 import { Dialog, FormControlLabel, Switch } from '@mui/material';
 import { IconType } from 'react-icons';
 import {
-  FiAlignLeft, FiArrowDown, FiArrowUp, FiCheckSquare, FiChevronDown, FiCircle, FiCopy, FiDisc, FiEye, FiLayout,
-  FiLink, FiLogOut, FiPaperclip, FiPlusCircle, FiSave, FiSettings, FiSquare, FiTrash2, FiType, FiX,
+  FiAlignLeft, FiArrowDown, FiArrowUp, FiCheckSquare, FiChevronDown, FiCircle, FiCopy, FiDisc, FiLayout,
+  FiLink, FiLogOut, FiPaperclip, FiPlusCircle, FiSave, FiSquare, FiTrash2, FiType, FiX,
 } from 'react-icons/fi';
 import { APPLY_FILE_LIMIT, APPLY_TEXT_MAX, ApplyQuestion, ApplyQuestionType, applyQuestionTypeText, hasOptions } from '../types';
-import ApplyFormRenderer, { AnswerState } from './ApplyFormRenderer';
 
 interface Props {
   value: ApplyQuestion[];
@@ -99,9 +98,7 @@ interface ScreenProps {
 
 // 빌더가 닫히면 언마운트되므로 아래 상태는 열 때마다 새로 시작한다
 function BuilderScreen({ draft, setDraft, onSave, onExit }: ScreenProps) {
-  const [mode, setMode] = useState<'build' | 'preview'>('build');
   const [optionInputs, setOptionInputs] = useState<Record<string, string>>({});
-  const [previewAnswers, setPreviewAnswers] = useState<AnswerState>({});
   const [focusKey, setFocusKey] = useState<string | null>(null);
 
   const update = (index: number, patch: Partial<ApplyQuestion>) =>
@@ -128,7 +125,6 @@ function BuilderScreen({ draft, setDraft, onSave, onExit }: ScreenProps) {
     const key = newKey();
     setDraft([...draft, { key, type, label: '', description: '', required: false, options: [] }]);
     setFocusKey(key);
-    setMode('build');
   };
 
   // 바로 아래에 같은 내용의 질문을 하나 더 만든다(key만 새로)
@@ -144,20 +140,10 @@ function BuilderScreen({ draft, setDraft, onSave, onExit }: ScreenProps) {
     setFocusKey(key);
   };
 
-  const labeled = draft.filter(q => q.label.trim());
-
   return (
     <div className="fb">
       <header className="fb-top">
         <h2 className="fb-title"><FiLayout /> 신청서 빌더</h2>
-        <div className="fb-mode">
-          <button type="button" className={mode === 'build' ? 'on' : ''} onClick={() => setMode('build')}>
-            <FiSettings /> 빌더 모드
-          </button>
-          <button type="button" className={mode === 'preview' ? 'on' : ''} onClick={() => setMode('preview')}>
-            <FiEye /> 미리보기
-          </button>
-        </div>
         <div className="fb-actions">
           <button type="button" className="fb-btn primary" onClick={onSave}><FiSave /> 저장하기</button>
           <button type="button" className="fb-btn" onClick={onExit}><FiLogOut /> 나가기</button>
@@ -169,25 +155,14 @@ function BuilderScreen({ draft, setDraft, onSave, onExit }: ScreenProps) {
           <div className="fb-canvas-inner">
             <div className="fb-count">
               <span>총 {draft.length}개</span>
-              {mode === 'build' && draft.length > 0 && (
+              {draft.length > 0 && (
                 <button type="button" className="fb-clear" onClick={() => window.confirm('질문을 모두 지울까요?') && setDraft([])}>
                   <FiTrash2 /> 전체 삭제
                 </button>
               )}
             </div>
 
-            {mode === 'preview' ? (
-              <div className="fb-card fb-preview">
-                {/* 지원자가 신청 버튼을 눌렀을 때 뜨는 창(ApplyModal)과 같은 모양으로 보여 준다 */}
-                <div className="fb-preview-head">
-                  <h3>신청서 작성</h3>
-                  <p>질문 {labeled.length}개 · 필수 {labeled.filter(q => q.required).length}개</p>
-                </div>
-                {labeled.length > 0
-                  ? <ApplyFormRenderer questions={labeled} value={previewAnswers} onChange={setPreviewAnswers} preview />
-                  : <p className="fb-empty-text">질문 내용을 입력하면 지원자에게 보이는 모습이 여기에 나옵니다.</p>}
-              </div>
-            ) : draft.length === 0 ? (
+            {draft.length === 0 ? (
               <div className="fb-card fb-empty">
                 <FiPlusCircle className="fb-empty-icon" />
                 <p className="fb-empty-text">항목 추가에서 원하는 항목을 눌러 질문을 만드세요</p>

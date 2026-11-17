@@ -14,7 +14,6 @@ interface Props {
   questions: ApplyQuestion[];
   value: AnswerState;
   onChange: (value: AnswerState) => void;
-  preview?: boolean; // 작성자 미리보기: 입력은 되지만 파일은 실제로 올리지 않는다
 }
 
 const empty: ApplyAnswerInput = { values: [], files: [] };
@@ -35,8 +34,8 @@ const uploadFile = async (file: File) => {
   return { key: data.key, name: file.name, size: file.size };
 };
 
-/** 신청서 질문을 입력 폼으로 그린다. 신청 모달과 작성자 미리보기에서 같이 쓴다. */
-function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
+/** 신청서 질문을 입력 폼으로 그린다(신청 모달). */
+function ApplyFormRenderer({ questions, value, onChange }: Props) {
   const [uploading, setUploading] = useState<string | null>(null);
   const answerOf = (key: string) => value[key] ?? empty;
   const set = (key: string, patch: Partial<ApplyAnswerInput>) =>
@@ -52,9 +51,6 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
       const ext = f.name.split('.').pop()?.toLowerCase() ?? '';
       if (!APPLY_FILE_LIMIT.extensions.includes(ext)) return alert('pdf, jpg, png, zip 파일만 올릴 수 있습니다.');
       if (f.size > APPLY_FILE_LIMIT.maxSize) return alert(`'${f.name}' 파일이 10MB를 넘습니다.`);
-    }
-    if (preview) {
-      return set(q.key, { files: [...current, ...files.map(f => ({ key: f.name, name: f.name, size: f.size }))] });
     }
     setUploading(q.key);
     try {
