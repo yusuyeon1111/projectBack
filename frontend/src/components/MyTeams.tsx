@@ -3,10 +3,11 @@ import axios from 'axios';
 import { Modal, Box, Typography, List, ListItem, Button, Stack } from '@mui/material';
 import { errorMessage } from '../auth';
 import { TeamDetail, TeamSummary, roleTextMap, teamStatusText } from '../types';
+import TeamTasks from './TeamTasks';
 
 const modalStyle = {
   position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-  width: 400, maxWidth: 'calc(100vw - 32px)', bgcolor: 'background.paper', borderRadius: '8px', boxShadow: 24, p: 4,
+  width: 640, maxWidth: 'calc(100vw - 32px)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto', bgcolor: 'background.paper', borderRadius: '8px', boxShadow: 24, p: 4,
 } as const;
 
 // 마이페이지 "내 팀" 탭. 첫 승인 때 생긴 팀 목록과 팀원 보기
@@ -104,6 +105,7 @@ export default function MyTeams() {
                   )}
                 </Stack>
               )}
+              <TeamTasks team={detail} open={open} />
             </>
           )}
         </Box>
