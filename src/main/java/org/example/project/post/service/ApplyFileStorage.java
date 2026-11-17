@@ -1,10 +1,7 @@
 package org.example.project.post.service;
 
 import com.amazonaws.HttpMethod;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.AmazonS3Exception;
 import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.ResponseHeaderOverrides;
@@ -30,14 +27,8 @@ public class ApplyFileStorage {
     private final AmazonS3 s3;
     private final String bucket;
 
-    public ApplyFileStorage(@Value("${aws.s3.access-key-id}") String accessKeyId,
-                            @Value("${aws.s3.secret-access-key}") String secretAccessKey,
-                            @Value("${aws.s3.region}") String region,
-                            @Value("${aws.s3.bucket-name}") String bucket) {
-        this.s3 = AmazonS3ClientBuilder.standard()
-                .withRegion(region)
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKeyId, secretAccessKey)))
-                .build();
+    public ApplyFileStorage(AmazonS3 s3, @Value("${aws.s3.bucket-name}") String bucket) {
+        this.s3 = s3;
         this.bucket = bucket;
     }
 
