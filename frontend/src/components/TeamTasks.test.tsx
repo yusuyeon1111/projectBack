@@ -25,9 +25,13 @@ const activity = {
   detail: { title: 'API 명세', from: 'TODO', to: 'IN_PROGRESS' }, createdAt: '2026-11-17T10:30:00',
 };
 
+const comment = { commentId: 5, authorMemberId: 2, authorName: '철수', content: '확인했어요', createdAt: '2026-11-17T11:00:00', deletable: true };
+
 beforeEach(() => {
   jest.resetAllMocks();
-  api.get.mockImplementation(((url: string) => Promise.resolve({ data: url.includes('/tasks') ? [task] : [activity] })) as any);
+  api.get.mockImplementation(((url: string) => Promise.resolve({
+    data: url.includes('/comments') ? [comment] : url.includes('/tasks') ? [task] : [activity],
+  })) as any);
   window.alert = jest.fn();
 });
 
@@ -73,4 +77,18 @@ test('끝난 팀에서는 업무를 추가하거나 고칠 수 없다', async ()
   expect(screen.queryByText('추가')).not.toBeInTheDocument();
   expect(screen.queryByText('수정')).not.toBeInTheDocument();
   expect(screen.getByLabelText('상태')).toBeDisabled();
+});
+
+test('댓글을 열어 읽고 쓰며, 지울 수 있는 댓글에만 삭제 버튼이 있다', async () => {
+  api.post.mockResolvedValue({});
+  render(<TeamTasks team={team} open />);
+  await screen.findByText('API 명세');
+
+  userEvent.click(screen.getByText('댓글'));
+  expect(await screen.findByText('확인했어요')).toBeInTheDocument();
+  expect(screen.getByText('삭제')).toBeInTheDocument(); // 업무는 못 지우고 댓글은 지울 수 있다
+
+  userEvent.type(screen.getByLabelText('댓글'), '좋아요');
+  userEvent.click(screen.getByText('등록'));
+  await waitFor(() => expect(api.post).toHaveBeenCalledWith(expect.stringContaining('/api/teams/7/tasks/3/comments'), { content: '좋아요' }));
 });
