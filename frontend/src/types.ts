@@ -56,7 +56,7 @@ export const notificationMessage = (n: NotificationItem) => {
 
 // 팀 화면은 마이페이지 '내 팀' 탭에 있다. 퇴출·해산으로 팀을 못 보는 사람도 있어 팀 id로 바로 열지 않는다
 export const notificationLink = (n: NotificationItem) =>
-  n.targetType === 'TEAM' ? '/myPage' : `/${n.postCategory === 'study' ? 'study' : 'post'}/${n.postId}`;
+  n.targetType === 'TEAM' ? '/myPage?tab=team' : `/${n.postCategory === 'study' ? 'study' : 'post'}/${n.postId}`;
 
 export const regions = [
   '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
