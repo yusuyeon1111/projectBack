@@ -449,7 +449,7 @@
 }
 
 .fb-preview-head h3 {
-  margin: 10px 0 4px;
+  margin: 0 0 4px;
   font-size: 1.25rem;
   font-weight: 700;
 }
@@ -460,18 +460,6 @@
   color: #6b7280;
 }
 
-.fb-preview-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #007bff;
-  background-color: #fff;
-  border: 1px solid #9ec5fe;
-  border-radius: 999px;
-}
 
 .fb-preview-foot {
   display: flex;

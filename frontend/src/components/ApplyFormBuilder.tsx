@@ -181,7 +181,6 @@ function BuilderScreen({ draft, setDraft, onSave, onExit }: ScreenProps) {
               <div className="fb-card fb-preview">
                 {/* 지원자가 신청 버튼을 눌렀을 때 뜨는 창(ApplyModal)과 같은 모양으로 보여 준다 */}
                 <div className="fb-preview-head">
-                  <span className="fb-preview-badge"><FiEye /> 지원자에게 보이는 화면</span>
                   <h3>신청서 작성</h3>
                   <p>질문 {labeled.length}개 · 필수 {labeled.filter(q => q.required).length}개</p>
                 </div>
