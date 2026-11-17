@@ -124,6 +124,43 @@
   color: #fff;
 }
 
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* 정렬 버튼(.sortButton)과 같은 톤 */
+.pagination button {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid gainsboro;
+  background-color: #fff;
+  color: #555;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled):not(.active) {
+  background-color: #f1f3f5;
+}
+
+.pagination button.active {
+  background-color: #0070f3;
+  border-color: #0070f3;
+  color: white;
+  font-weight: bold;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 #main-top-p {
     font-size: clamp(26px, 2vw + 10px, 35px);
     font-weight: 600;

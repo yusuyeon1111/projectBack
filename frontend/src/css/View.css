@@ -1,28 +1,66 @@
 .view-container {
-  padding: 40px 150px;
+  padding: 40px 20px;
   background-color: #F9FAFB;
   display: flex;
   justify-content: center;
+  align-items: flex-start; /* 카드가 내용 높이만큼만 차지하게 */
   min-height: 100vh;
   box-sizing: border-box;
 }
 
 .formDiv{
-  width: 70%;
-  max-width: 1000px;
+  width: 100%;
+  max-width: 860px;
+  box-sizing: border-box;
   background-color: white;
-  padding: 70px 150px;
+  padding: 48px 56px;
   border-radius: 15px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.05);
 }
 
 .post-title {
-  font-family: 'TheJamsil5Bold', sans-serif;
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #0056b3;
-  margin: 0 auto;  /* 가운데 정렬 */
-  width: fit-content;
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.35;
+  color: #111;
+  margin: 16px 0 12px;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+/* 작성자 · 작성일 · 조회수 */
+.post-meta {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #888;
+}
+
+.post-meta span + span::before {
+  content: "·";
+  margin: 0 8px;
+}
+
+/* 기간·방식·지역·스택 요약 */
+.post-summary {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 14px 16px;
+  align-items: center;
+  margin: 0 0 20px;
+  padding: 22px 24px;
+  background-color: #F9FAFB;
+  border-radius: 12px;
+  font-size: 1rem;
+}
+
+.post-summary dt {
+  font-weight: 600;
+  color: #888;
+}
+
+.post-summary dd {
+  margin: 0;
+  color: #222;
 }
 
 .post-info {
@@ -39,13 +77,18 @@
 }
 
 .post-section-title {
-  font-family: 'TheJamsil5Bold', sans-serif;
-  margin-top: 30px;
-  font-size: 1.6rem;
+  margin: 36px 0 16px;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: #333;
-  border-bottom: 2px solid #007bff;
-  padding-bottom: 10px;
+  color: #111;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 12px;
+}
+
+/* 상세 본문은 회색 상자 없이 카드 위에 바로 놓는다 */
+.formDiv .toastui-editor-contents {
+  padding: 0;
+  background-color: transparent;
 }
 
 /* 토스트 UI 에디터 뷰어 스타일 */
@@ -59,38 +102,33 @@
 }
 
 #settingIcon {
-  margin-top: 10px;
-  font-size: 25px;
+  font-size: 22px;
+  color: #888;
   cursor: pointer;
 }
 
 .view-top-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;    /* 가로 중앙 정렬 */
-  justify-content: center; /* 세로 중앙 정렬(필요시) */
-  text-align: center;
-  position: relative;     /* 메뉴 절대 위치 기준 */
-  padding: 20px;
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid #eee;
 }
 
 .setting-wrapper {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: relative;     /* 수정·삭제 메뉴 절대 위치 기준 */
+  display: flex;
+  align-items: center;
 }
 
 .view-top {
-  position: relative; /* setting icon 절대 위치 기준 */
-  width: 100%;
-  max-width: 600px;   /* 적절한 최대 너비 지정 */
-  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .view-menu {
   position: absolute;
-  top: 40px; /* 아이콘 바로 아래 */
-  right: -38px;
+  top: 32px; /* 아이콘 바로 아래 */
+  right: 0;
   background: white;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -132,13 +170,19 @@
     box-sizing: border-box;
 }
 
+/* 목록의 프로젝트/스터디 라벨과 같은 색 */
 .category-label {
-    background-color: #007bff;
-    padding: 8px 10px;
-    width: 100px;
-    text-align: center;
-    color: white;
-    margin-bottom: 30px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: rgb(223, 95, 137);
+    background-color: pink;
+}
+
+.category-label[data-type="study"] {
+    color: #17a2b8;
+    background-color: paleturquoise;
 }
 
 .css-1nh9prl-MuiStack-root {
@@ -168,28 +212,22 @@
   border-radius: 8px;
   background-color: #fff;
   border: 1px solid #e0e0e0;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.position:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 .position span {
-  font-size: 20px;
+  font-size: 1rem;
   color: #555;
 }
 
 .position span:first-child {
   font-weight: 600;
-  flex: 1;
+  min-width: 120px;
 }
 
 .position span:nth-child(2) {
   color: #0056b3;
   font-weight: 700;
-  flex: 2;
+  flex: 1;
 }
 
 .apply-btn {
@@ -221,8 +259,6 @@
     width: 90%;
     padding: 40px 50px;
   }
-  .post-title {font-size: 2.2rem;}
-  .post-section-title {font-size: 1.5rem;}
 }
 
 @media (max-width: 768px) {
@@ -233,11 +269,8 @@
     padding: 30px 20px;
     border-radius: 10px;
   }
-  .post-title {font-size: 1.8rem;}
+  .formDiv {padding: 28px 20px;}
+  .post-summary {padding: 16px; grid-template-columns: 44px 1fr;}
+  .post-title {font-size: 1.5rem;}
   .post-info {font-size: 1rem;}
-  .post-section-title {
-    font-size: 1.3rem;
-    border-bottom-width: 2px;
-    padding-bottom: 6px;
-  }
 }

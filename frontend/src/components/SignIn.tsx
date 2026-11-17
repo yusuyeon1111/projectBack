@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../css/Sign.css';
 import axios from "axios";
@@ -7,6 +7,7 @@ import { JwtToken } from "../types";
 import { useForm } from 'react-hook-form'
 import kakao from '../assets/kakaoLogin.png';
 import naver from '../assets/naverLogin.png';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 interface SignInForm {
   username: string;
@@ -22,6 +23,7 @@ function Signin() {
     }
   }, []);
   const nav = useNavigate();
+  const [showPw, setShowPw] = useState(false);
   const {
       register,
       handleSubmit,
@@ -71,11 +73,21 @@ function Signin() {
         {errors.username && <p className="error">{errors.username.message}</p>}
 
         <label htmlFor="password">비밀번호</label>
-        <input
-          id="password"
-          type="password"
-          {...register('password', { required: '비밀번호를 입력해주세요' })}
-        />
+        <div className="pw-field">
+          <input
+            id="password"
+            type={showPw ? "text" : "password"}
+            {...register('password', { required: '비밀번호를 입력해주세요' })}
+          />
+          <button
+            type="button"
+            className="pw-toggle"
+            onClick={() => setShowPw(v => !v)}
+            aria-label={showPw ? "비밀번호 숨기기" : "비밀번호 보기"}
+          >
+            {showPw ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+          </button>
+        </div>
         {errors.password && <p className="error">{errors.password.message}</p>}
 
         <button type="submit">로그인</button>

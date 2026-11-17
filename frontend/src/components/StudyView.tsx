@@ -207,9 +207,8 @@ function StudyView() {
         <>
         <div className='formDiv'>
          <div className='view-top-container'>
-          <p className='category-label'>스터디</p>
-            <div className='view-top'>
-              <h2 className="post-title">{post.title}</h2>
+          <div className='view-top'>
+              <span className='category-label' data-type='study'>스터디</span>
               {!useUpdate && post.author === username && (
                 <div className='setting-wrapper'>
                   <IoSettingsSharp id='settingIcon' onClick={editMenu} />
@@ -233,15 +232,43 @@ function StudyView() {
                       </div>
                     )}
             </div>
-            <span className="post-info">{post.nickname}</span>
+            <h2 className="post-title">{post.title}</h2>
+            <p className="post-meta">
+              <span>{post.nickname}</span>
+              {post.created && <span>{post.created.split(' ')[0]}</span>}
+              <span>조회 {post.viewCount}</span>
+            </p>
+            
             </div>
+            <dl className="post-summary">
+              <dt>기간</dt>
+              <dd>{post.startDate ? post.startDate.split('T')[0] : '미정'} ~ {post.endDate ? post.endDate.split('T')[0] : '미정'}</dd>
+              <dt>방식</dt>
+              <dd>
+                {post.projectType === "online" && '온라인'}
+                {post.projectType === "offline" && '오프라인'}
+                {post.projectType === "both" && '온라인 · 오프라인'}
+              </dd>
+              <dt>지역</dt>
+              <dd>{post.region === 'nothing' ? '지역무관' : post.region}</dd>
+              {post.category === 'project' && post.techStacks.length > 0 && (
+                <>
+                  <dt>스택</dt>
+                  <dd className="myStack-container">
+                    {post.techStacks.map((stack, index) => (
+                      <span key={index} className="stack-pill"># {stack}</span>
+                    ))}
+                  </dd>
+                </>
+              )}
+            </dl>
             {post.author !== username && post.positions && post.positions.length > 0 && (
             post.positions
               .filter(pos => pos.status !== "END")
               .map(pos => (
                 <div className='position' key={pos.id}>
                   <span>모집 인원 수</span>
-                  <span>{pos.count}</span>
+                  <span>{pos.count}명</span>
                   <>
                   <button
                     className="apply-btn"
@@ -254,29 +281,7 @@ function StudyView() {
                 </div>
               ))
           )}
-            <span className="post-info"><strong>📅 스터디 기간 : </strong> {post.startDate ? post.startDate.split('T')[0] : '미정'} - </span>
-            <span className="post-info"><strong></strong> {post.endDate ? post.endDate.split('T')[0] : '미정'}</span>
-
-            <p className="post-info"><strong>🏢 스터디 방식:</strong>
-              {post.projectType === "online" && '온라인으로 진행합니다.'}
-              {post.projectType === "offline" && '오프라인으로 진행합니다.'}
-              {post.projectType === "both" && '온라인과 오프라인 모두 가능합니다.'}
-            </p>
-              {post.region === 'nothing' ?
-              <p className="post-info"><strong>🗺️ 지역:</strong> 지역무관</p> :
-              <p className="post-info"><strong>🗺️ 지역:</strong> {post.region}</p>
-            }
-            {post.category === 'project' ?
-            <>
-            <p className="post-info"><strong>🔧 사용 스택:</strong></p>
-            <div className="myStack-container">
-                {post.techStacks.map((stack, index) => (
-                  <span key={index} className="stack-pill"># {stack}</span>
-                ))}
-            </div>
-            </>
-            :<></>}
-            <h3 className="post-section-title">✔️ 설명</h3>
+            <h3 className="post-section-title">설명</h3>
             <Viewer initialValue={post.content} />
             </div>
         </>
