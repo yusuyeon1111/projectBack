@@ -249,6 +249,14 @@ export interface TeamDetail {
   members: TeamMember[];
 }
 
+// 신청 상태. WITHDRAWN(탈퇴)·EXPELLED(퇴출)는 팀에서 빠진 승인이다
+export const applyStatusText: Record<string, string> = {
+  APPLY: '대기', ACCEPT: '승인', REJECT: '거절', WITHDRAWN: '탈퇴', EXPELLED: '퇴출',
+};
+export const applyStatusClass: Record<string, string> = {
+  APPLY: 'status-pending', ACCEPT: 'status-accepted', REJECT: 'status-rejected', WITHDRAWN: 'status-unknown', EXPELLED: 'status-rejected',
+};
+
 export const teamStatusText: Record<string, string> = {
   FORMING: '팀 구성 중',
   ACTIVE: '진행 중',

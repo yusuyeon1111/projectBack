@@ -5,7 +5,7 @@ import { MdEdit } from "react-icons/md";
 import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
-import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, postStatusText, roleTextMap } from '../types';
+import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, applyStatusClass, applyStatusText, postStatusText, roleTextMap } from '../types';
 import { errorMessage } from '../auth';
 import ApplicationAnswersDialog from './ApplicationAnswersDialog';
 import MyTeams from './MyTeams';
@@ -91,6 +91,16 @@ function MyPage() {
 
       fetchData();  // 호출
     }, [username]);
+
+  // 탈퇴한 팀에 같은 포지션으로 다시 신청한다(처음 낸 신청서 답변을 그대로 쓴다)
+  const reapply = async (applyId: number) => {
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/post/reapply`, { postPositionId: applyId });
+      setApplyData(list => list.map(p => (p.applyId === applyId ? { ...p, applyStatus: 'APPLY' } : p)));
+    } catch (e) {
+      alert(errorMessage(e, '다시 신청하지 못했습니다.'));
+    }
+  };
 
   const [value, setValue] = React.useState(0);
 
@@ -381,24 +391,8 @@ function MyPage() {
                 :<span id='projectlabel'>프로젝트</span>}
                 <span className='myTitle' onClick={() => navigate(post.category === 'study'? `/study/${post.postId}`: `/post/${post.postId}`)}>
                   {post.postTitle}</span>
-                <span
-                  className={`like ${
-                    post.applyStatus === 'APPLY'
-                      ? 'status-pending'
-                      : post.applyStatus === 'ACCEPT'
-                      ? 'status-accepted'
-                      : post.applyStatus === 'REJECT'
-                      ? 'status-rejected'
-                      : 'status-unknown'
-                  }`}
-                >
-                  {post.applyStatus === 'APPLY'
-                    ? '대기'
-                    : post.applyStatus === 'ACCEPT'
-                    ? '승인'
-                    : post.applyStatus === 'REJECT'
-                    ? '거절'
-                    : '알 수 없음'}
+                <span className={`like ${applyStatusClass[post.applyStatus] ?? 'status-unknown'}`}>
+                  {applyStatusText[post.applyStatus] ?? '알 수 없음'}
                 </span>
 
                 <div className='dataInner'>
@@ -406,6 +400,10 @@ function MyPage() {
                   {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 신청분야 : {roleTextMap[post.positionName]}</span></>}
                   <span className='line'>|</span>
                   <span className='myDate answers-link' onClick={() => setAnswersOf({ id: post.applyId, title: '내 신청서' })}>신청서 보기</span>
+                  {post.applyStatus === 'WITHDRAWN' && <>
+                    <span className='line'>|</span>
+                    <span className='myDate answers-link' onClick={() => reapply(post.applyId)}>다시 신청</span>
+                  </>}
                 </div>
               </div>
             ))
@@ -495,8 +493,8 @@ function MyPage() {
                     신청일: {post.appliedAt}
                   </Typography>
                   <Typography sx={{ fontSize: 16, color: '#555', mb: 0.5 }}>
-                    상태: <span className={`like ${post.status === 'APPLY' ? 'status-pending' : post.status === 'ACCEPT' ? 'status-accepted' : post.status === 'REJECT' ? 'status-rejected' : 'status-unknown'}`}>
-                      {post.status === 'APPLY' ? '대기' : post.status === 'ACCEPT' ? '승인' : post.status === 'REJECT' ? '거절' : '알 수 없음'}
+                    상태: <span className={`like ${applyStatusClass[post.status] ?? 'status-unknown'}`}>
+                      {applyStatusText[post.status] ?? '알 수 없음'}
                     </span>
                   </Typography>
                   {post.category === 'project' && (
