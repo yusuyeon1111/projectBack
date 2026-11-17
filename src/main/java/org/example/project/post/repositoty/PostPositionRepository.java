@@ -4,6 +4,7 @@ import io.lettuce.core.dynamic.annotation.Param;
 import org.example.project.post.entity.PostPosition;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -30,4 +31,9 @@ public interface PostPositionRepository extends JpaRepository<PostPosition, Long
     """)
     List<Object[]> sumPostPositionCountPerMonth(@Param("year") int year);
 
+    // 승인된 사람이 빠지면 그 포지션은 정원 아래가 되므로 다시 연다
+    @Modifying
+    @Query(value = "UPDATE post_position SET status = 'ING' WHERE position_id = "
+            + "(SELECT post_position_id FROM post_position_member WHERE id = :applicationId)", nativeQuery = true)
+    void reopenByApplicationId(@Param("applicationId") Long applicationId);
 }

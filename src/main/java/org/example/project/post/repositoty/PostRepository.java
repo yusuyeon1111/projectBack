@@ -74,4 +74,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
         ORDER BY FUNCTION('MONTH', p.created)
     """)
     List<Object[]> countPostGroupByCategory(int year);
+
+    @Modifying
+    @Query("UPDATE Post p SET p.status = 'ING' WHERE p.id = :id")
+    void reopen(@Param("id") Long id);
 }

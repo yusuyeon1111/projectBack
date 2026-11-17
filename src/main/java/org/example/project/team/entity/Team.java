@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 public class Team {
 
     public static final String FORMING = "FORMING";
+    public static final String ACTIVE = "ACTIVE";
+    public static final String COMPLETED = "COMPLETED";
     public static final String DISBANDED = "DISBANDED";
 
     @Id
@@ -45,5 +47,32 @@ public class Team {
         this.leaderMemberId = leaderMemberId;
         this.status = FORMING;
         this.createdAt = LocalDateTime.now();
+    }
+
+    // 완료·해산된 팀은 읽기 전용이다
+    public boolean isOpen() {
+        return FORMING.equals(status) || ACTIVE.equals(status);
+    }
+
+    public void start() {
+        if (!FORMING.equals(status)) throw new IllegalStateException("모집 중인 팀만 시작할 수 있습니다.");
+        status = ACTIVE;
+        startedAt = LocalDateTime.now();
+    }
+
+    public void complete() {
+        if (!ACTIVE.equals(status)) throw new IllegalStateException("진행 중인 팀만 완료할 수 있습니다.");
+        status = COMPLETED;
+        endedAt = LocalDateTime.now();
+    }
+
+    public void disband() {
+        if (!isOpen()) throw new IllegalStateException("이미 끝난 팀입니다.");
+        status = DISBANDED;
+        endedAt = LocalDateTime.now();
+    }
+
+    public void changeLeader(Long memberId) {
+        leaderMemberId = memberId;
     }
 }

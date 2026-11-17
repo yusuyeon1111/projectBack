@@ -9,6 +9,7 @@ import org.example.project.post.dto.PostAcceptDto;
 import org.example.project.post.entity.PostPosition;
 import org.example.project.post.entity.PostPositionMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -141,4 +142,18 @@ public interface PostPositionMemberRepository extends JpaRepository<PostPosition
         ORDER BY FUNCTION('MONTH', ppm.rejectedAt)
     """)
     List<Object[]> countRejectMonth(int year);
+
+    // 상태가 from일 때만 바꾼다. 0이면 다른 요청이 먼저 바꾼 것이다
+    @Modifying
+    @Query("UPDATE PostPositionMember ppm SET ppm.status = :to WHERE ppm.id = :id AND ppm.status = :from")
+    int changeStatus(@Param("id") Long id, @Param("from") String from, @Param("to") String to);
+
+    // 탈퇴(WITHDRAWN)한 본인 신청만 대기로 되돌린다. 연타해도 한 번만 바뀐다
+    @Modifying
+    @Query("""
+        UPDATE PostPositionMember ppm
+           SET ppm.status = 'APPLY', ppm.appliedAt = :now, ppm.acceptedAt = null, ppm.rejectedAt = null
+         WHERE ppm.id = :id AND ppm.member.id = :memberId AND ppm.status = 'WITHDRAWN'
+    """)
+    int reapply(@Param("id") Long id, @Param("memberId") Long memberId, @Param("now") java.time.LocalDateTime now);
 }

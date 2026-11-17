@@ -139,6 +139,20 @@ public class PositionService {
         return list;
     }
 
+    // 탈퇴(WITHDRAWN)한 본인 신청을 대기로 되돌린다. 조건부 UPDATE라 연타해도 한 번만 바뀐다.
+    // 퇴출(EXPELLED)·거절(REJECT)은 상태가 달라 바뀌지 않는다. 정원과 팀 상태는 승인할 때 확인한다.
+    @Transactional
+    public void reapply(Long applicationId, String username) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        if (postPositionMemberRepository.reapply(applicationId, member.getId(), LocalDateTime.now()) == 0) {
+            throw new IllegalStateException("탈퇴한 신청만 다시 신청할 수 있습니다.");
+        }
+        PostPositionMember application = postPositionMemberRepository.findById(applicationId).orElseThrow();
+        teamService.recordApplication(applicationId, "APPLY", member.getId());
+        notificationService.notifyApply(application.getPostPosition().getId(), member);
+    }
+
     // 포지션 거절
     @Transactional
     public List<ApplyMemeberDto>  rejectPosition(ApplyPositionRequestDto dto, String username) {
