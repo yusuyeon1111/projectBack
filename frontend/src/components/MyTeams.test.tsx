@@ -21,7 +21,7 @@ const team = (leader: boolean) => (url: string) => Promise.resolve({
     : { teamId: 7, postId: 1, name: '사이드 프로젝트', status: 'FORMING', createdAt: '2026-11-17T10:00:00', members: [
         { memberId: 1, nickname: '나', positionRole: null, leader: true, joinedAt: '2026-11-17T10:00:00' },
         { memberId: 2, nickname: '철수', positionRole: 'backend', leader: false, joinedAt: '2026-11-17T10:00:00' },
-      ] },
+      ], myMemberId: leader ? 1 : 2 },
 }) as any;
 
 test('내 팀 목록을 보여 주고 누르면 팀원을 연다', async () => {
@@ -33,7 +33,7 @@ test('내 팀 목록을 보여 주고 누르면 팀원을 연다', async () => {
 
   userEvent.click(screen.getByText('사이드 프로젝트'));
   expect(await screen.findByText(/팀원 2명/)).toBeInTheDocument();
-  expect(screen.getByText(/철수 ·/)).toBeInTheDocument(); // 담당자 선택지에도 이름이 있어 팀원 줄로 찾는다
+  expect(screen.getByText('BACKEND')).toBeInTheDocument(); // 팀원 줄에 포지션이 보인다
   expect(api.get).toHaveBeenLastCalledWith(expect.stringContaining('/api/teams/7'));
 });
 
@@ -50,6 +50,7 @@ test('팀장은 팀원을 퇴출하고 팀을 시작할 수 있고 탈퇴 버튼
   render(<MyTeams />);
   userEvent.click(await screen.findByText('사이드 프로젝트'));
 
+  userEvent.click(await screen.findByLabelText('철수 관리'));
   userEvent.click(await screen.findByText('퇴출'));
   expect(await screen.findByText('팀 시작')).toBeInTheDocument();
   expect(api.delete).toHaveBeenCalledWith(expect.stringContaining('/api/teams/7/members/2'));
@@ -66,7 +67,7 @@ test('팀원은 탈퇴만 할 수 있고 탈퇴하면 창이 닫힌다', async (
   userEvent.click(await screen.findByText('사이드 프로젝트'));
 
   expect(await screen.findByText('탈퇴')).toBeInTheDocument();
-  expect(screen.queryByText('퇴출')).not.toBeInTheDocument();
+  expect(screen.queryByLabelText('철수 관리')).not.toBeInTheDocument();
   userEvent.click(screen.getByText('탈퇴'));
   expect(api.delete).toHaveBeenCalledWith(expect.stringContaining('/api/teams/7/members/me'));
   await screen.findByText('사이드 프로젝트');
