@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// 팀 업무 CRUD·낙관적 락·조건부 상태 변경·활동 기록. 동시 요청을 재현해야 해서 롤백 없이 돌리고 직접 정리한다.
+// 팀 업무 CRUD·낙관적 락·조건부 상태 변경·활동 기록·댓글·업무 알림. 동시 요청을 재현해야 해서 롤백 없이 돌리고 직접 정리한다.
 @SpringBootTest(properties = {
         "jwt.secret=dGVzdC1zZWNyZXQta2V5LWZvci1zZWN1cml0eS1hY2Nlc3MtdGVzdA==",
         "spring.data.redis.usessl=false",
@@ -198,6 +198,68 @@ class TaskTest {
         // 팀 상태 변경도 활동에 남는다
         JsonNode activities = body(call(get("/api/teams/" + teamId + "/activities"), a));
         assertThat(activities.findValuesAsText("type")).startsWith("TEAM_COMPLETED", "TEAM_STARTED");
+    }
+
+    @Test
+    void 담당자로_새로_정해질_때만_알린다() throws Exception {
+        JsonNode task = create(a, "b에게", b.getId());
+        create(a, "스스로 맡음", a.getId());
+        // 같은 담당자로 다시 저장하면 알리지 않고, 담당이 바뀌면 새 담당자에게 알린다
+        JsonNode same = body(call(patch(taskUrl(task)).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(
+                Map.of("title", "b에게", "assigneeMemberId", b.getId(), "version", task.get("version").asLong()))), a));
+        call(patch(taskUrl(task)).contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(
+                Map.of("title", "b에게", "assigneeMemberId", author.getId(), "version", same.get("version").asLong()))), a)
+                .andExpect(status().isOk());
+
+        assertThat(notifications(b)).containsExactly("TASK_ASSIGNED");
+        assertThat(notifications(a)).isEmpty();
+        assertThat(notifications(author)).containsExactly("TASK_ASSIGNED");
+        assertThat(jdbc.queryForObject("SELECT actor FROM notification WHERE receiver = ? AND type = 'TASK_ASSIGNED'", String.class, b.getUsername()))
+                .isEqualTo(a.getNickname());
+    }
+
+    @Test
+    void 댓글은_업무를_만든_사람과_담당자에게_알리고_쓴_사람과_팀장만_지운다() throws Exception {
+        JsonNode task = create(a, "댓글 업무", b.getId());
+        String comments = taskUrl(task) + "/comments";
+        jdbc.update("DELETE FROM notification WHERE receiver LIKE ?", prefix + "%"); // 담당 알림은 빼고 본다
+
+        JsonNode byB = body(call(post(comments).contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"확인했습니다\"}"), b)
+                .andExpect(status().isOk()));
+        JsonNode byAuthor = body(call(post(comments).contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"팀장 의견\"}"), author)
+                .andExpect(status().isOk()));
+        call(post(comments).contentType(MediaType.APPLICATION_JSON).content("{\"content\":\" \"}"), b).andExpect(status().isBadRequest());
+
+        assertThat(notifications(a)).containsExactly("TASK_COMMENT", "TASK_COMMENT");
+        assertThat(notifications(b)).containsExactly("TASK_COMMENT"); // 자기 댓글은 받지 않는다
+        assertThat(notifications(author)).isEmpty();
+
+        JsonNode list = body(call(get(comments), a).andExpect(status().isOk()));
+        assertThat(list.findValuesAsText("content")).containsExactly("확인했습니다", "팀장 의견");
+        assertThat(list.get(0).get("deletable").asBoolean()).isFalse();
+
+        call(delete(comments + "/" + byAuthor.get("commentId").asLong()), b).andExpect(status().isForbidden());
+        call(delete(comments + "/" + byB.get("commentId").asLong()), author).andExpect(status().isOk());
+        call(delete(comments + "/" + byAuthor.get("commentId").asLong()), author).andExpect(status().isOk());
+        call(get(comments), member("outsider")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 다른_업무_경로로는_댓글을_못_지우고_업무를_지우면_댓글도_지워진다() throws Exception {
+        JsonNode task = create(a, "원래 업무", null);
+        JsonNode other = create(a, "다른 업무", null);
+        JsonNode comment = body(call(post(taskUrl(task) + "/comments").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"content\":\"댓글\"}"), a));
+
+        call(delete(taskUrl(other) + "/comments/" + comment.get("commentId").asLong()), author).andExpect(status().isNotFound());
+        call(delete(taskUrl(task)), a).andExpect(status().isOk());
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM task_comment WHERE id = ?", Long.class, comment.get("commentId").asLong()))
+                .isZero();
+    }
+
+    private List<String> notifications(Member m) {
+        return jdbc.queryForList("SELECT type FROM notification WHERE receiver = ? AND type LIKE 'TASK_%' ORDER BY id",
+                String.class, m.getUsername());
     }
 
     // --- helpers ---

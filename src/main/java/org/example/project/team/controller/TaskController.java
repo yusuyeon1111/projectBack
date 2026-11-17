@@ -2,6 +2,7 @@ package org.example.project.team.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.example.project.team.dto.ActivityDto;
+import org.example.project.team.dto.CommentDto;
 import org.example.project.team.dto.TaskDto;
 import org.example.project.team.dto.TaskRequest;
 import org.example.project.team.service.TaskService;
@@ -47,6 +48,24 @@ public class TaskController {
     @DeleteMapping("/tasks/{taskId}")
     public void delete(@PathVariable Long teamId, @PathVariable Long taskId, Principal principal) {
         taskService.delete(teamId, taskId, principal.getName());
+    }
+
+    @GetMapping("/tasks/{taskId}/comments")
+    public List<CommentDto> comments(@PathVariable Long teamId, @PathVariable Long taskId, Principal principal) {
+        return taskService.findComments(teamId, taskId, principal.getName());
+    }
+
+    public record CommentRequest(String content) {}
+
+    @PostMapping("/tasks/{taskId}/comments")
+    public CommentDto addComment(@PathVariable Long teamId, @PathVariable Long taskId, @RequestBody CommentRequest request,
+                                 Principal principal) {
+        return taskService.addComment(teamId, taskId, principal.getName(), request.content());
+    }
+
+    @DeleteMapping("/tasks/{taskId}/comments/{commentId}")
+    public void deleteComment(@PathVariable Long teamId, @PathVariable Long taskId, @PathVariable Long commentId, Principal principal) {
+        taskService.deleteComment(teamId, taskId, commentId, principal.getName());
     }
 
     @GetMapping("/activities")
