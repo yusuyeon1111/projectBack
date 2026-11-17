@@ -285,8 +285,12 @@
     gap: 10px;
   }
 
+  /* 버튼 두 개를 가로로 두면 좁은 화면에서 네이버 버튼이 밖으로 밀려난다 */
   .oauth-buttons {
-    width: 60%;
+    width: 100%;
+    max-width: 300px;
+    flex-direction: column;
+    align-items: center;
   }
 
   .kakao-login,

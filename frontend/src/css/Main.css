@@ -257,7 +257,8 @@
   .main-post-inner{display: block;}
   .searchMenu{display: none;}
   .itemList {width: 100%;}
-  .searchMenuMobile {display:flex; width: 100%; gap: 2%; padding: 0 10px;}
+  .searchMenuMobile {display:flex; width: 100%; box-sizing: border-box; gap: 2%; padding: 0 10px;}
+  .emptyItem {width: 100%; box-sizing: border-box;}
   .searchItem{border-bottom: none; width: 80%;}
   .searchIcon{display: flex; align-items: center;}
   .filterMenuMobile { align-items: center; justify-content: center; display: flex; flex-direction: column; padding-bottom: 25%; overflow: hidden;}
