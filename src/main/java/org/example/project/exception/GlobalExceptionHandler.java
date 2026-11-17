@@ -7,9 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 
 import javax.naming.AuthenticationException;
 import java.util.Map;
+import java.util.Objects;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -19,6 +21,11 @@ public class GlobalExceptionHandler {
     // Redis·DB 연결 실패와 명령 시간 초과. 요청이 잘못된 게 아니므로 400/403이 아니라 503이다
     public static ResponseEntity<Map<String, String>> unavailable() {
         return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", UNAVAILABLE_MESSAGE));
+    }
+
+    // Map.of는 null 값을 받지 않아 메시지 없는 예외가 오면 처리기 자체가 NPE로 실패한다
+    private static Map<String, String> error(Exception ex) {
+        return Map.of("error", Objects.requireNonNullElse(ex.getMessage(), "요청을 처리할 수 없습니다."));
     }
 
     @ExceptionHandler({DataAccessResourceFailureException.class, QueryTimeoutException.class})
@@ -34,23 +41,30 @@ public class GlobalExceptionHandler {
     // 정원 초과, 이미 처리된 신청처럼 권한이 아니라 현재 상태와 충돌하는 요청
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, String>> handleConflict(IllegalStateException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error(ex));
     }
 
     // 입력값이 규칙에 맞지 않는 요청(신청서 질문·답변 검증 등). RuntimeException 처리(403)보다 먼저 잡는다.
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleBadRequest(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error(ex));
     }
 
     // 남의 팀처럼 존재 자체를 알려 주지 않을 자원
     @ExceptionHandler(java.util.NoSuchElementException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(java.util.NoSuchElementException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error(ex));
+    }
+
+    // SSE 연결이 시간 초과로 끝날 때 온다. 아래 RuntimeException 처리(403)가 가로채면 이미 열린 SSE 응답에
+    // JSON을 쓰려다 실패한다. 받은 예외를 그대로 다시 던지면 Spring 기본 처리(DefaultHandlerExceptionResolver)로 넘어간다
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public void passAsyncTimeout(AsyncRequestTimeoutException ex) {
+        throw ex;
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", ex.getMessage()));
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error(ex));
     }
 }
