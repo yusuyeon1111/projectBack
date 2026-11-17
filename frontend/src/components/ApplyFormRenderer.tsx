@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { APPLY_FILE_LIMIT, APPLY_TEXT_MAX, ApplyAnswerInput, ApplyQuestion } from '../types';
 import { errorMessage } from '../auth';
+import { FiUploadCloud } from 'react-icons/fi';
 
 export type AnswerState = Record<string, ApplyAnswerInput>;
 
@@ -67,49 +68,61 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
     }
   };
 
+  // 고른 선택지는 파란 테두리 칸으로 보인다(라디오·체크박스)
+  const optionSx = (checked: boolean) => ({
+    m: 0, mb: 1, px: 1.5, py: 0.25, width: '100%', boxSizing: 'border-box', borderRadius: '8px', border: '1px solid',
+    '&:last-of-type': { mb: 0 },
+    borderColor: checked ? '#007bff' : '#e5e7eb', bgcolor: checked ? '#f0f7ff' : '#fff',
+    transition: 'all .15s', '&:hover': { borderColor: checked ? '#007bff' : '#9ec5fe' },
+  });
+
   return (
-    <Stack spacing={2.5}>
-      {questions.map(q => {
+    <Stack spacing={2}>
+      {questions.map((q, i) => {
         const answer = answerOf(q.key);
-        const label = (
-          <Box mb={0.75}>
-            <Typography fontWeight={600}>
-              {q.label}{q.required && <span className="apply-required"> *</span>}
-            </Typography>
-            {q.description && <Typography variant="body2" color="text.secondary" whiteSpace="pre-line">{q.description}</Typography>}
-          </Box>
-        );
         const single = answer.values[0] ?? '';
+        const max = APPLY_TEXT_MAX[q.type];
         return (
-          <Box key={q.key}>
-            {label}
+          <Box key={q.key} className="apply-q">
+            <Stack direction="row" spacing={1} alignItems="flex-start" mb={q.description ? 0.5 : 1.25}>
+              <span className="apply-q-no">Q{i + 1}</span>
+              <Typography fontWeight={700} sx={{ flex: 1, pt: '1px', wordBreak: 'break-word' }}>{q.label}</Typography>
+              {q.required ? <span className="apply-q-tag required">필수</span> : <span className="apply-q-tag">선택</span>}
+            </Stack>
+            {q.description && (
+              <Typography variant="body2" color="text.secondary" whiteSpace="pre-line" mb={1.25}>{q.description}</Typography>
+            )}
             {(q.type === 'TEXT' || q.type === 'URL') && (
               <TextField size="small" fullWidth value={single}
-                         placeholder={q.type === 'URL' ? 'https://' : ''}
-                         inputProps={{ maxLength: APPLY_TEXT_MAX[q.type] }}
+                         placeholder={q.type === 'URL' ? 'https://' : '답변을 입력하세요'}
+                         inputProps={{ maxLength: max }}
                          onChange={e => set(q.key, { values: [e.target.value] })} />
             )}
             {q.type === 'TEXTAREA' && (
-              <TextField size="small" fullWidth multiline minRows={3} value={single}
-                         inputProps={{ maxLength: APPLY_TEXT_MAX.TEXTAREA }}
+              <TextField size="small" fullWidth multiline minRows={4} value={single} placeholder="답변을 입력하세요"
+                         inputProps={{ maxLength: max }}
                          onChange={e => set(q.key, { values: [e.target.value] })} />
             )}
+            {max && <p className="apply-q-count">{single.length} / {max}</p>}
             {q.type === 'SELECT' && (
               <TextField select size="small" fullWidth value={single}
+                         SelectProps={{ displayEmpty: true }}
                          onChange={e => set(q.key, { values: e.target.value ? [e.target.value] : [] })}>
-                <MenuItem value="">선택하세요</MenuItem>
+                <MenuItem value=""><span style={{ color: '#9ca3af' }}>선택하세요</span></MenuItem>
                 {q.options.map(o => <MenuItem key={o} value={o}>{o}</MenuItem>)}
               </TextField>
             )}
             {q.type === 'RADIO' && (
               <RadioGroup value={single} onChange={e => set(q.key, { values: [e.target.value] })}>
-                {q.options.map(o => <FormControlLabel key={o} value={o} control={<Radio size="small" />} label={o} />)}
+                {q.options.map(o => (
+                  <FormControlLabel key={o} value={o} control={<Radio size="small" />} label={o} sx={optionSx(single === o)} />
+                ))}
               </RadioGroup>
             )}
             {q.type === 'CHECKBOX' && (
               <FormGroup>
                 {q.options.map(o => (
-                  <FormControlLabel key={o} label={o} control={
+                  <FormControlLabel key={o} label={o} sx={optionSx(answer.values.includes(o))} control={
                     <Checkbox size="small" checked={answer.values.includes(o)}
                               onChange={e => set(q.key, {
                                 values: e.target.checked ? [...answer.values, o] : answer.values.filter(v => v !== o),
@@ -120,23 +133,22 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
             )}
             {q.type === 'FILE' && (
               <Box>
-                <Typography variant="body2" color="text.secondary" mb={1}>
-                  pdf, jpg, png, zip · 파일당 10MB · 최대 {APPLY_FILE_LIMIT.maxCount}개
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1}>
-                  {answer.files.map(f => (
-                    <Chip key={f.key} size="small" label={`${f.name}${f.size ? ` (${formatSize(f.size)})` : ''}`}
-                          onDelete={() => set(q.key, { files: answer.files.filter(x => x.key !== f.key) })} />
-                  ))}
-                </Stack>
                 {answer.files.length < APPLY_FILE_LIMIT.maxCount && (
-                  <label className="apply-file-btn">
-                    {uploading === q.key ? '올리는 중...' : '파일 선택'}
+                  <label className="apply-file-drop">
+                    <FiUploadCloud className="apply-file-icon" />
+                    <span className="apply-file-main">{uploading === q.key ? '올리는 중...' : '파일 선택'}</span>
+                    <span className="apply-file-hint">pdf, jpg, png, zip · 파일당 10MB · 최대 {APPLY_FILE_LIMIT.maxCount}개</span>
                     <input type="file" hidden multiple disabled={uploading !== null}
                            accept={APPLY_FILE_LIMIT.extensions.map(e => `.${e}`).join(',')}
                            onChange={e => { handleFiles(q, e.target.files); e.target.value = ''; }} />
                   </label>
                 )}
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mt={1}>
+                  {answer.files.map(f => (
+                    <Chip key={f.key} size="small" variant="outlined" label={`${f.name}${f.size ? ` (${formatSize(f.size)})` : ''}`}
+                          onDelete={() => set(q.key, { files: answer.files.filter(x => x.key !== f.key) })} />
+                  ))}
+                </Stack>
               </Box>
             )}
           </Box>

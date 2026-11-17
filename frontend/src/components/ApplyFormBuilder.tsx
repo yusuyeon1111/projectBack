@@ -7,7 +7,8 @@ import {
   FiLink, FiLogOut, FiPaperclip, FiPlusCircle, FiSave, FiSettings, FiSquare, FiTrash2, FiType, FiX,
 } from 'react-icons/fi';
 import { APPLY_FILE_LIMIT, APPLY_TEXT_MAX, ApplyQuestion, ApplyQuestionType, applyQuestionTypeText, hasOptions } from '../types';
-import ApplyFormRenderer, { AnswerState } from './ApplyFormRenderer';
+import ApplyFormRenderer, { AnswerState, missingRequired } from './ApplyFormRenderer';
+import { toast } from './Toast';
 
 interface Props {
   value: ApplyQuestion[];
@@ -178,9 +179,25 @@ function BuilderScreen({ draft, setDraft, onSave, onExit }: ScreenProps) {
 
             {mode === 'preview' ? (
               <div className="fb-card fb-preview">
+                {/* 지원자가 신청 버튼을 눌렀을 때 뜨는 창(ApplyModal)과 같은 모양으로 보여 준다 */}
+                <div className="fb-preview-head">
+                  <span className="fb-preview-badge"><FiEye /> 지원자에게 보이는 화면</span>
+                  <h3>신청서 작성</h3>
+                  <p>질문 {labeled.length}개 · 필수 {labeled.filter(q => q.required).length}개</p>
+                </div>
                 {labeled.length > 0
                   ? <ApplyFormRenderer questions={labeled} value={previewAnswers} onChange={setPreviewAnswers} preview />
                   : <p className="fb-empty-text">질문 내용을 입력하면 지원자에게 보이는 모습이 여기에 나옵니다.</p>}
+                {labeled.length > 0 && (
+                  <div className="fb-preview-foot">
+                    <button type="button" className="fb-btn" onClick={() => setPreviewAnswers({})}>입력 지우기</button>
+                    {/* 미리보기라 보내지 않고 필수 항목 확인만 해 본다 */}
+                    <button type="button" className="fb-btn primary"
+                            onClick={() => toast(missingRequired(labeled, previewAnswers) ?? '필수 항목을 모두 채웠습니다. 미리보기라 제출되지는 않습니다.')}>
+                      신청하기
+                    </button>
+                  </div>
+                )}
               </div>
             ) : draft.length === 0 ? (
               <div className="fb-card fb-empty">
