@@ -58,7 +58,7 @@ aws 일시적 장애로 인해 11일까지 다시 복구 예정입니다.
   게시글에 달린 좋아요 정보를 관리합니다.
   
 ## 7. 주요 기능 소개
-- 회원가입/로그인 : JWT 기반 인증, 소셜 로그인(Kakao), Redis를 활용한 세션 관리
+- 회원가입/로그인 : JWT 기반 인증, 소셜 로그인(Kakao). Redis로 기기별 Refresh Token 회전·재사용 탐지, 로그아웃 토큰 블랙리스트, 관리자 차단 시 토큰 즉시 무효화
   
 [![프로젝트 시연](https://img.youtube.com/vi/oNG0h_y2NdI/0.jpg)](https://www.youtube.com/watch?v=oNG0h_y2NdI)
 

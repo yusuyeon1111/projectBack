@@ -26,10 +26,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 `application.yml`은 모든 비밀값을 환경변수로 읽는다. 프로필 분리(`application-local.yml` 등)가 없으므로 로컬에서도 전부 지정해야 한다:
 `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REDIS_HOST`, `REDIS_PORT`, `JWT_SECRET`(Base64 인코딩된 HMAC 키), `KAKAO_CLIENT_ID`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`.
 
+- Redis 장애 정책은 fail-closed다. 필터가 토큰 폐기 여부를 확인하지 못하면 인증하지 않고 비로그인으로 넘기며, 로그인이 필요한 API는 401 대신 503을 준다(401이면 프론트가 로그아웃시킨다). Lettuce 명령·연결 타임아웃은 1초(`RedisRepositoryConfig`, 기본 60초면 요청이 멈춘다). `RedisOutageTest`(연결 거부), `RedisHangTest`(응답 없음)가 검증한다.
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
-- JPA `ddl-auto: update` — 엔티티를 바꾸면 기동 시 스키마가 자동 변경된다. 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
+- 스키마는 Flyway(`src/main/resources/db/migration`)가 관리하고 JPA는 `ddl-auto: validate`라서 엔티티와 테이블이 어긋나면 기동이 멈춘다. **엔티티를 바꾸면 `V{다음 번호}__설명.sql`을 함께 추가한다.** 이미 적용된 파일은 고치지 않는다(체크섬 불일치로 기동 실패). `V1__baseline.sql`은 Flyway 도입 전 `ddl-auto`가 만들던 스키마이고, ddl-auto로 테이블이 이미 만들어진 로컬 개발 DB에는 `baseline-on-migrate`로 실행 없이 적용 표시만 한다(운영 DB는 아직 없어서 첫 배포는 빈 DB에 V1부터 실행된다). 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
 - OSIV(`spring.jpa.open-in-view`)는 꺼져 있고, `WebMvcConfig`가 같은 인터셉터를 알림 구독(`/api/notifications/subscribe`)만 빼고 직접 건다. SSE 요청이 열려 있는 동안 DB 커넥션을 쥐지 않게 하려는 것이다. 다른 API는 여전히 OSIV에 기대어 지연 로딩할 수 있다.
-- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
+- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`, `TeamFormationTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`·`TeamFormationTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 승인을 실행하는 테스트는 회원을 지우기 전에 `TeamCleanup.deleteFor`로 팀·이력을 먼저 지워야 한다(회원 FK). 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
 ## 아키텍처
 
@@ -39,8 +40,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `SecurityConfig`: stateless 세션, CSRF/formLogin 비활성. 공개 API(회원가입·로그인·아이디/이메일 중복 체크, 게시글 목록·비로그인 상세, OAuth2 경로)만 `permitAll`이고 나머지는 인증 필요, `/api/admin/**`은 `ROLE_ADMIN`. 미인증 요청은 401(`HttpStatusEntryPoint`). **사용자 식별은 항상 컨트롤러의 `Principal`(토큰 subject = 회원 username)로 하고, 요청 본문·파라미터의 username은 믿지 않는다.** 글 수정·삭제와 신청 승인·거절은 `PostService.findOwnedPost` 등으로 작성자 본인인지 확인한다. 이 규칙은 `SecurityAccessTest`가 검증한다.
 - `JwtAuthenticationFilter`: `Authorization: Bearer <token>` 헤더를 파싱해 `SecurityContext`에 인증을 채운다. 토큰 자체가 Redis 키로 존재하면(`logout` 값) 블랙리스트로 간주해 인증을 건너뛴다. `/api/post/list`는 필터를 아예 통과시킨다.
-- `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. `roles` 클레임에 권한을 콤마로 저장한다.
-- Redis 키 규약: `RT:{username}` → refresh token, `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
+- `JwtTokenProvider`: access 2시간 / refresh 7일, HS256. access token은 `roles`(콤마 구분)와 `sid`, refresh token은 `sid`·`jti`·`typ=refresh`를 담고 권한은 담지 않는다. 필터는 refresh token을 인증에 쓰지 않는다.
+- Refresh Token 회전(`RefreshTokenService`): 로그인(일반·카카오)마다 기기 세션 `sid`를 만들고, `POST /api/member/reissue`가 새 토큰 쌍을 주며 이전 refresh token을 무효로 한다. 이미 바뀐 토큰이 다시 오면 재사용(탈취)으로 보고 그 기기 세션을 지우고, 그 기기로 발급된 access token도 `RVK:{sid}`로 막는다. 탭 여러 개의 동시 재발급을 위해 바꾼 뒤 10초 동안은 같은 이전 토큰에 방금 만든 쌍을 그대로 준다. 비교·교체는 Lua 스크립트 하나로 원자 실행한다. 권한·차단 여부는 재발급 때 DB에서 읽는다. `RefreshTokenTest`가 검증한다.
+- Redis 키 규약: `RTS:{username}` → 해시(필드 `sid` → 현재 refresh token의 `jti`, 7일 TTL, 로그아웃은 필드 삭제, 차단은 키 삭제), `RTG:{이전 jti}` → 재발급 유예용 토큰 쌍 JSON(10초), `RVK:{sid}` → 재사용이 감지된 기기의 access token 차단(access token 수명만큼 TTL, 필터가 `BAN:`과 함께 EXISTS 한 번으로 확인), `{accessToken}` → `"logout"` (남은 만료시간만큼 TTL), `BAN:{username}` → 관리자 차단 표시(access token 수명만큼 TTL, 필터가 이 키가 있으면 기존 토큰도 인증하지 않음), `SSE:{ticket}` → 알림 구독용 1회용 티켓(30초, 쓰면 바로 삭제).
 - 일반 로그인은 `MemberService.signIn` → `AuthenticationManager` → `CustomerUserDetailsService`. 카카오 로그인은 `CustomerOAuth2UserService` → `OAuth2SuccessHandler`에서 회원 자동 생성 후, 회원 username과 DB 권한으로 토큰을 만들어 **쿼리스트링에 실어** 프론트 `/success`로 리다이렉트한다. (OAuth2 인증 객체의 이름은 카카오 숫자 id라서 그대로 쓰면 안 된다.)
 - 계정 비활성화는 `Member.delYn = 'Y'`로 표현한다(soft delete). 로그인·OAuth 양쪽에서 이 값을 검사한다.
 
@@ -52,6 +54,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `Post.postStatus`(`SCHEDULED`/`IN_PROGRESS`/`END`)는 `PostStatusScheduler`가 매일 00:00 및 앱 기동 시 `startDate`/`endDate` 기준으로 일괄 갱신한다. `Post.delYn`은 관리자 숨김 처리용.
 - 통계/차트 쿼리(`countMemberPerMonth` 등)는 리포지토리에 JPQL로 작성되어 `Object[]`를 반환하고 서비스에서 DTO로 매핑한다.
 
+### 팀 (팀해요 2.0, 설계: `docs/design/team-2.0.md`)
+
+- 글의 **첫 승인 때 팀이 자동으로 생긴다**(`TeamService.joinOnAccept`, 승인과 같은 트랜잭션·같은 글 잠금 안). 팀장은 첫 승인자가 아니라 **글 작성자**(`member.username = post.author`)이고, `team.leader_member_id` 한 칸에 둬서 팀장이 둘일 수 없다. 작성자 회원을 못 찾으면 409로 승인까지 롤백한다.
+- 이미 그 팀의 활성 팀원이면 같은 글의 다른 포지션에 신청·승인할 수 없다(409). 팀이 있는(해산되지 않은) 글은 삭제할 수 없다(409).
+- 팀 조회(`/api/teams/my`, `/api/teams/{id}`)는 팀원만 된다. 관리자도 팀원이 아니면 404다(`NoSuchElementException` → 404).
+- 신청 상태가 바뀔 때마다 `application_event`에 한 줄씩 남긴다(신청 행은 현재 상태만 담는다).
+- `team`·`team_member`·`application_event`가 글·신청을 가리키는 FK는 `ON DELETE SET NULL`이다. 글 삭제는 JPA cascade로 신청 행을 지우므로 이 FK들이 막지 않아야 한다.
+
 ### 알림 (SSE)
 
 - 포지션 신청 → 글 작성자, 승인·거절 → 신청자에게 알림을 만든다(`NotificationService`, `notification` 테이블). 글 제목·카테고리·역할은 만든 시점 값을 복사해 둔다. 알림 행은 승인·거절과 같은 트랜잭션에서 저장되므로 409로 롤백되면 남지 않는다.
@@ -61,7 +71,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 예외 처리
 
-`GlobalExceptionHandler`가 `RuntimeException` → 403, `IllegalStateException` → 409, `BadCredentialsException` → 401로 변환한다(본문은 `{error: 메시지}`, 프론트는 `auth.ts`의 `errorMessage`로 꺼낸다). 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
+`GlobalExceptionHandler`가 Redis·DB 연결 실패와 명령 시간 초과(`DataAccessResourceFailureException`, `QueryTimeoutException`) → 503, `RuntimeException` → 403, `IllegalStateException` → 409, `BadCredentialsException` → 401로 변환한다(본문은 `{error: 메시지}`, 프론트는 `auth.ts`의 `errorMessage`로 꺼낸다). 서비스 계층은 커스텀 예외 없이 메시지 담은 `RuntimeException`을 던지는 관례다. `MemberController`에는 별도 `@ExceptionHandler`(400)가 있어 해당 컨트롤러에서는 그것이 우선한다.
 
 ### S3 업로드
 

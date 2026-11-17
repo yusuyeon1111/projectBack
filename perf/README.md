@@ -16,7 +16,7 @@
 ## 실행 방법
 
 ```bash
-# 1) 측정용 스키마를 만들고 앱을 한 번 띄워 테이블 생성 (ddl-auto)
+# 1) 측정용 스키마를 만들고 앱을 한 번 띄워 테이블 생성 (Flyway)
 docker exec teamhaeyo-mysql mysql -uroot -plocal -e "CREATE DATABASE project_perf DEFAULT CHARACTER SET utf8mb4"
 DB_URL='jdbc:mysql://localhost:3306/project_perf?...' ./gradlew bootRun --args='--server.port=8081 --spring.jpa.properties.hibernate.generate_statistics=true ...'
 

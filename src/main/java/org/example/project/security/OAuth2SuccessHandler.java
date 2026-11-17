@@ -10,7 +10,6 @@ import org.example.project.member.dto.JwtToken;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -26,17 +25,15 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
-    private final JwtTokenProvider jwtTokenProvider;
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
-    private final RedisTemplate<String, String> redisTemplate;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -101,8 +98,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         Authentication memberAuth = new UsernamePasswordAuthenticationToken(
                 member.getUsername(), null,
                 member.getRoles().stream().map(SimpleGrantedAuthority::new).toList());
-        JwtToken token = jwtTokenProvider.generateToken(memberAuth);
-        redisTemplate.opsForValue().set("RT:" + member.getUsername(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
+        JwtToken token = refreshTokenService.issue(memberAuth);
 
         // 리다이렉트 URL 생성
         String redirectUri = UriComponentsBuilder

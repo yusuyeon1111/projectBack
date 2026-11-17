@@ -175,3 +175,36 @@ export interface JwtToken {
   refreshTokenExpiresIn: number;
   roles: string[];
 }
+
+// 팀 (GET /api/teams/my, /api/teams/{id})
+export interface TeamSummary {
+  teamId: number;
+  postId: number | null;
+  name: string;
+  status: string;
+  leader: boolean;
+}
+
+export interface TeamMember {
+  memberId: number;
+  nickname: string | null;
+  positionRole: string | null;
+  leader: boolean;
+  joinedAt: string;
+}
+
+export interface TeamDetail {
+  teamId: number;
+  postId: number | null;
+  name: string;
+  status: string;
+  createdAt: string;
+  members: TeamMember[];
+}
+
+export const teamStatusText: Record<string, string> = {
+  FORMING: '팀 구성 중',
+  ACTIVE: '진행 중',
+  COMPLETED: '완료',
+  DISBANDED: '해산',
+};
