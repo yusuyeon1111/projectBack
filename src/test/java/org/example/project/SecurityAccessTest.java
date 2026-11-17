@@ -103,6 +103,20 @@ class SecurityAccessTest {
     }
 
     @Test
+    void 관리자는_자기_계정을_비활성화할_수_없다() throws Exception {
+        Member admin = memberRepository.save(Member.builder()
+                .username("self-ban-admin").email("self-ban@test.com").delYn("N").build());
+        try {
+            mvc.perform(post("/api/admin/banUser").header("Authorization", bearer("self-ban-admin", "ROLE_ADMIN"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"memberId\":" + admin.getId() + "}"))
+                    .andExpect(status().isBadRequest());
+            org.assertj.core.api.Assertions.assertThat(memberRepository.findById(admin.getId()).orElseThrow().getDelYn()).isEqualTo("N");
+        } finally {
+            memberRepository.delete(admin);
+        }
+    }
+
+    @Test
     void 차단된_회원의_기존_토큰은_401() throws Exception {
         Member member = memberRepository.save(Member.builder()
                 .username("ban-target").email("ban@test.com").delYn("N").build());

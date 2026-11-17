@@ -205,10 +205,14 @@ public class MemberService {
         return "계정이 활성화 되었습니다.";
     }
 
-    public String banUser(UpdateMemberDto dto) {
+    public String banUser(UpdateMemberDto dto, String adminUsername) {
         Long id = dto.getMemberId();
         Member member = memberRepository.findById(id)
                 .orElseThrow(()->new RuntimeException("찾을 수 없는 사용자 입니다."));
+        // 자기 계정을 막으면 바로 로그아웃되고 풀어 줄 사람이 없다
+        if (member.getUsername().equals(adminUsername)) {
+            throw new IllegalArgumentException("본인 계정은 비활성화할 수 없습니다.");
+        }
         member.setDelYn("Y");
         memberRepository.save(member);
         // 이미 발급된 access token은 서명만으로 통과하므로, 남은 최대 수명 동안 필터에서 막는다

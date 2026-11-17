@@ -61,8 +61,8 @@ public class AdminController {
     }
 
     @PostMapping("/banUser")
-    public ResponseEntity<String> banUser(@RequestBody UpdateMemberDto dto) {
-        return ResponseEntity.ok(memberService.banUser(dto));
+    public ResponseEntity<String> banUser(@RequestBody UpdateMemberDto dto, java.security.Principal principal) {
+        return ResponseEntity.ok(memberService.banUser(dto, principal.getName()));
     }
 
     @PostMapping("/changePostStatus")
