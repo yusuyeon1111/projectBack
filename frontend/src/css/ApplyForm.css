@@ -461,14 +461,6 @@
 }
 
 
-.fb-preview-foot {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-}
 
 .fb-panel {
   width: 260px;
