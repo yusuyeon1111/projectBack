@@ -30,7 +30,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
 - 스키마는 Flyway(`src/main/resources/db/migration`)가 관리하고 JPA는 `ddl-auto: validate`라서 엔티티와 테이블이 어긋나면 기동이 멈춘다. **엔티티를 바꾸면 `V{다음 번호}__설명.sql`을 함께 추가한다.** 이미 적용된 파일은 고치지 않는다(체크섬 불일치로 기동 실패). `V1__baseline.sql`은 Flyway 도입 전 `ddl-auto`가 만들던 스키마이고, ddl-auto로 테이블이 이미 만들어진 로컬 개발 DB에는 `baseline-on-migrate`로 실행 없이 적용 표시만 한다(운영 DB는 아직 없어서 첫 배포는 빈 DB에 V1부터 실행된다). 다이얼렉트는 MariaDB로 지정되어 있지만 드라이버는 MySQL이다.
 - OSIV(`spring.jpa.open-in-view`)는 꺼져 있고, `WebMvcConfig`가 같은 인터셉터를 알림 구독(`/api/notifications/subscribe`)만 빼고 직접 건다. SSE 요청이 열려 있는 동안 DB 커넥션을 쥐지 않게 하려는 것이다. 다른 API는 여전히 OSIV에 기대어 지연 로딩할 수 있다.
-- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`, `TeamFormationTest`, `TeamMembershipTest`, `ApplyFormTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`·`TeamFormationTest`·`TeamMembershipTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 승인을 실행하는 테스트는 회원을 지우기 전에 `TeamCleanup.deleteFor`로 팀·이력을 먼저 지워야 한다(회원 FK). 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
+- 테스트(`contextLoads`, `SecurityAccessTest`, `PositionConcurrencyTest`, `PostSearchTest`, `Notification*Test`, `SseTicketTest`, `TeamFormationTest`, `TeamMembershipTest`, `TaskTest`, `ApplyFormTest`)는 `@SpringBootTest`라서 실제 DB/Redis 연결이 필요하다. `NotificationStreamTest`는 임의 포트로 서버를 띄워 실제 HTTP로 SSE를 읽는다. `contextLoads`는 `JWT_SECRET`도 실제 길이의 키여야 한다(`openssl rand -base64 32`). `PositionConcurrencyTest`·`TeamFormationTest`·`TeamMembershipTest`·`TaskTest`는 동시 커밋을 재현하려고 롤백 없이 DB에 쓰고 직접 정리한다. 승인을 실행하는 테스트는 회원을 지우기 전에 `TeamCleanup.deleteFor`로 팀·이력을 먼저 지워야 한다(회원 FK). 환경변수 없이 `./gradlew build`를 돌리면 테스트 단계에서 실패하므로 컴파일만 확인할 땐 `compileJava` 또는 `build -x test`를 쓴다.
 
 ## 아키텍처
 
@@ -63,6 +63,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 팀 쓰기 작업은 승인과 같은 순서(글 행 → 팀 행)로 잠근다(`TeamService.lockTeam`). 잠그기 전에 `team.post_id`를 읽어 스냅샷이 먼저 잡히므로, 그 뒤 상태 확인은 잠금 읽기(`findForUpdate…`)나 조건부 UPDATE로 한다. `TeamMembershipTest`가 동시 탈퇴·승인, 동시 위임을 검증한다.
 - 팀 조회(`/api/teams/my`, `/api/teams/{id}`)는 팀원만 된다. 관리자도 팀원이 아니면 404다(`NoSuchElementException` → 404).
 - 신청 상태가 바뀔 때마다 `application_event`에 한 줄씩 남긴다(신청 행은 현재 상태만 담는다).
+- 업무(`task`, `TaskService`, `/api/teams/{id}/tasks`)는 팀원만 보고 쓴다(아니면 404, 다른 팀 업무 id도 404). 수정은 칸 전체를 바꾸며 읽은 `version`을 함께 보내야 하고, 다르거나 저장 직전에 누가 고쳤으면(`@Version`) 409다. 상태 변경(`PATCH .../status {from, to}`)은 조건부 UPDATE라 연타해도 한 번만 바뀌고 version도 올린다. 삭제는 팀장·만든 사람만(403). 업무 쓰기는 팀 행을 공유 잠금(`findByIdForShare`)으로 먼저 잡아 완료·해산·퇴출과 줄을 선다. 탈퇴·퇴출하면 그 사람의 담당 업무가 비워진다. `TaskTest`가 검증한다.
+- 업무 변경과 멤버 변동·팀 상태 변경은 `team_activity`에 한 줄씩 남고(`detail` JSON에 당시 제목 등), `GET /api/teams/{id}/activities?cursor=&taskId=`로 최신순 30개씩 읽는다.
 - `team`·`team_member`·`application_event`가 글·신청을 가리키는 FK는 `ON DELETE SET NULL`이다. 글 삭제는 JPA cascade로 신청 행을 지우므로 이 FK들이 막지 않아야 한다.
 
 ### 알림 (SSE)

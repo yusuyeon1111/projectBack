@@ -3,7 +3,7 @@
 모집글로 모인 사람들이 같은 서비스 안에서 팀을 꾸리고, 업무(Task)를 나눠 진행하고, 프로젝트를 끝내기까지 관리한다.
 기존 Spring Boot·JPA·MySQL·Redis·SSE 구성을 그대로 쓰고 새 인프라는 들이지 않는다.
 
-> 상태: 설계 3차안. **Phase 1(팀 자동 생성, 내 팀 화면)과 Phase 2(멤버 관리, V4 알림 확장)를 구현했다.** Phase 3 이후는 설계만 있다.
+> 상태: 설계 3차안. **Phase 1(팀 자동 생성, 내 팀 화면), Phase 2(멤버 관리, V4 알림 확장), Phase 3(업무, V5)을 구현했다.** Phase 4 이후는 설계만 있다.
 >
 > **전제: 운영 중인 DB가 없다.** 이관할 기존 데이터도, 맞춰야 할 운영 스키마도 없다. 첫 배포는 빈 DB에 Flyway가 V1부터 차례로 만든다.
 
@@ -314,7 +314,8 @@ CREATE TABLE application_event (
 | DELETE | `/api/teams/{teamId}/members/{memberId}` | 팀장 | 2 |
 | POST | `/api/post/reapply` `{applicationId}` | 본인(`WITHDRAWN`) | 2 |
 | GET·POST | `/api/teams/{teamId}/tasks` | 팀원 | 3 |
-| GET·PATCH·DELETE | `/api/teams/{teamId}/tasks/{taskId}` (PATCH는 `version` 필수) | 팀원 / 삭제는 팀장·작성자 | 3 |
+| GET·PATCH·DELETE | `/api/teams/{teamId}/tasks/{taskId}` (PATCH는 `version` 필수, 칸 전체 교체) | 팀원 / 삭제는 팀장·작성자 | 3 |
+| PATCH | `/api/teams/{teamId}/tasks/{taskId}/status` `{from, to}` (조건부 UPDATE) | 팀원 | 3 |
 | GET·POST | `/api/teams/{teamId}/tasks/{taskId}/comments` | 팀원 | 4 |
 | DELETE | `/api/teams/{teamId}/tasks/{taskId}/comments/{id}` | 팀장·작성자 | 4 |
 | GET | `/api/teams/{teamId}/activities?cursor=&taskId=` | 팀원 | 3 |
@@ -344,7 +345,8 @@ CREATE TABLE application_event (
 | 팀장 위임 | ① 팀 행 FOR UPDATE ② 요청자가 현재 팀장인지 ③ 대상이 활성 팀원인지 ④ 변경 | 두 사람이 동시에 위임, 위임 대상이 동시에 탈퇴(탈퇴도 팀 행을 잠근다) |
 | 팀 상태 변경 | 팀 행 FOR UPDATE 후 상태 전이 확인 | 완료와 해산이 동시에 일어남 |
 | 업무 수정 | `@Version` 낙관적 락 → 충돌하면 409 | 수정 내용이 덮어써짐(lost update) |
-| 업무 상태 변경 | 조건부 UPDATE(`WHERE status = ?`) | 연타, 이력 중복 |
+| 업무 상태 변경 | 조건부 UPDATE(`WHERE status = ?`), version도 올린다 | 연타, 이력 중복, 상태 변경을 모르는 수정이 덮어쓰기 |
+| 업무 쓰기 공통 | 팀 행 공유 잠금(FOR SHARE) 후 팀원·팀 상태 확인 | 완료·해산·퇴출 직후에 업무가 써짐 |
 
 탈퇴·퇴출을 할 때 글 행을 잠그는 데는 `post_id`가 필요하다. 그래서 잠금 없이 `team.post_id`를 먼저 읽는다. `post_id` 자체는 바뀌지 않는 값(글 삭제로 NULL이 되는 경우만 있음)이지만, 이 일반 조회가 트랜잭션의 스냅샷을 먼저 잡는다. 그래서 그 뒤 팀원·신청 상태 확인은 일반 조회가 아니라 잠금 읽기나 조건부 UPDATE로 한다(구현 때 확인). NULL이면 글이 없으므로 팀 행만 잠근다.
 
