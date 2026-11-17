@@ -63,6 +63,7 @@ services:
       - app
     environment:
       DOMAIN: ${DOMAIN:-teamhaeyo.kro.kr}   # 로컬 리허설은 DOMAIN=localhost(자체 서명 인증서)
+      ACME_EMAIL: ${ACME_EMAIL:?}           # 인증서 발급처 계정 연락처(공개되지 않음)
     ports:
       - "80:80"
       - "443:443"

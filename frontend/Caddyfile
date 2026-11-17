@@ -1,4 +1,10 @@
-# 인증서는 Caddy가 Let's Encrypt에서 자동으로 받고 갱신한다(80·443이 열려 있고 도메인이 이 서버를 가리켜야 한다)
+# 인증서는 Caddy가 자동으로 받고 갱신한다(80·443이 열려 있고 도메인이 이 서버를 가리켜야 한다)
+# kro.kr은 여러 사람이 나눠 쓰는 도메인이라 Let's Encrypt의 상위 도메인당 주간 발급 한도(50장)가 늘 차 있다.
+# 계정 이메일이 있으면 Caddy가 Let's Encrypt 실패 시 ZeroSSL(무료 ACME)로 넘어가 받는다
+{
+	email {$ACME_EMAIL}
+}
+
 {$DOMAIN:teamhaeyo.kro.kr} {
 	encode zstd gzip
 
