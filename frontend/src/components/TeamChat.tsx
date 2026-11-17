@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Divider, IconButton, InputBase, Stack, Typography } from '@mui/material';
+import SendIcon from '@mui/icons-material/Send';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import TeamAvatar from './TeamAvatar';
 import { errorMessage } from '../auth';
 import { ChatMessage, SSE_CONNECTED, TEAM_CHAT, TeamDetail } from '../types';
 
@@ -21,6 +24,12 @@ export default function TeamChat({ team, open }: { team: TeamDetail; open: boole
   const [hasOlder, setHasOlder] = useState(false);
   const [content, setContent] = useState('');
   const lastId = useRef(0);
+  const listRef = useRef<HTMLDivElement>(null);
+  const newest = messages.length ? messages[messages.length - 1].id : 0;
+  useEffect(() => {
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [newest]);
   const url = `${process.env.REACT_APP_API_URL}/api/teams/${team.teamId}/messages`;
 
   const add = (incoming: ChatMessage[]) => {
@@ -89,27 +98,59 @@ export default function TeamChat({ team, open }: { team: TeamDetail; open: boole
     }
   };
 
+  const mine = (m: ChatMessage) => m.senderMemberId === team.myMemberId;
+
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="subtitle1">채팅</Typography>
-      <Box sx={{ maxHeight: 240, overflowY: 'auto', border: 1, borderColor: 'divider', borderRadius: 1, p: 1 }}>
-        {hasOlder && <Button size="small" onClick={() => loadOlder().catch(() => {})}>이전 대화</Button>}
-        {messages.length === 0 && <Typography variant="body2" color="text.secondary">아직 대화가 없습니다.</Typography>}
-        {messages.map(m => (
-          <Typography key={m.id} variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-            <b>{m.senderName}</b> {m.content}{' '}
-            <Typography component="span" variant="caption" color="text.secondary">{m.createdAt.slice(11, 16)}</Typography>
-          </Typography>
-        ))}
+    <>
+      <Box ref={listRef} sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2.5, py: 2, bgcolor: '#fff' }}>
+        {hasOlder && (
+          <Box sx={{ textAlign: 'center', mb: 1 }}>
+            <Button size="small" onClick={() => loadOlder().catch(() => {})}>이전 대화 보기</Button>
+          </Box>
+        )}
+        {messages.length === 0 && (
+          <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ height: '100%', color: 'text.secondary' }}>
+            <ChatBubbleOutlineIcon sx={{ fontSize: 40, opacity: 0.4 }} />
+            <Typography variant="body2">아직 대화가 없습니다.</Typography>
+            {open && <Typography variant="caption">첫 메시지로 인사를 건네 보세요.</Typography>}
+          </Stack>
+        )}
+        {messages.map((m, i) => {
+          const prev = messages[i - 1];
+          const newDay = !prev || prev.createdAt.slice(0, 10) !== m.createdAt.slice(0, 10);
+          // 같은 사람이 이어 보낸 메시지는 이름·얼굴을 한 번만 보인다
+          const first = newDay || prev.senderMemberId !== m.senderMemberId;
+          const me = mine(m);
+          return (
+            <Box key={m.id}>
+              {newDay && <Divider sx={{ my: 1.5 }}><Typography variant="caption" color="text.secondary">{m.createdAt.slice(0, 10).replace(/-/g, '. ')}</Typography></Divider>}
+              <Stack direction={me ? 'row-reverse' : 'row'} spacing={1} alignItems="flex-end" sx={{ mt: first ? 1.25 : 0.4 }}>
+                {!me && <Box sx={{ width: 32, flexShrink: 0, alignSelf: 'flex-start' }}>{first && <TeamAvatar memberId={m.senderMemberId} name={m.senderName} size={32} />}</Box>}
+                <Box sx={{ maxWidth: '70%' }}>
+                  {!me && first && <Typography variant="caption" fontWeight={600} sx={{ display: 'block', mb: 0.25 }}>{m.senderName}</Typography>}
+                  <Box sx={{ px: 1.5, py: 1, borderRadius: 2.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: 14, lineHeight: 1.5,
+                    ...(me ? { bgcolor: '#007bff', color: '#fff', borderBottomRightRadius: 6 } : { bgcolor: '#f1f3f5', borderTopLeftRadius: first ? 6 : undefined }) }}>
+                    {m.content}
+                  </Box>
+                </Box>
+                <Typography variant="caption" color="text.disabled" sx={{ flexShrink: 0, fontSize: 11 }}>{m.createdAt.slice(11, 16)}</Typography>
+              </Stack>
+            </Box>
+          );
+        })}
       </Box>
       {open && (
-        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-          <TextField size="small" label="메시지" value={content} onChange={e => setContent(e.target.value)}
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ p: 1.5, borderTop: 1, borderColor: 'divider', bgcolor: '#F9FAFB' }}>
+          <InputBase placeholder="메시지를 입력하세요" value={content} onChange={e => setContent(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) send(); }}
-            inputProps={{ maxLength: 1000 }} sx={{ flex: 1 }} />
-          <Button variant="contained" size="small" disabled={!content.trim()} onClick={send}>보내기</Button>
+            inputProps={{ maxLength: 1000, 'aria-label': '메시지' }}
+            sx={{ flex: 1, bgcolor: '#fff', border: 1, borderColor: 'divider', borderRadius: 5, px: 2, py: 0.75, fontSize: 14 }} />
+          <IconButton aria-label="보내기" disabled={!content.trim()} onClick={send}
+            sx={{ bgcolor: '#007bff', color: '#fff', '&:hover': { bgcolor: '#0056b3' }, '&.Mui-disabled': { bgcolor: '#e5e7eb', color: '#fff' } }}>
+            <SendIcon fontSize="small" />
+          </IconButton>
         </Stack>
       )}
-    </Box>
+    </>
   );
 }
