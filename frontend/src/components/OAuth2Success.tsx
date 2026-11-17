@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from './Toast';
 const OAuth2Success = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const OAuth2Success = () => {
     };
 
     if (!data.nickname) {
-      alert("닉네임을 입력해주세요.");
+      toast("닉네임을 입력해주세요.");
       return;
     }
 
@@ -24,11 +25,11 @@ const OAuth2Success = () => {
           Authorization: `Bearer ${localStorage.getItem("accessToken")}`
         }
       });
-      alert("정보 등록이 완료되었습니다!");
+      toast("정보 등록이 완료되었습니다!");
       navigate("/"); 
     } catch (err) {
       console.error("업데이트 오류:", err);
-      alert("정보 등록에 실패했습니다. 다시 시도해주세요.");
+      toast("정보 등록에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -46,7 +47,7 @@ const OAuth2Success = () => {
         localStorage.setItem('accessToken', accessToken ?? "");
         localStorage.setItem('refreshToken', refreshToken ?? "");
         localStorage.setItem('username', username ?? "");
-        alert('로그인 완료!');
+        toast("로그인이 완료되었습니다!");
         navigate('/');
       } else if (newUserFlag === 'true') {
         localStorage.setItem('accessToken', accessToken ?? "");
@@ -54,7 +55,7 @@ const OAuth2Success = () => {
         localStorage.setItem('username', username ?? "");
         setIsNewUser(true);
       } else {
-        alert('로그인 실패');
+        toast("로그인에 실패했습니다.");
         navigate('/signin');
       }
     }, [location, navigate]);
