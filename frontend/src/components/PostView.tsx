@@ -12,6 +12,7 @@ import { Post, regions, roleTextMap } from '../types';
 import ApplyFormBuilder, { applyQuestionsError } from './ApplyFormBuilder';
 import ApplyModal from './ApplyModal';
 import { errorMessage } from '../auth';
+import { toast } from './Toast';
 
 // 수정 폼에서 스택 입력칸 값을 post 상태에 같이 들고 다님
 type PostEdit = Post & { stackInput?: string };
@@ -43,12 +44,14 @@ function PostView() {
           setLike(true)
         }
       } catch (error) {
-        console.error('게시글 조회 실패:', error);
+        // 없는 글·관리자가 숨긴 글(404)이면 '로딩 중'에 멈추지 않게 메인으로 돌려보낸다
+        toast(errorMessage(error, '게시글을 불러오지 못했습니다.'));
+        navigate('/', { replace: true });
       }
     };
 
     fetchPost();
-  }, [postId, username]);
+  }, [postId, username, navigate]);
 
   if (!post) return <div>로딩 중...</div>;
 

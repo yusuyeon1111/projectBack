@@ -51,6 +51,9 @@ public class PositionService {
     public ResponseEntity<String> applyPostPosition(ApplyPositionRequestDto dto) {
         PostPosition position = postPositionRepository.findWithPostById(dto.getPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
+        if ("Y".equals(position.getPost().getDelYn())) {
+            throw new java.util.NoSuchElementException("게시글을 찾을 수 없습니다.");
+        }
         if ("END".equals(position.getStatus())) {
             return ResponseEntity.badRequest().body("모집이 마감된 포지션입니다.");
         }
