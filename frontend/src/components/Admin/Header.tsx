@@ -1,3 +1,4 @@
+import { toast } from '../Toast';
 import { useRef, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { clearAuth } from "../../auth";
@@ -58,12 +59,12 @@ function Header() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       clearAuth();
-      alert("로그아웃 되었습니다.");
+      toast("로그아웃 되었습니다.");
       navigate("/")
       window.location.reload();
     } catch (error) {
       console.error("로그아웃 실패", error);
-      alert("로그아웃 중 오류가 발생했습니다.");
+      toast("로그아웃 중 오류가 발생했습니다.");
     }
   };
 

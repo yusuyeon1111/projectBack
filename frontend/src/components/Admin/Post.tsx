@@ -1,3 +1,4 @@
+import { toast } from '../Toast';
 import axios from 'axios';
 import React, { useState, useEffect } from "react";
 import { Post as PostType, PageResponse, pageNumbers } from "../../types";
@@ -36,10 +37,10 @@ function Post() {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
     });
-    alert(res.data);
+    toast(res.data);
     fetchPosts(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(errorMessage(error, "요청에 실패했습니다."));
+    toast(errorMessage(error, "요청에 실패했습니다."));
   }
 }
   return (

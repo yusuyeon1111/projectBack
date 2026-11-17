@@ -1,3 +1,4 @@
+import { toast } from '../Toast';
 import axios from 'axios';
 import React, { useEffect, useState } from "react";
 import { AdminMember, PageResponse } from "../../types";
@@ -34,10 +35,10 @@ const acceptUser = async (memberId: number) => {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
     });
-    alert(res.data);
+    toast(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(errorMessage(error, "요청에 실패했습니다."));
+    toast(errorMessage(error, "요청에 실패했습니다."));
   }
 }
 
@@ -50,10 +51,10 @@ const banUser = async (member: AdminMember) => {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
     });
-    alert(res.data);
+    toast(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(errorMessage(error, "요청에 실패했습니다."));
+    toast(errorMessage(error, "요청에 실패했습니다."));
   }
 }
 
