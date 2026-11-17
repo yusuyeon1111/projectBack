@@ -268,6 +268,7 @@ export interface TeamDetail {
   status: string;
   createdAt: string;
   members: TeamMember[];
+  myMemberId: number; // 보는 사람 자신
 }
 
 // 신청 상태. WITHDRAWN(탈퇴)·EXPELLED(퇴출)는 팀에서 빠진 승인이다
@@ -276,6 +277,11 @@ export const applyStatusText: Record<string, string> = {
 };
 export const applyStatusClass: Record<string, string> = {
   APPLY: 'status-pending', ACCEPT: 'status-accepted', REJECT: 'status-rejected', WITHDRAWN: 'status-unknown', EXPELLED: 'status-rejected',
+};
+
+// 팀 상태 칩 색(MUI Chip color)
+export const teamStatusColor: Record<string, 'primary' | 'success' | 'default' | 'error'> = {
+  FORMING: 'primary', ACTIVE: 'success', COMPLETED: 'default', DISBANDED: 'error',
 };
 
 export const teamStatusText: Record<string, string> = {

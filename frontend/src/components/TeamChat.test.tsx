@@ -10,7 +10,7 @@ jest.mock('axios', () => ({
 }));
 const api = axios as jest.Mocked<typeof axios>;
 
-const team: TeamDetail = { teamId: 7, postId: 1, name: '팀', status: 'ACTIVE', createdAt: '', members: [] };
+const team: TeamDetail = { teamId: 7, postId: 1, name: '팀', status: 'ACTIVE', createdAt: '', members: [], myMemberId: 1 };
 const msg = (id: number, over: Partial<ChatMessage> = {}): ChatMessage => ({
   id, teamId: 7, senderMemberId: 1, senderName: '철수', content: `메시지${id}`, createdAt: '2026-11-17T10:00:00', ...over,
 });
@@ -55,7 +55,7 @@ test('보낸 메시지를 바로 보이고, 끝난 팀은 입력창이 없다', 
   await screen.findByText('아직 대화가 없습니다.');
 
   userEvent.type(screen.getByLabelText('메시지'), '안녕하세요');
-  userEvent.click(screen.getByText('보내기'));
+  userEvent.click(screen.getByLabelText('보내기'));
   expect(await screen.findByText('안녕하세요')).toBeInTheDocument();
   expect(api.post).toHaveBeenCalledWith(expect.stringContaining('/api/teams/7/messages'), { content: '안녕하세요' });
   unmount();

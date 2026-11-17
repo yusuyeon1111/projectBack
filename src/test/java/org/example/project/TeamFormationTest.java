@@ -161,7 +161,8 @@ class TeamFormationTest {
 
         mvc.perform(get("/api/teams/" + teamId).header("Authorization", bearer(a.getUsername())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.members.length()").value(2));
+                .andExpect(jsonPath("$.members.length()").value(2))
+                .andExpect(jsonPath("$.myMemberId").value(a.getId()));
         mvc.perform(get("/api/teams/my").header("Authorization", bearer(author.getUsername())))
                 .andExpect(jsonPath("$[0].teamId").value(teamId))
                 .andExpect(jsonPath("$[0].leader").value(true));

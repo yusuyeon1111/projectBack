@@ -111,7 +111,8 @@ public class TeamService {
     public TeamDetailDto findTeam(Long teamId, String username) {
         TeamMember me = teamMemberRepository.findByTeam_IdAndMember_UsernameAndStatus(teamId, username, TeamMember.ACTIVE)
                 .orElseThrow(() -> new NoSuchElementException("팀을 찾을 수 없습니다."));
-        return new TeamDetailDto(me.getTeam(), teamMemberRepository.findByTeam_IdAndStatusOrderByIdAsc(teamId, TeamMember.ACTIVE));
+        return new TeamDetailDto(me.getTeam(), teamMemberRepository.findByTeam_IdAndStatusOrderByIdAsc(teamId, TeamMember.ACTIVE),
+                me.getMember().getId());
     }
 
     // --- 팀 쓰기 작업(팀장·팀원) ---
