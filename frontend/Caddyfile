@@ -1,0 +1,16 @@
+# 인증서는 Caddy가 Let's Encrypt에서 자동으로 받고 갱신한다(80·443이 열려 있고 도메인이 이 서버를 가리켜야 한다)
+{$DOMAIN:teamhaeyo.kro.kr} {
+	encode zstd gzip
+
+	# SSE(text/event-stream)는 Caddy가 버퍼링 없이 바로 흘려보낸다
+	@backend path /api/* /oauth2/* /login/oauth2/*
+	handle @backend {
+		reverse_proxy app:8080
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
