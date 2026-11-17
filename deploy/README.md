@@ -6,7 +6,7 @@ RDS·ElastiCache는 비용 때문에 쓰지 않는다. 알림·채팅 SSE 연결
 | 파일 | 하는 일 |
 |---|---|
 | `../Dockerfile` | 백엔드 이미지(Gradle 빌드 → JRE) |
-| `../frontend/Dockerfile`, `../frontend/Caddyfile` | 프론트 빌드 결과를 Caddy가 서빙, `/api`·`/oauth2`·`/login/oauth2`는 앱으로. 인증서는 Caddy가 자동 발급·갱신 |
+| `../frontend/Dockerfile`, `../frontend/Caddyfile` | 프론트 빌드 결과를 Caddy가 서빙, `/api`·`/oauth2/authorization`·`/login/oauth2`는 앱으로(`/oauth2/success`는 프론트 화면). 인증서는 Caddy가 자동 발급·갱신 |
 | `docker-compose.yml` | 네 컨테이너와 데이터 볼륨 |
 | `env.example` | 서버에서 만들 `.env`의 항목 |
 | `ec2-user-data.sh` | 첫 부팅 때 스왑·Docker 설치, 저장소 clone |
