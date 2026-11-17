@@ -19,6 +19,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 린트/포맷터 설정은 없다.
 
+로컬 서버를 띄운 뒤 `python3 scripts/dev-seed.py [서버 주소, 기본 http://localhost:8080]`를 돌리면 테스트 계정 `leader`·`alice`·`bob`(비밀번호는 스크립트의 `PASSWORD`)과 모집글, 승인된 팀(alice), 대기 중인 신청(bob)을 API로 만든다. 이미 있으면 아무것도 하지 않는다.
+
 목록 검색 성능 측정은 `perf/`에 있다(더미 데이터 `seed.sql`, k6 시나리오, 결과 기록 `perf/README.md`). 측정은 `project_perf` 스키마와 8081 포트의 별도 앱으로 하고, 개선할 때마다 같은 시나리오로 다시 재서 README에 전후를 남긴다.
 
 ### 실행에 필요한 환경변수
