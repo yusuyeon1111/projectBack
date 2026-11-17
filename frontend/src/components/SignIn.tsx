@@ -8,6 +8,7 @@ import { useForm } from 'react-hook-form'
 import kakao from '../assets/kakaoLogin.png';
 import naver from '../assets/naverLogin.png';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { toast } from './Toast';
 
 interface SignInForm {
   username: string;
@@ -41,7 +42,7 @@ function Signin() {
         localStorage.setItem("refreshToken", response.data.refreshToken);
         localStorage.setItem("username",username)
         localStorage.setItem("role", response.data.roles[0]);
-        alert("로그인이 완료되었습니다!");
+        toast("로그인이 완료되었습니다!");
         if(response.data.roles[0] === 'ROLE_ADMIN') {
           nav("/admin");
         } else {
