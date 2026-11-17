@@ -23,6 +23,7 @@ public class ApplyFormService {
     static final int MAX_QUESTIONS = 20;
     static final int MAX_LABEL_LENGTH = 100;
     static final int MAX_OPTIONS = 20;
+    static final int MAX_DESCRIPTION_LENGTH = 300;
     private static final Pattern KEY_PATTERN = Pattern.compile("[A-Za-z0-9-]{1,36}");
 
     static final Map<String, Integer> MAX_TEXT_LENGTH = Map.of("TEXT", 200, "TEXTAREA", 2000, "URL", 500);
@@ -74,6 +75,10 @@ public class ApplyFormService {
             if (label.isEmpty() || label.length() > MAX_LABEL_LENGTH) {
                 throw new IllegalArgumentException("질문 내용은 1~" + MAX_LABEL_LENGTH + "자로 입력해주세요.");
             }
+            String description = trim(q.description());
+            if (description.length() > MAX_DESCRIPTION_LENGTH) {
+                throw new IllegalArgumentException("'" + label + "' 질문의 설명은 " + MAX_DESCRIPTION_LENGTH + "자까지 입력할 수 있습니다.");
+            }
             String key = trim(q.key()).isEmpty() ? UUID.randomUUID().toString() : q.key();
             if (!KEY_PATTERN.matcher(key).matches() || !keys.add(key)) {
                 throw new IllegalArgumentException("질문 식별자가 올바르지 않습니다.");
@@ -88,7 +93,7 @@ public class ApplyFormService {
                             + MAX_LABEL_LENGTH + "자 이내로 입력해주세요.");
                 }
             }
-            result.add(new ApplyQuestion(key, q.type(), label, q.required(), options));
+            result.add(new ApplyQuestion(key, q.type(), label, description, q.required(), options));
         }
         return result;
     }

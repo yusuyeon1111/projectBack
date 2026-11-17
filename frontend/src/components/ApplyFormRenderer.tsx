@@ -4,7 +4,7 @@ import '../css/ApplyForm.css';
 import {
   Box, Checkbox, Chip, FormControlLabel, FormGroup, MenuItem, Radio, RadioGroup, Stack, TextField, Typography,
 } from '@mui/material';
-import { APPLY_FILE_LIMIT, ApplyAnswerInput, ApplyQuestion } from '../types';
+import { APPLY_FILE_LIMIT, APPLY_TEXT_MAX, ApplyAnswerInput, ApplyQuestion } from '../types';
 import { errorMessage } from '../auth';
 
 export type AnswerState = Record<string, ApplyAnswerInput>;
@@ -72,9 +72,12 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
       {questions.map(q => {
         const answer = answerOf(q.key);
         const label = (
-          <Typography fontWeight={600} mb={0.5}>
-            {q.label || '(질문 내용 없음)'}{q.required && <span className="apply-required"> *</span>}
-          </Typography>
+          <Box mb={0.75}>
+            <Typography fontWeight={600}>
+              {q.label}{q.required && <span className="apply-required"> *</span>}
+            </Typography>
+            {q.description && <Typography variant="body2" color="text.secondary" whiteSpace="pre-line">{q.description}</Typography>}
+          </Box>
         );
         const single = answer.values[0] ?? '';
         return (
@@ -83,12 +86,12 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
             {(q.type === 'TEXT' || q.type === 'URL') && (
               <TextField size="small" fullWidth value={single}
                          placeholder={q.type === 'URL' ? 'https://' : ''}
-                         inputProps={{ maxLength: q.type === 'URL' ? 500 : 200 }}
+                         inputProps={{ maxLength: APPLY_TEXT_MAX[q.type] }}
                          onChange={e => set(q.key, { values: [e.target.value] })} />
             )}
             {q.type === 'TEXTAREA' && (
               <TextField size="small" fullWidth multiline minRows={3} value={single}
-                         inputProps={{ maxLength: 2000 }}
+                         inputProps={{ maxLength: APPLY_TEXT_MAX.TEXTAREA }}
                          onChange={e => set(q.key, { values: [e.target.value] })} />
             )}
             {q.type === 'SELECT' && (

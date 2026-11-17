@@ -59,9 +59,13 @@ export interface ApplyQuestion {
   key: string;
   type: ApplyQuestionType;
   label: string;
+  description?: string; // 제목 아래 보충 설명(선택)
   required: boolean;
   options: string[];
 }
+
+// 글로 답하는 질문의 최대 글자 수. 서버(ApplyFormService.MAX_TEXT_LENGTH)와 같은 값이어야 한다.
+export const APPLY_TEXT_MAX: Partial<Record<ApplyQuestionType, number>> = { TEXT: 200, TEXTAREA: 2000, URL: 500 };
 
 export const applyQuestionTypeText: Record<ApplyQuestionType, string> = {
   TEXT: '짧은 글', TEXTAREA: '긴 글', URL: '링크', SELECT: '드롭다운', RADIO: '하나 선택', CHECKBOX: '여러 개 선택', FILE: '파일 첨부',
