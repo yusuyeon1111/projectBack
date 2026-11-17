@@ -11,6 +11,11 @@ test('알림 종류별 문구', () => {
     .toBe("'사이드 프로젝트' 기획 포지션 신청이 승인되었습니다.");
   expect(notificationMessage({ ...base, type: 'REJECT', role: 'design', actor: null }))
     .toBe("'사이드 프로젝트' 디자인 포지션 신청이 거절되었습니다.");
+  // 스터디는 포지션이 없으므로 글 단위로
+  expect(notificationMessage({ ...base, postTitle: '자격증 스터디', postCategory: 'study', role: 'totalCount' }))
+    .toBe("'자격증 스터디' 스터디에 홍길동님이 신청했습니다.");
+  expect(notificationMessage({ ...base, type: 'ACCEPT', postTitle: '자격증 스터디', postCategory: 'study', role: 'totalCount', actor: null }))
+    .toBe("'자격증 스터디' 스터디 신청이 승인되었습니다.");
 });
 
 test('알림 링크는 글 종류에 따라 상세 경로로', () => {
