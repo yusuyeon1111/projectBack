@@ -72,7 +72,7 @@ class ApplyFormTest {
                 {"title":"신청서 테스트","category":"study","content":"c","startDate":"2099-01-01","endDate":"2099-12-31","projectType":"online","region":"nothing",
                  "positions":[{"role":"totalCount","count":2,"status":"ING"}],
                  "applyQuestions":[
-                   {"type":"TEXT","label":" 자기소개 ","required":true},
+                   {"type":"TEXT","label":" 자기소개 ","description":" 세 줄 이내 ","required":true},
                    {"type":"RADIO","label":"경험","required":true,"options":["있음","없음"," 있음 "]},
                    {"type":"URL","label":"깃허브","required":false},
                    {"type":"FILE","label":"포트폴리오","required":false}]}""";
@@ -96,6 +96,7 @@ class ApplyFormTest {
     void 질문은_공백을_다듬고_중복_선택지를_합쳐_저장한다() throws Exception {
         JsonNode questions = read(call(get("/api/post/view/" + postId), null, null)).get("applyQuestions");
         assertThat(questions.get(0).get("label").asText()).isEqualTo("자기소개");
+        assertThat(questions.get(0).get("description").asText()).isEqualTo("세 줄 이내");
         assertThat(questions.get(1).get("options").toString()).isEqualTo("[\"있음\",\"없음\"]");
         assertThat(keys).doesNotContainNull().doesNotHaveDuplicates();
     }
@@ -106,6 +107,16 @@ class ApplyFormTest {
                 {"title":"t","category":"study","projectType":"online","region":"nothing","startDate":"2099-01-01","endDate":"2099-12-31",
                  "positions":[{"role":"totalCount","count":1}],
                  "applyQuestions":[{"type":"RADIO","label":"경험","required":true,"options":[]}]}""";
+        call(post("/api/post/create"), author, body).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 질문_설명이_300자를_넘으면_400() throws Exception {
+        String body = """
+                {"title":"t","category":"study","projectType":"online","region":"nothing","startDate":"2099-01-01","endDate":"2099-12-31",
+                 "positions":[{"role":"totalCount","count":1}],
+                 "applyQuestions":[{"type":"TEXT","label":"이름","description":"%s","required":true}]}"""
+                .formatted("가".repeat(301));
         call(post("/api/post/create"), author, body).andExpect(status().isBadRequest());
     }
 
