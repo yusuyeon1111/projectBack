@@ -14,8 +14,11 @@ import org.example.project.team.dto.TeamDetailDto;
 import org.example.project.team.dto.TeamSummaryDto;
 import org.example.project.team.entity.ApplicationEvent;
 import org.example.project.team.entity.Team;
+import org.example.project.team.entity.TeamActivity;
 import org.example.project.team.entity.TeamMember;
 import org.example.project.team.repository.ApplicationEventRepository;
+import org.example.project.team.repository.TaskRepository;
+import org.example.project.team.repository.TeamActivityRepository;
 import org.example.project.team.repository.TeamMemberRepository;
 import org.example.project.team.repository.TeamRepository;
 import org.springframework.security.access.AccessDeniedException;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 @Slf4j
@@ -38,6 +42,8 @@ public class TeamService {
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository applicationRepository;
     private final NotificationService notificationService;
+    private final TaskRepository taskRepository;
+    private final TeamActivityRepository activityRepository;
 
     // 승인된 신청자를 팀에 넣는다. 팀이 없으면(첫 승인) 작성자를 팀장으로 팀을 만든다.
     // 승인 트랜잭션 안에서, 글 행을 잠근 뒤에 불러야 한다. 같은 글의 승인이 글 잠금으로 줄을 서므로
@@ -59,6 +65,7 @@ public class TeamService {
         } else {
             throw new IllegalStateException(existing.isActive() ? "이미 이 팀의 팀원입니다." : "이 팀에서 퇴출된 사람입니다.");
         }
+        record(team, applicant, "MEMBER_JOINED", "MEMBER", applicant.getId(), role == null ? null : Map.of("role", role));
     }
 
     // 팀장은 첫 승인자가 아니라 글 작성자다. 승인은 작성자만 할 수 있으니 정상이라면 조회가 실패하지 않는다.
@@ -111,22 +118,28 @@ public class TeamService {
 
     @Transactional
     public void start(Long teamId, String username) {
-        Team team = requireLeader(lockTeam(teamId), username).getTeam();
+        TeamMember leader = requireLeader(lockTeam(teamId), username);
+        Team team = leader.getTeam();
         team.start();
+        record(team, leader.getMember(), "TEAM_STARTED", "TEAM", team.getId(), null);
         notifyMembers(team, "TEAM_STARTED", username);
     }
 
     @Transactional
     public void complete(Long teamId, String username) {
-        Team team = requireLeader(lockTeam(teamId), username).getTeam();
+        TeamMember leader = requireLeader(lockTeam(teamId), username);
+        Team team = leader.getTeam();
         team.complete();
+        record(team, leader.getMember(), "TEAM_COMPLETED", "TEAM", team.getId(), null);
         notifyMembers(team, "TEAM_COMPLETED", username);
     }
 
     @Transactional
     public void disband(Long teamId, String username) {
-        Team team = requireLeader(lockTeam(teamId), username).getTeam();
+        TeamMember leader = requireLeader(lockTeam(teamId), username);
+        Team team = leader.getTeam();
         team.disband();
+        record(team, leader.getMember(), "TEAM_DISBANDED", "TEAM", team.getId(), null);
         notifyMembers(team, "TEAM_DISBANDED", username);
     }
 
@@ -139,10 +152,12 @@ public class TeamService {
     @Transactional
     public void changeLeader(Long teamId, String username, Long targetMemberId) {
         Team team = lockTeam(teamId);
-        requireOpen(requireLeader(team, username));
+        TeamMember me = requireOpen(requireLeader(team, username));
         TeamMember target = requireActiveMember(teamId, targetMemberId);
         if (target.isLeader()) throw new IllegalArgumentException("이미 팀장입니다.");
         team.changeLeader(targetMemberId);
+        record(team, me.getMember(), "LEADER_CHANGED", "MEMBER", targetMemberId,
+                Map.of("name", NotificationService.displayName(target.getMember())));
         notificationService.notifyTeam(team, "TEAM_LEADER", List.of(target.getMember().getUsername()), username, null, null);
     }
 
@@ -152,6 +167,7 @@ public class TeamService {
         if (me.isLeader()) throw new IllegalStateException("팀장은 다른 팀원에게 팀장을 넘긴 뒤 탈퇴할 수 있습니다.");
         release(me, TeamMember.LEFT, "WITHDRAWN", me.getMember().getId());
         Team team = me.getTeam();
+        record(team, me.getMember(), "MEMBER_LEFT", "MEMBER", me.getMember().getId(), null);
         memberRepository.findById(team.getLeaderMemberId()).ifPresent(leader -> notificationService.notifyTeam(
                 team, "TEAM_LEFT", List.of(leader.getUsername()), username, NotificationService.displayName(me.getMember()), me.getPositionRole()));
     }
@@ -162,6 +178,8 @@ public class TeamService {
         TeamMember target = requireActiveMember(teamId, targetMemberId);
         if (target.isLeader()) throw new IllegalArgumentException("팀장은 퇴출할 수 없습니다.");
         release(target, TeamMember.KICKED, "EXPELLED", leader.getMember().getId());
+        record(target.getTeam(), leader.getMember(), "MEMBER_KICKED", "MEMBER", targetMemberId,
+                Map.of("name", NotificationService.displayName(target.getMember())));
         notificationService.notifyTeam(target.getTeam(), "TEAM_KICKED", List.of(target.getMember().getUsername()),
                 username, null, target.getPositionRole());
     }
@@ -200,6 +218,7 @@ public class TeamService {
     // 팀에서 빠지면 신청도 승인에서 내려오고, 정원 아래가 된 포지션과 글을 다시 모집 중으로 연다
     private void release(TeamMember target, String memberStatus, String applicationStatus, Long actorId) {
         target.leave(memberStatus);
+        taskRepository.unassign(target.getTeam().getId(), target.getMember().getId());
         Long applicationId = target.getSourceApplicationId(); // 글이 지워졌으면 null
         if (applicationId == null || applicationRepository.changeStatus(applicationId, "ACCEPT", applicationStatus) == 0) {
             return;
@@ -207,5 +226,9 @@ public class TeamService {
         postPositionRepository.reopenByApplicationId(applicationId);
         postRepository.reopen(target.getTeam().getPostId());
         recordApplication(applicationId, applicationStatus, actorId);
+    }
+
+    private void record(Team team, Member actor, String type, String targetType, Long targetId, Map<String, Object> detail) {
+        activityRepository.save(new TeamActivity(team.getId(), actor, type, targetType, targetId, detail));
     }
 }

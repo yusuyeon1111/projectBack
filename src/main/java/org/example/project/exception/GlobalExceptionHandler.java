@@ -1,6 +1,7 @@
 package org.example.project.exception;
 
 import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +43,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, String>> handleConflict(IllegalStateException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error(ex));
+    }
+
+    // 업무를 읽은 뒤 저장하기 전에 다른 사람이 먼저 고쳤다(@Version)
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> handleOptimisticLock(OptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "다른 사람이 먼저 수정했습니다. 새로고침한 뒤 다시 시도해주세요."));
     }
 
     // 입력값이 규칙에 맞지 않는 요청(신청서 질문·답변 검증 등). RuntimeException 처리(403)보다 먼저 잡는다.

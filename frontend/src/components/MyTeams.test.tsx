@@ -5,7 +5,7 @@ import MyTeams from './MyTeams';
 
 jest.mock('axios', () => ({
   __esModule: true,
-  default: { get: jest.fn(), post: jest.fn(), put: jest.fn(), delete: jest.fn(), interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } } },
+  default: { get: jest.fn(), post: jest.fn(), put: jest.fn(), patch: jest.fn(), delete: jest.fn(), interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } } },
 }));
 const api = axios as jest.Mocked<typeof axios>;
 
@@ -15,7 +15,8 @@ beforeEach(() => {
 });
 
 const team = (leader: boolean) => (url: string) => Promise.resolve({
-  data: url.endsWith('/api/teams/my')
+  data: url.includes('/tasks') || url.includes('/activities') ? []
+  : url.endsWith('/api/teams/my')
     ? [{ teamId: 7, postId: 1, name: '사이드 프로젝트', status: 'FORMING', leader }]
     : { teamId: 7, postId: 1, name: '사이드 프로젝트', status: 'FORMING', createdAt: '2026-11-17T10:00:00', members: [
         { memberId: 1, nickname: '나', positionRole: null, leader: true, joinedAt: '2026-11-17T10:00:00' },
@@ -32,7 +33,7 @@ test('내 팀 목록을 보여 주고 누르면 팀원을 연다', async () => {
 
   userEvent.click(screen.getByText('사이드 프로젝트'));
   expect(await screen.findByText(/팀원 2명/)).toBeInTheDocument();
-  expect(screen.getByText(/철수/)).toBeInTheDocument();
+  expect(screen.getByText(/철수 ·/)).toBeInTheDocument(); // 담당자 선택지에도 이름이 있어 팀원 줄로 찾는다
   expect(api.get).toHaveBeenLastCalledWith(expect.stringContaining('/api/teams/7'));
 });
 

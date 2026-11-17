@@ -281,3 +281,53 @@ export const teamStatusText: Record<string, string> = {
   COMPLETED: '완료',
   DISBANDED: '해산',
 };
+
+// 팀 업무 (GET /api/teams/{id}/tasks). 수정할 때 받은 version을 그대로 돌려보낸다
+export interface Task {
+  taskId: number;
+  title: string;
+  description: string | null;
+  status: 'TODO' | 'IN_PROGRESS' | 'DONE';
+  assigneeMemberId: number | null;
+  creatorMemberId: number;
+  dueDate: string | null;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  deletable: boolean;
+}
+
+export const taskStatusText: Record<Task['status'], string> = {
+  TODO: '할 일', IN_PROGRESS: '진행 중', DONE: '완료',
+};
+
+// 팀 활동 (GET /api/teams/{id}/activities). detail은 기록 당시 값이다
+export interface TeamActivity {
+  id: number;
+  actorMemberId: number;
+  actorName: string;
+  type: string;
+  targetType: string;
+  targetId: number | null;
+  detail: Record<string, string> | null;
+  createdAt: string;
+}
+
+export function activityText(a: TeamActivity): string {
+  const d = a.detail ?? {};
+  const status = (s: string) => taskStatusText[s as Task['status']] ?? s;
+  switch (a.type) {
+    case 'TASK_CREATED': return `${a.actorName}님이 업무 "${d.title}"을(를) 만들었습니다`;
+    case 'TASK_UPDATED': return `${a.actorName}님이 업무 "${d.title}"을(를) 수정했습니다`;
+    case 'TASK_STATUS': return `${a.actorName}님이 "${d.title}"을(를) ${status(d.from)} → ${status(d.to)}(으)로 옮겼습니다`;
+    case 'TASK_DELETED': return `${a.actorName}님이 업무 "${d.title}"을(를) 지웠습니다`;
+    case 'MEMBER_JOINED': return `${a.actorName}님이 팀에 합류했습니다`;
+    case 'MEMBER_LEFT': return `${a.actorName}님이 팀에서 탈퇴했습니다`;
+    case 'MEMBER_KICKED': return `${a.actorName}님이 ${d.name}님을 퇴출했습니다`;
+    case 'LEADER_CHANGED': return `${a.actorName}님이 ${d.name}님에게 팀장을 넘겼습니다`;
+    case 'TEAM_STARTED': return `${a.actorName}님이 팀을 시작했습니다`;
+    case 'TEAM_COMPLETED': return `${a.actorName}님이 팀을 완료했습니다`;
+    case 'TEAM_DISBANDED': return `${a.actorName}님이 팀을 해산했습니다`;
+    default: return `${a.actorName}님의 활동`;
+  }
+}
