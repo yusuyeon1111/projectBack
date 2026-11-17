@@ -1,0 +1,77 @@
+# 운영 서버(EC2 한 대)에서 앱·MySQL·Redis·웹(Caddy)을 함께 띄운다.
+# 알림·채팅 SSE 연결을 서버 메모리에 두므로 앱은 한 대여야 한다.
+# 사용: deploy/ 에서 .env를 만든 뒤 `docker compose up -d --build`
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: project
+      MYSQL_USER: teamhaeyo
+      MYSQL_PASSWORD: ${DB_PASSWORD:?}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?}
+      TZ: Asia/Seoul
+    # 2GB 서버라 버퍼 풀과 performance_schema 메모리를 줄인다
+    command: --innodb-buffer-pool-size=128M --performance-schema=OFF --max-connections=50
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # 토큰 폐기·차단 키를 지우면 안 되므로 가득 차면 쓰기를 거절한다(noeviction)
+    command: redis-server --maxmemory 64mb --maxmemory-policy noeviction --save 300 1
+    volumes:
+      - redis-data:/data
+
+  app:
+    build: ..
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/project?serverTimezone=Asia/Seoul&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: teamhaeyo
+      DB_PASSWORD: ${DB_PASSWORD:?}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SPRING_DATA_REDIS_USESSL: "false"
+      JWT_SECRET: ${JWT_SECRET:?}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:?}
+      # 빈 문자열이면 Spring이 기동을 멈추므로(client-id must not be empty) 비었을 때도 값을 채운다
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-not-configured}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-not-configured}
+      AWS_REGION: ap-northeast-2
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME:?}
+      TZ: Asia/Seoul
+      # S3 자격 증명은 넣지 않는다. EC2 인스턴스 역할(teamhaeyo-ec2)을 SDK가 찾는다
+
+  web:
+    build:
+      context: ../frontend
+      args:
+        REACT_APP_KAKAO_API_KEY: ${REACT_APP_KAKAO_API_KEY:?}
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-teamhaeyo.kro.kr}   # 로컬 리허설은 DOMAIN=localhost(자체 서명 인증서)
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy-data:/data   # 발급받은 인증서. 지우면 재발급(발급 횟수 제한 주의)
+      - caddy-config:/config
+
+volumes:
+  mysql-data:
+  redis-data:
+  caddy-data:
+  caddy-config:
