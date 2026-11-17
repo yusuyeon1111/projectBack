@@ -47,6 +47,9 @@ public class MemberController {
     @Value("${aws.s3.region}")
     private String region;
 
+    @Value("${aws.s3.bucket-name}")
+    private String bucketName;
+
 
     private final MemberService memberService;
    private final PostService postService;
@@ -129,7 +132,6 @@ public class MemberController {
     @GetMapping("/presigned-url")
     public Map<String, String> presignedUrl(@RequestParam String filename, Principal principal) {
         String username = principal.getName();
-        String bucketName = "aws-practice-img-suyeon";
         String objectKey = "uploads/"+username+"/"+filename;
 
         BasicAWSCredentials creds = new BasicAWSCredentials(
