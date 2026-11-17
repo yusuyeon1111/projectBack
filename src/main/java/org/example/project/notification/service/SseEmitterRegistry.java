@@ -25,8 +25,7 @@ public class SseEmitterRegistry {
     public SseEmitter add(String username) {
         SseEmitter emitter = new SseEmitter(TIMEOUT);
         emitter.onCompletion(() -> remove(username, emitter));
-        // complete하지 않으면 Spring이 AsyncRequestTimeoutException을 던져 예외 처리기(403)까지 간다. complete는 onCompletion으로 목록에서도 지운다
-        emitter.onTimeout(emitter::complete);
+        emitter.onTimeout(() -> remove(username, emitter));
         emitter.onError(e -> remove(username, emitter));
         send(username, emitter, SseEmitter.event().name("connected").data("ok"));
         emitters.compute(username, (k, set) -> {
