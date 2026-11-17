@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import '../css/Mypage.css';
 import axios from 'axios';
 import { MdEdit } from "react-icons/md";
-import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem } from '@mui/material';
+import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
-import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, applyStatusClass, applyStatusText, postStatusText, roleTextMap } from '../types';
+import { ApplyMember, ApplyPost, Member, MyPageResponse, Post, applyStatusClass, applyStatusText, postStatusText, roleTextMap } from '../types';
 import { errorMessage } from '../auth';
 import ApplicationAnswersDialog from './ApplicationAnswersDialog';
 import MyTeams from './MyTeams';
@@ -39,7 +39,10 @@ function a11yProps(index: number) {
   };
 }
 
-const TEAM_TAB = 4;
+// 용도별 탭: 팀 활동 · 모집과 지원 · 관심 글
+const TEAM_TAB = 0;
+const RECRUIT_TAB = 1;
+const LIKE_TAB = 2;
 
 function MyPage() {
   const [open, setOpen] = useState(false);
@@ -48,7 +51,6 @@ function MyPage() {
   const [memberData, setMemberData] = useState<Member | null>(null);
   const [postData, setPostData] = useState<Post[]>([]);
   const [applyData, setApplyData] = useState<ApplyPost[]>([]);
-  const [acceptData, setAcceptData] = useState<AcceptPost[]>([]);
   const [likeData, setLikeData] = useState<Post[]>([]);
   const [stackInput, setStackInput] = useState("");
   const [stackList, setStackList] = useState<string[]>([]);
@@ -78,7 +80,6 @@ function MyPage() {
         try {
           const response = await axios.get<MyPageResponse>(`${process.env.REACT_APP_API_URL}/api/member/myPage`);
           setMemberData(response.data.member);
-          setAcceptData(response.data.acceptPosts)
           setApplyData(response.data.applyPosts)
           setLikeData(response.data.likePosts)
           setPostData(response.data.posts)
@@ -104,7 +105,8 @@ function MyPage() {
     }
   };
 
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(TEAM_TAB);
+  const [recruitView, setRecruitView] = useState<'posts' | 'applies'>('posts');
 
   // 팀 알림이 ?tab=team으로 보낸다. 이미 마이페이지에 있어도 다시 누르면 열리게 location.key로 반응한다
   const location = useLocation();
@@ -337,10 +339,6 @@ function MyPage() {
                 <span>{applyData.length}</span>
               </div>
               <div>
-                <span>참여중</span>
-                <span>{acceptData.length}</span>
-              </div>
-              <div>
                 <span>찜한글</span>
                 <span>{likeData.length}</span>
               </div>
@@ -356,14 +354,21 @@ function MyPage() {
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={value} onChange={handleChange} variant="scrollable" scrollButtons="auto" aria-label="basic tabs example">
-              <Tab label="작성글" {...a11yProps(0)} />
-              <Tab label="신청내역" {...a11yProps(1)} />
-              <Tab label="참여중" {...a11yProps(2)} />
-              <Tab label="찜한글" {...a11yProps(3)} />
               <Tab label="내 팀" {...a11yProps(TEAM_TAB)} />
+              <Tab label="모집 · 지원" {...a11yProps(RECRUIT_TAB)} />
+              <Tab label="찜한 글" {...a11yProps(LIKE_TAB)} />
             </Tabs>
           </Box>
-          <CustomTabPanel value={value} index={0}>
+          <CustomTabPanel value={value} index={TEAM_TAB}>
+            <MyTeams />
+          </CustomTabPanel>
+          <CustomTabPanel value={value} index={RECRUIT_TAB}>
+            <ToggleButtonGroup exclusive size="small" color="primary" value={recruitView} sx={{ mb: 2 }}
+              onChange={(_, v) => v && setRecruitView(v)}>
+              <ToggleButton value="posts">내가 모집한 글 {postData.length}</ToggleButton>
+              <ToggleButton value="applies">내가 지원한 글 {applyData.length}</ToggleButton>
+            </ToggleButtonGroup>
+            {recruitView === 'posts' ? (
             <div className='postData-container'>
             { postData.length > 0 ? postData.map((post)=>(
               <div className='postItemTop' key={post.id} >
@@ -387,11 +392,9 @@ function MyPage() {
                 </div>
                 <button id='applyMngBtn' onClick={() => handleOpenModal(post.id)}>👤 신청자관리</button>
               </div>
-            )):<div><p>데이터 없음.</p></div>}
+            )):<div><p>작성한 모집글이 없습니다.</p></div>}
             </div>
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={1}>
-            {applyData.length > 0 ?
+            ) : applyData.length > 0 ?
              applyData.map((post)=>(
               <div key={post.postId} className='postItem'>
                 {post.category === 'study' ?
@@ -415,27 +418,10 @@ function MyPage() {
                 </div>
               </div>
             ))
-            : <div><p>데이터 없음.</p></div>
+            : <div><p>지원한 글이 없습니다.</p></div>
           }
           </CustomTabPanel>
-          <CustomTabPanel value={value} index={2}>
-            {acceptData.length > 0 ? acceptData.map((post)=>(
-              <div key={post.postId} className='postItem'>
-                {post.category === 'study' ?
-                <span id='studylabel'>스터디</span>
-                :<span id='projectlabel'>프로젝트</span>}
-                <span className='myTitle' onClick={() => navigate(post.category === 'study'? `/study/${post.postId}`: `/post/${post.postId}`)}>
-                  {post.postTitle}</span>
-                <span className='status' data-type={post.postStatus === 'END' ? 'end' : 'active'}>{postStatusText(post.postStatus)}</span>
-                <div className='dataInner'>
-                  <span className='myDate'>참여일자 : {post.acceptedAt}</span><span className='line'>|</span>
-                  <span className='myDate'> 기간 : {post.startDate} - {post.endDate}</span>
-                  {post.category === 'project' && <><span className='line'>|</span><span className='myDate'> 참여분야 : {roleTextMap[post.positionName]}</span></>}
-              </div>
-              </div>
-            )): <div><p>데이터 없음.</p></div>}
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={3}>
+          <CustomTabPanel value={value} index={LIKE_TAB}>
             {likeData.length > 0 ? likeData.map((post)=>(
               <div key={post.id} className='postItem'>
                  {post.category === 'study' ?
@@ -457,10 +443,7 @@ function MyPage() {
                 </div>
 
               </div>
-            )): <div><p>데이터 없음.</p></div>}
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={TEAM_TAB}>
-            <MyTeams />
+            )): <div><p>찜한 글이 없습니다.</p></div>}
           </CustomTabPanel>
         </Box>
       </div>
