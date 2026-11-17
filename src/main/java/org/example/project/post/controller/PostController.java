@@ -90,6 +90,12 @@ public class PostController {
         return positionService.acceptPosition(dto, principal.getName());
     }
 
+    // 탈퇴한 팀에 같은 포지션으로 다시 신청한다. 신청서 답변은 처음 낸 것을 그대로 쓴다
+    @PostMapping("/reapply")
+    public void reapply(@RequestBody ApplyPositionRequestDto dto, Principal principal) {
+        positionService.reapply(dto.getPostPositionId(), principal.getName());
+    }
+
     @PostMapping("/reject")
     public List<ApplyMemeberDto> rejectPost(@RequestBody ApplyPositionRequestDto dto, Principal principal) {
         return positionService.rejectPosition(dto, principal.getName());

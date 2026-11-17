@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 public class TeamMember {
 
     public static final String ACTIVE = "ACTIVE";
+    public static final String LEFT = "LEFT";
+    public static final String KICKED = "KICKED";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,5 +54,24 @@ public class TeamMember {
 
     public boolean isLeader() {
         return team.getLeaderMemberId().equals(member.getId());
+    }
+
+    public boolean isActive() {
+        return ACTIVE.equals(status);
+    }
+
+    // 탈퇴(LEFT)·퇴출(KICKED). 행은 지우지 않는다(uk_team_member라 다시 들어오면 이 행을 되살린다)
+    public void leave(String status) {
+        this.status = status;
+        this.leftAt = LocalDateTime.now();
+    }
+
+    // 탈퇴했던 사람이 다시 승인되면 같은 행을 되살린다
+    public void rejoin(Long sourceApplicationId, String positionRole) {
+        this.sourceApplicationId = sourceApplicationId;
+        this.positionRole = positionRole;
+        this.status = ACTIVE;
+        this.joinedAt = LocalDateTime.now();
+        this.leftAt = null;
     }
 }

@@ -6,6 +6,7 @@ export const roleTextMap: Record<string, string> = {
   pm: "기획",
   design: "디자인",
   etc: "기타",
+  totalCount: "스터디원", // 스터디 글은 포지션 없이 인원만 받아서 역할이 totalCount로 저장된다
 };
 
 // 스케줄러가 아직 안 돈 새 글은 postStatus가 비어 있어 예정으로 본다
@@ -248,6 +249,14 @@ export interface TeamDetail {
   createdAt: string;
   members: TeamMember[];
 }
+
+// 신청 상태. WITHDRAWN(탈퇴)·EXPELLED(퇴출)는 팀에서 빠진 승인이다
+export const applyStatusText: Record<string, string> = {
+  APPLY: '대기', ACCEPT: '승인', REJECT: '거절', WITHDRAWN: '탈퇴', EXPELLED: '퇴출',
+};
+export const applyStatusClass: Record<string, string> = {
+  APPLY: 'status-pending', ACCEPT: 'status-accepted', REJECT: 'status-rejected', WITHDRAWN: 'status-unknown', EXPELLED: 'status-rejected',
+};
 
 export const teamStatusText: Record<string, string> = {
   FORMING: '팀 구성 중',
