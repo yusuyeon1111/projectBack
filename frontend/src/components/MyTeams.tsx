@@ -169,7 +169,7 @@ export default function MyTeams() {
                     <TeamTasks team={detail} open={open} />
                   </Box>
                   <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', display: tab === 2 ? 'block' : 'none' }}>
-                    <TeamActivityFeed teamId={detail.teamId} visible={tab === 2} />
+                    <TeamActivityFeed teamId={detail.teamId} visible={tab === 2} reloadKey={detail} />
                   </Box>
                 </Box>
               </Box>

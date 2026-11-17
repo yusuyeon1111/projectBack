@@ -22,3 +22,16 @@ test('탭이 보일 때 활동을 읽어 문장으로 보여 준다', async () =
   expect(await screen.findByText(/철수님이 "API 명세"을\(를\) 할 일 → 진행 중/)).toBeInTheDocument();
   expect(api.get).toHaveBeenCalledWith(expect.stringContaining('/api/teams/7/activities'));
 });
+
+test('탭을 연 채로 팀 상태가 바뀌면(reloadKey) 다시 읽는다', async () => {
+  api.get.mockReset();
+  api.get.mockResolvedValue({ data: [activity] });
+  const { rerender } = render(<TeamActivityFeed teamId={7} visible reloadKey={{ status: 'FORMING' }} />);
+  await screen.findByText(/철수님이/);
+  expect(api.get).toHaveBeenCalledTimes(1);
+
+  api.get.mockResolvedValue({ data: [{ ...activity, id: 10, type: 'TEAM_STARTED', targetType: 'TEAM', detail: null }, activity] });
+  rerender(<TeamActivityFeed teamId={7} visible reloadKey={{ status: 'ACTIVE' }} />);
+  await screen.findAllByText(/철수님이/);
+  expect(api.get).toHaveBeenCalledTimes(2);
+});
