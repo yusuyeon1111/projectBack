@@ -55,14 +55,12 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         }
 
         Member member;
-        boolean isNewUser = false;
 
         Optional<Member> optionalMember = memberRepository.findByEmail(email);
 
         if(optionalMember.isPresent()) {
             member = optionalMember.get();
         } else {
-            isNewUser = true;
             member = Member.builder()
                     .email(email)
                     .name(name)
@@ -71,6 +69,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .delYn("N")
                     .roles(List.of("ROLE_USER"))
                     .provider(registrationId)
+                    .createdAt(new Date())
                     .build();
             try {
                 memberRepository.save(member);
@@ -78,7 +77,6 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 // 이미 존재하면 기존 회원 가져오기
                 member = memberRepository.findByEmail(email)
                         .orElseThrow(() -> new IllegalStateException("회원 생성 실패"));
-                isNewUser = false;
             }
         }
         if ("Y".equals(member.getDelYn())) {
@@ -99,6 +97,10 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 member.getUsername(), null,
                 member.getRoles().stream().map(SimpleGrantedAuthority::new).toList());
         JwtToken token = refreshTokenService.issue(memberAuth);
+
+        // 닉네임을 아직 안 정했으면 프론트가 정보 입력 화면을 보여 준다. "방금 만든 회원"으로 판단하면
+        // 첫 로그인이 입력 전에 끊긴 회원은 다시 입력 화면을 못 보고 닉네임 없이 남는다(글 등록 실패)
+        boolean isNewUser = member.getNickname() == null || member.getNickname().isBlank();
 
         // 리다이렉트 URL 생성
         String redirectUri = UriComponentsBuilder
