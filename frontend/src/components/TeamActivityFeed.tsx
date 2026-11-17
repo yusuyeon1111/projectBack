@@ -8,8 +8,9 @@ import TeamAvatar from './TeamAvatar';
 
 const PAGE = 30;
 
-// 팀 활동 타임라인(최신순). 업무 탭에서 바뀐 내용이 보이도록 탭을 열 때마다 다시 읽는다
-export default function TeamActivityFeed({ teamId, visible }: { teamId: number; visible: boolean }) {
+// 팀 활동 타임라인(최신순). 업무 탭에서 바뀐 내용이 보이도록 탭을 열 때마다 다시 읽는다.
+// 탭을 연 채로 팀 시작·위임 등을 하면 부모가 팀을 다시 읽어 reloadKey가 바뀌므로 그때도 다시 읽는다
+export default function TeamActivityFeed({ teamId, visible, reloadKey }: { teamId: number; visible: boolean; reloadKey?: unknown }) {
   const [activities, setActivities] = useState<TeamActivity[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const url = `${process.env.REACT_APP_API_URL}/api/teams/${teamId}/activities`;
@@ -23,7 +24,7 @@ export default function TeamActivityFeed({ teamId, visible }: { teamId: number; 
   useEffect(() => {
     if (visible) load().catch(e => alert(errorMessage(e, '활동을 불러오지 못했습니다.')));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [teamId, visible]);
+  }, [teamId, visible, reloadKey]);
 
   if (activities.length === 0) {
     return (
