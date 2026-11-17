@@ -9,7 +9,8 @@
 	encode zstd gzip
 
 	# SSE(text/event-stream)는 Caddy가 버퍼링 없이 바로 흘려보낸다
-	@backend path /api/* /oauth2/* /login/oauth2/*
+	# /oauth2/success는 토큰을 받는 프론트 화면이라 백엔드로 보내면 안 된다. 로그인 시작·콜백만 백엔드로
+	@backend path /api/* /oauth2/authorization/* /login/oauth2/*
 	handle @backend {
 		reverse_proxy app:8080
 	}
