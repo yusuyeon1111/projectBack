@@ -52,7 +52,10 @@ export const notificationMessage = (n: NotificationItem) => {
     if (n.type === 'TEAM_LEADER' || n.type === 'TEAM_KICKED') return `'${n.postTitle}' 팀에서 ${teamMessages[n.type]}`;
     return `'${n.postTitle}' 팀이 ${teamMessages[n.type]}`;
   }
-  const target = `'${n.postTitle}' ${roleTextMap[n.role ?? ''] ?? n.role} 포지션`;
+  // 스터디는 포지션 없이 인원만 받으므로(role = totalCount) 글 단위로 말한다
+  const target = n.role === 'totalCount'
+    ? `'${n.postTitle}' 스터디`
+    : `'${n.postTitle}' ${roleTextMap[n.role ?? ''] ?? n.role} 포지션`;
   if (n.type === 'APPLY') return `${target}에 ${n.actor}님이 신청했습니다.`;
   return `${target} 신청이 ${n.type === 'ACCEPT' ? '승인' : '거절'}되었습니다.`;
 };

@@ -359,7 +359,7 @@ function PostView() {
                     disabled={appliedPositions.includes(pos.id)}
                     onClick={() => applyPosition(pos.id)}
                   >
-                    {appliedPositions.includes(pos.id) ? "신청 완료" : "포지션 신청하기"}
+                    {appliedPositions.includes(pos.id) ? "신청 완료" : pos.role === "totalCount" ? "스터디 신청하기" : "포지션 신청하기"}
                   </button>
                   </>
                 </div>

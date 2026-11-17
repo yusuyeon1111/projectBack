@@ -55,7 +55,7 @@ public class PositionService {
             throw new java.util.NoSuchElementException("게시글을 찾을 수 없습니다.");
         }
         if ("END".equals(position.getStatus())) {
-            return ResponseEntity.badRequest().body("모집이 마감된 포지션입니다.");
+            return ResponseEntity.badRequest().body("모집이 마감되었습니다.");
         }
         if ("END".equals(position.getPost().getPostStatus())) {
             return ResponseEntity.badRequest().body("진행 기간이 끝난 글입니다.");
@@ -68,7 +68,7 @@ public class PositionService {
         teamService.checkNotTeamMember(position.getPost().getId(), member.getId());
         boolean alreadyApplied = postPositionMemberRepository.existsByPostPositionAndMember(position, member);
         if(alreadyApplied) {
-            return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
+            return ResponseEntity.badRequest().body("이미 신청했습니다.");
         }
 
         // 신청서 질문에 맞춰 검사한 답변. S3 확인이 들어 있어 저장 직전에 한 번만 만든다.
@@ -83,13 +83,13 @@ public class PositionService {
         try {
             postPositionMemberRepository.save(postPositionMember);
         } catch (DataIntegrityViolationException e) {
-            return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
+            return ResponseEntity.badRequest().body("이미 신청했습니다.");
         }
         // ponytail: 신청은 일부러 트랜잭션 밖이라(위 주석) 이력 저장이 실패하면 이력 없는 신청이 남는다. 신청 이력이 감사 용도가 되면 묶는다
         teamService.recordApplication(postPositionMember.getId(), "APPLY", member.getId());
         notificationService.notifyApply(position.getId(), member);
 
-        return ResponseEntity.ok("포지션 신청이 완료되었습니다.");
+        return ResponseEntity.ok("신청이 완료되었습니다.");
     }
 
     // 신청 기록을 찾고, 그 신청이 달린 글의 작성자인지 확인. 글/포지션은 클라이언트가 보낸 id가 아닌 신청 기록에서 꺼낸다.
