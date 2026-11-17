@@ -184,3 +184,23 @@ test('재연결 대기 중 언마운트하면 다시 붙지 않는다', async ()
   expect(FakeEventSource.instances).toHaveLength(1);
   expect(api.post).toHaveBeenCalledTimes(1);
 });
+
+test('채팅 이벤트와 (재)연결은 알림 목록에 넣지 않고 브라우저 이벤트로 넘긴다', async () => {
+  const chats: any[] = [];
+  let reconnects = 0;
+  const onChat = (e: Event) => chats.push((e as CustomEvent).detail);
+  const onConnected = () => { reconnects++; };
+  window.addEventListener('team-chat', onChat);
+  window.addEventListener('sse-connected', onConnected);
+
+  renderHeader();
+  const es = await connected(1);
+  es.emit('connected', 'ok');
+  es.emit('chat', JSON.stringify({ id: 99, teamId: 3, senderMemberId: 1, senderName: '철수', content: '안녕', createdAt: '' }));
+
+  expect(chats).toEqual([expect.objectContaining({ id: 99, content: '안녕' })]);
+  expect(reconnects).toBe(1);
+  expect(screen.getByText('1')).toBeInTheDocument(); // 안 읽은 알림 수는 그대로
+  window.removeEventListener('team-chat', onChat);
+  window.removeEventListener('sse-connected', onConnected);
+});

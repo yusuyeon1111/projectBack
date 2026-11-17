@@ -4,6 +4,7 @@ import { Modal, Box, Typography, List, ListItem, Button, Stack } from '@mui/mate
 import { errorMessage } from '../auth';
 import { TeamDetail, TeamSummary, roleTextMap, teamStatusText } from '../types';
 import TeamTasks from './TeamTasks';
+import TeamChat from './TeamChat';
 
 const modalStyle = {
   position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -105,6 +106,7 @@ export default function MyTeams() {
                   )}
                 </Stack>
               )}
+              <TeamChat team={detail} open={open} />
               <TeamTasks team={detail} open={open} />
             </>
           )}

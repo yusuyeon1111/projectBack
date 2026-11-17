@@ -346,3 +346,17 @@ export interface TaskComment {
   createdAt: string;
   deletable: boolean;
 }
+
+// 팀 채팅 (GET·POST /api/teams/{id}/messages). 실시간으로는 알림 SSE 연결의 chat 이벤트로 온다
+export interface ChatMessage {
+  id: number;
+  teamId: number;
+  senderMemberId: number;
+  senderName: string;
+  content: string;
+  createdAt: string;
+}
+
+// useNotifications가 SSE를 받아 window에 다시 쏘는 브라우저 이벤트 이름
+export const TEAM_CHAT = 'team-chat';
+export const SSE_CONNECTED = 'sse-connected';
