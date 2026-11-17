@@ -23,7 +23,8 @@ export const pageNumbers = (page: number, totalPages: number) => {
 export interface NotificationItem {
   id: number;
   type: 'APPLY' | 'ACCEPT' | 'REJECT'
-    | 'TEAM_STARTED' | 'TEAM_COMPLETED' | 'TEAM_DISBANDED' | 'TEAM_LEADER' | 'TEAM_LEFT' | 'TEAM_KICKED';
+    | 'TEAM_STARTED' | 'TEAM_COMPLETED' | 'TEAM_DISBANDED' | 'TEAM_LEADER' | 'TEAM_LEFT' | 'TEAM_KICKED'
+    | 'TASK_ASSIGNED' | 'TASK_COMMENT';
   targetType: 'POST' | 'TEAM';
   targetId: number;
   postId: number | null; // 팀 알림은 글이 지워졌으면 null
@@ -45,6 +46,8 @@ const teamMessages: Partial<Record<NotificationItem['type'], string>> = {
 
 export const notificationMessage = (n: NotificationItem) => {
   if (n.targetType === 'TEAM') {
+    if (n.type === 'TASK_ASSIGNED') return `'${n.postTitle}' 팀에서 ${n.actor}님이 업무를 맡겼습니다.`;
+    if (n.type === 'TASK_COMMENT') return `'${n.postTitle}' 팀 업무에 ${n.actor}님이 댓글을 남겼습니다.`;
     if (n.type === 'TEAM_LEFT') return `'${n.postTitle}' 팀에서 ${n.actor}님이 탈퇴했습니다.`;
     if (n.type === 'TEAM_LEADER' || n.type === 'TEAM_KICKED') return `'${n.postTitle}' 팀에서 ${teamMessages[n.type]}`;
     return `'${n.postTitle}' 팀이 ${teamMessages[n.type]}`;
@@ -321,6 +324,8 @@ export function activityText(a: TeamActivity): string {
     case 'TASK_UPDATED': return `${a.actorName}님이 업무 "${d.title}"을(를) 수정했습니다`;
     case 'TASK_STATUS': return `${a.actorName}님이 "${d.title}"을(를) ${status(d.from)} → ${status(d.to)}(으)로 옮겼습니다`;
     case 'TASK_DELETED': return `${a.actorName}님이 업무 "${d.title}"을(를) 지웠습니다`;
+    case 'COMMENT_CREATED': return `${a.actorName}님이 "${d.title}"에 댓글을 남겼습니다`;
+    case 'COMMENT_DELETED': return `${a.actorName}님이 "${d.title}"의 댓글을 지웠습니다`;
     case 'MEMBER_JOINED': return `${a.actorName}님이 팀에 합류했습니다`;
     case 'MEMBER_LEFT': return `${a.actorName}님이 팀에서 탈퇴했습니다`;
     case 'MEMBER_KICKED': return `${a.actorName}님이 ${d.name}님을 퇴출했습니다`;
@@ -330,4 +335,14 @@ export function activityText(a: TeamActivity): string {
     case 'TEAM_DISBANDED': return `${a.actorName}님이 팀을 해산했습니다`;
     default: return `${a.actorName}님의 활동`;
   }
+}
+
+// 업무 댓글 (GET /api/teams/{id}/tasks/{taskId}/comments)
+export interface TaskComment {
+  commentId: number;
+  authorMemberId: number;
+  authorName: string;
+  content: string;
+  createdAt: string;
+  deletable: boolean;
 }

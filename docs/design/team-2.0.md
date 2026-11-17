@@ -3,7 +3,7 @@
 모집글로 모인 사람들이 같은 서비스 안에서 팀을 꾸리고, 업무(Task)를 나눠 진행하고, 프로젝트를 끝내기까지 관리한다.
 기존 Spring Boot·JPA·MySQL·Redis·SSE 구성을 그대로 쓰고 새 인프라는 들이지 않는다.
 
-> 상태: 설계 3차안. **Phase 1(팀 자동 생성, 내 팀 화면), Phase 2(멤버 관리, V4 알림 확장), Phase 3(업무, V5)을 구현했다.** Phase 4 이후는 설계만 있다.
+> 상태: 설계 3차안. **Phase 1(팀 자동 생성, 내 팀 화면), Phase 2(멤버 관리, V4 알림 확장), Phase 3(업무, V5), Phase 4(댓글·업무 알림, V6)를 구현했다.** Phase 5(채팅)는 설계만 있다.
 >
 > **전제: 운영 중인 DB가 없다.** 이관할 기존 데이터도, 맞춰야 할 운영 스키마도 없다. 첫 배포는 빈 DB에 Flyway가 V1부터 차례로 만든다.
 
@@ -293,7 +293,7 @@ CREATE TABLE application_event (
 |---|---|
 | V4 | `notification`: `type`을 VARCHAR(30)으로, `target_type`·`target_id` 추가. 기존 행(로컬 개발 데이터)은 `('POST', post_id)`로 채움. 팀 알림(`TEAM_STARTED`·`TEAM_COMPLETED`·`TEAM_DISBANDED`는 팀원 전체, `TEAM_LEADER`는 새 팀장, `TEAM_KICKED`는 퇴출된 사람, `TEAM_LEFT`는 팀장)은 `('TEAM', team_id)`이고 `post_title`에 팀 이름을 복사한다. 행동한 사람 자신은 받지 않는다 |
 | V5 | `task`, `team_activity` |
-| V6 | `task_comment` |
+| V6 | `task_comment`(업무 삭제 시 ON DELETE CASCADE). 알림은 스키마 변경 없이 `TASK_ASSIGNED`(새 담당자)·`TASK_COMMENT`(업무를 만든 사람·담당자)를 `('TEAM', team_id)`로 남긴다 |
 | V7 | `chat_message` (§6.3) |
 
 ---

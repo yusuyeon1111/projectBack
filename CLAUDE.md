@@ -64,12 +64,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 팀 조회(`/api/teams/my`, `/api/teams/{id}`)는 팀원만 된다. 관리자도 팀원이 아니면 404다(`NoSuchElementException` → 404).
 - 신청 상태가 바뀔 때마다 `application_event`에 한 줄씩 남긴다(신청 행은 현재 상태만 담는다).
 - 업무(`task`, `TaskService`, `/api/teams/{id}/tasks`)는 팀원만 보고 쓴다(아니면 404, 다른 팀 업무 id도 404). 수정은 칸 전체를 바꾸며 읽은 `version`을 함께 보내야 하고, 다르거나 저장 직전에 누가 고쳤으면(`@Version`) 409다. 상태 변경(`PATCH .../status {from, to}`)은 조건부 UPDATE라 연타해도 한 번만 바뀌고 version도 올린다. 삭제는 팀장·만든 사람만(403). 업무 쓰기는 팀 행을 공유 잠금(`findByIdForShare`)으로 먼저 잡아 완료·해산·퇴출과 줄을 선다. 탈퇴·퇴출하면 그 사람의 담당 업무가 비워진다. `TaskTest`가 검증한다.
+- 업무 댓글(`task_comment`, `.../tasks/{taskId}/comments`)은 팀원이 쓰고 팀장·쓴 사람만 지운다(403). 업무를 지우면 DB의 ON DELETE CASCADE로 함께 지워진다. 담당자가 새로 정해지면 그 사람에게 `TASK_ASSIGNED`, 댓글이 달리면 업무를 만든 사람과 담당자에게 `TASK_COMMENT` 팀 알림을 보낸다(행동한 본인 제외, `actor`에 표시 이름).
 - 업무 변경과 멤버 변동·팀 상태 변경은 `team_activity`에 한 줄씩 남고(`detail` JSON에 당시 제목 등), `GET /api/teams/{id}/activities?cursor=&taskId=`로 최신순 30개씩 읽는다.
 - `team`·`team_member`·`application_event`가 글·신청을 가리키는 FK는 `ON DELETE SET NULL`이다. 글 삭제는 JPA cascade로 신청 행을 지우므로 이 FK들이 막지 않아야 한다.
 
 ### 알림 (SSE)
 
-- 포지션 신청 → 글 작성자, 승인·거절 → 신청자에게 알림을 만든다(`NotificationService`, `notification` 테이블). 글 제목·카테고리·역할은 만든 시점 값을 복사해 둔다. 팀 상태 변경·위임·탈퇴·퇴출도 `TEAM_*` 알림을 만든다(`target_type = 'TEAM'`, `post_title`에 팀 이름). 프론트는 팀 알림을 마이페이지로 보낸다. 알림 행은 승인·거절과 같은 트랜잭션에서 저장되므로 409로 롤백되면 남지 않는다.
+- 포지션 신청 → 글 작성자, 승인·거절 → 신청자에게 알림을 만든다(`NotificationService`, `notification` 테이블). 글 제목·카테고리·역할은 만든 시점 값을 복사해 둔다. 팀 상태 변경·위임·탈퇴·퇴출도 `TEAM_*`, 업무 담당 지정·댓글은 `TASK_*` 알림을 만든다(`target_type = 'TEAM'`, `post_title`에 팀 이름). 프론트는 팀 알림을 마이페이지로 보낸다. 알림 행은 승인·거절과 같은 트랜잭션에서 저장되므로 409로 롤백되면 남지 않는다.
 - 실시간 전송은 `NotificationCreatedEvent`를 `@TransactionalEventListener(AFTER_COMMIT)`로 받아 `SseEmitterRegistry`(회원별 열린 연결, 서버 메모리)로 보낸다. 커밋된 알림만 나간다. 연결이 서버 메모리에 있어 **서버가 한 대일 때만 맞다**(여러 대면 Redis Pub/Sub 필요).
 - 구독 인증: `EventSource`는 헤더를 못 붙이므로 `POST /api/notifications/ticket`(Bearer)으로 1회용 티켓을 받고 `GET /api/notifications/subscribe?ticket=`로 연다. 구독 경로는 `permitAll`이고 컨트롤러가 티켓·`BAN:` 키를 확인한다.
 - 재연결: 티켓이 1회용이라 브라우저 자동 재연결은 실패한다. 프론트(`useNotifications`)가 에러 시 직접 닫고 새 티켓 + `lastEventId` 쿼리로 다시 붙으면 서버가 그 이후 알림을 다시 보낸다. 로그아웃·차단 시 서버가 그 회원의 연결을 닫는다.
