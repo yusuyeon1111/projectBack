@@ -155,7 +155,7 @@ public class PostService {
     // 게시글 상세보기
     @Transactional
     public PostResponseDto selectViewByIdWithUsername(Long postId, String username) {
-        Post post = loadAndCountView(postId);
+        Post post = loadAndCountView(postId, username);
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         boolean likedByUser = postLikeRepository.findByPostIdAndMemberId(postId, member.getId()).isPresent();
@@ -167,17 +167,22 @@ public class PostService {
     // 게시글 상세보기 로그인 x
     @Transactional
     public PostResponseDto selectViewById(Long postId) {
-        Post post = loadAndCountView(postId);
+        Post post = loadAndCountView(postId, null);
         PostResponseDto response = new PostResponseDto(post);
         response.setApplyQuestions(applyFormService.getQuestions(postId));
         return response;
     }
 
     // 엔티티에 +1 해서 저장하면 동시 조회끼리 덮어쓴다. DB에서 먼저 올리고 읽어야 올린 값이 응답에 보인다
-    private Post loadAndCountView(Long postId) {
+    // 관리자가 숨긴 글은 작성자만 본다. 예외로 트랜잭션이 롤백되어 올린 조회수도 되돌아간다
+    private Post loadAndCountView(Long postId, String username) {
         postRepository.incrementViewCount(postId);
-        return postRepository.findById(postId)
+        Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
+        if ("Y".equals(post.getDelYn()) && !post.getAuthor().equals(username)) {
+            throw new NoSuchElementException("게시글을 찾을 수 없습니다.");
+        }
+        return post;
     }
 
     // 본인이 작성한 글만 반환, 아니면 403

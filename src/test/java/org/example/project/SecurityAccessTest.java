@@ -123,6 +123,38 @@ class SecurityAccessTest {
     }
 
     @Test
+    void 관리자가_숨긴_글은_작성자만_보고_신청할_수_없다() throws Exception {
+        Member owner = memberRepository.save(Member.builder()
+                .username("hidden-owner").email("hidden-owner@test.com").delYn("N").build());
+        Post post = Post.builder()
+                .title("숨김 테스트").author("hidden-owner").category("project")
+                .created(new Date()).delYn("Y").likeCount(0).viewCount(0)
+                .positions(new java.util.ArrayList<>()).techStacks(new java.util.ArrayList<>()).likes(new java.util.ArrayList<>())
+                .build();
+        PostPosition position = new PostPosition();
+        position.setPost(post);
+        position.setRole("backend");
+        position.setCount(1);
+        post.getPositions().add(position);
+        post = postRepository.save(post);
+        try {
+            mvc.perform(get("/api/post/view/" + post.getId())).andExpect(status().isNotFound());
+            mvc.perform(get("/api/post/viewUsername/" + post.getId()).header("Authorization", bearer("stranger", "ROLE_USER")))
+                    .andExpect(status().isNotFound());
+            mvc.perform(post("/api/post/apply").header("Authorization", bearer("stranger", "ROLE_USER"))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"positionId\":" + post.getPositions().get(0).getId() + "}"))
+                    .andExpect(status().isNotFound());
+            // 막힌 조회는 롤백되어 조회수가 오르지 않는다
+            org.assertj.core.api.Assertions.assertThat(postRepository.findById(post.getId()).orElseThrow().getViewCount()).isZero();
+            mvc.perform(get("/api/post/viewUsername/" + post.getId()).header("Authorization", bearer("hidden-owner", "ROLE_USER")))
+                    .andExpect(status().isOk());
+        } finally {
+            postRepository.findById(post.getId()).ifPresent(postRepository::delete);
+            memberRepository.delete(owner);
+        }
+    }
+
+    @Test
     void 비로그인_상세_응답에_신청자_정보가_없다() throws Exception {
         Member applicant = memberRepository.save(Member.builder()
                 .username("leak-applicant").email("leak@test.com").delYn("N").build());
