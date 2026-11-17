@@ -23,6 +23,14 @@ import User from './components/Admin/User';
 import AdminLayout from './components/Admin/Layout';
 import { Toaster } from './components/Toast';
 
+// 날짜 칸은 달력 아이콘을 눌러야만 달력이 열려서, 칸 어디를 눌러도 열리게 한다(글 작성·수정의 모든 날짜 칸)
+document.addEventListener('click', e => {
+  const input = e.target as HTMLInputElement;
+  if (input instanceof HTMLInputElement && input.type === 'date' && !input.disabled && !input.readOnly) {
+    try { input.showPicker(); } catch { /* 지원하지 않는 브라우저는 원래대로 */ }
+  }
+});
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <BrowserRouter basename = {process.env.PUBLIC_URL}>
