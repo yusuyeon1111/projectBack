@@ -69,6 +69,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                     .delYn("N")
                     .roles(List.of("ROLE_USER"))
                     .provider(registrationId)
+                    .createdAt(new Date())
                     .build();
             try {
                 memberRepository.save(member);
