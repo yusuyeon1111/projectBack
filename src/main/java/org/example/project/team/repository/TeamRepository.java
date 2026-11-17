@@ -21,4 +21,9 @@ public interface TeamRepository extends JpaRepository<Team, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM Team t WHERE t.id = :id")
     Optional<Team> findByIdForUpdate(@Param("id") Long id);
+
+    // 업무 쓰기끼리는 막지 않고, 팀 상태 변경·퇴출(배타 잠금)과만 줄을 세운다
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("SELECT t FROM Team t WHERE t.id = :id")
+    Optional<Team> findByIdForShare(@Param("id") Long id);
 }
