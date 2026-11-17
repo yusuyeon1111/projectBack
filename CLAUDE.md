@@ -21,7 +21,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 로컬 서버를 띄운 뒤 `python3 scripts/dev-seed.py [서버 주소, 기본 http://localhost:8080]`를 돌리면 테스트 계정 `leader`·`alice`·`bob`(비밀번호는 스크립트의 `PASSWORD`)과 모집글, 승인된 팀(alice), 대기 중인 신청(bob)을 API로 만든다. 이미 있으면 아무것도 하지 않는다.
 
-배포는 `deploy/`(EC2 한 대에 Docker Compose로 앱·MySQL·Redis·Caddy, 절차는 `deploy/README.md`)에 있다. 운영 Redis는 이 compose 안의 SSL 없는 Redis라 `SPRING_DATA_REDIS_USESSL=false`로 띄운다.
+배포는 `deploy/`(EC2 한 대에 Docker Compose로 앱·MySQL·Redis·Caddy, 절차는 `deploy/README.md`)에 있다. 반영은 `deploy/deploy.sh app|web|all`(SSM으로 서버에서 pull·재기동 후 `deploy/smoke.sh`로 확인)로 한다. 반복 절차는 프로젝트 스킬로 정해 두었다: 커밋·PR·병합은 `.claude/skills/ship`, 운영 반영은 `.claude/skills/deploy`. 운영 Redis는 이 compose 안의 SSL 없는 Redis라 `SPRING_DATA_REDIS_USESSL=false`로 띄운다.
 
 목록 검색 성능 측정은 `perf/`에 있다(더미 데이터 `seed.sql`, k6 시나리오, 결과 기록 `perf/README.md`). 측정은 `project_perf` 스키마와 8081 포트의 별도 앱으로 하고, 개선할 때마다 같은 시나리오로 다시 재서 README에 전후를 남긴다.
 
