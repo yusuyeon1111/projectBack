@@ -87,7 +87,8 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
             <Stack direction="row" spacing={1} alignItems="flex-start" mb={q.description ? 0.5 : 1.25}>
               <span className="apply-q-no">Q{i + 1}</span>
               <Typography fontWeight={700} sx={{ flex: 1, pt: '1px', wordBreak: 'break-word' }}>{q.label}</Typography>
-              {q.required ? <span className="apply-q-tag required">필수</span> : <span className="apply-q-tag">선택</span>}
+              {q.type === 'CHECKBOX' && <span className="apply-q-tag multi">복수 선택</span>}
+              {q.required && <span className="apply-q-tag required">필수</span>}
             </Stack>
             {q.description && (
               <Typography variant="body2" color="text.secondary" whiteSpace="pre-line" mb={1.25}>{q.description}</Typography>

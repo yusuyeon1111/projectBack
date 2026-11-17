@@ -645,6 +645,11 @@
   border-radius: 999px;
 }
 
+.apply-q-tag.multi {
+  color: #007bff;
+  background-color: #f0f7ff;
+}
+
 .apply-q-tag.required {
   color: #e74c3c;
   background-color: #fdecea;
