@@ -1,3 +1,4 @@
+import { toast } from '../Toast';
 import axios from 'axios';
 import React, { useState, useEffect } from "react";
 import { Post as PostType, PageResponse, pageNumbers } from "../../types";
@@ -29,16 +30,17 @@ function Post() {
     }, [filters.page, filters.size]);
 
  const changePostStatus = async (postId: number, delYn: "Y" | "N") => {
+  if (delYn === 'Y' && !window.confirm('이 글을 비공개할까요? 작성자 말고는 볼 수 없고 신청도 막힙니다.')) return;
   try {
     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/changePostStatus`, {id: postId, delYn: delYn }, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
     });
-    alert(res.data);
+    toast(res.data);
     fetchPosts(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(errorMessage(error, "요청에 실패했습니다."));
+    toast(errorMessage(error, "요청에 실패했습니다."));
   }
 }
   return (

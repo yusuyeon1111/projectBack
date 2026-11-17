@@ -1,3 +1,4 @@
+import { toast } from '../Toast';
 import axios from 'axios';
 import React, { useEffect, useState } from "react";
 import { AdminMember, PageResponse } from "../../types";
@@ -34,24 +35,26 @@ const acceptUser = async (memberId: number) => {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
     });
-    alert(res.data);
+    toast(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(errorMessage(error, "요청에 실패했습니다."));
+    toast(errorMessage(error, "요청에 실패했습니다."));
   }
 }
 
-const banUser = async (memberId: number) => {
+const banUser = async (member: AdminMember) => {
+  if (!window.confirm(`${member.nickname}(${member.email}) 계정을 비활성화할까요? 바로 로그아웃되고 로그인할 수 없습니다.`)) return;
+  const memberId = member.id;
   try {
     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/banUser`, { memberId }, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("accessToken")}`
       },
     });
-    alert(res.data);
+    toast(res.data);
     fetchMembers(); // 성공 시 리스트 갱신
   } catch (error: any) {
-    alert(errorMessage(error, "요청에 실패했습니다."));
+    toast(errorMessage(error, "요청에 실패했습니다."));
   }
 }
 
@@ -83,8 +86,9 @@ const banUser = async (memberId: number) => {
                               <button onClick={() => acceptUser(member.id)}>
                                 <FiRefreshCw /> 계정 활성화
                               </button>
-                            ) : (
-                              <button className="delete-btn" onClick={() => banUser(member.id)}>
+                            ) : member.username !== localStorage.getItem('username') && (
+                              // 자기 계정은 막지 못한다(서버도 400)
+                              <button className="delete-btn" onClick={() => banUser(member)}>
                                 <MdDelete /> 계정 비활성화
                               </button>
                             )}

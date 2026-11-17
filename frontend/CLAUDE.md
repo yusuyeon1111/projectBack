@@ -60,7 +60,7 @@ CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경�
 
 **토스트**: 화면을 막지 않는 짧은 안내는 `components/Toast.tsx`의 `toast(문구)`를 쓴다. `<Toaster/>`가 `index.tsx`의 라우트 바깥에 하나 있어서 띄운 뒤 페이지를 옮겨도 보인다. `alert`는 브라우저를 멈추게 해서 확인이 필요 없는 안내에는 쓰지 않는다.
 
-**관리자**: `components/Admin/` — `Dashboard.tsx`가 recharts로 `/api/admin/chart*` 통계, `User.tsx`가 회원 목록/승인/차단(`/api/admin/memberAll`, `acceptUser`, `banUser`), `Post.tsx`가 게시글 상태 변경.
+**관리자**: `components/Admin/` — `Dashboard.tsx`가 recharts로 `/api/admin/chart*` 통계, `User.tsx`가 회원 목록/승인/차단(`/api/admin/memberAll`, `acceptUser`, `banUser`), `Post.tsx`가 게시글 비공개·공개. 차단·비공개는 확인 창을 거치고, 본인 계정 줄에는 차단 버튼이 없다(서버도 400). 비공개 글은 서버가 작성자 외에는 404로 막고, 상세 화면은 조회에 실패하면 토스트를 띄우고 메인으로 보낸다. 로그인 시 관리자 판별은 `roles`에 `ROLE_ADMIN`이 있는지로 한다(순서 없음, `SignIn.test.tsx`).
 
 **스타일**: 컴포넌트별 일반 CSS 파일(`src/css/*.css`, `src/css/admin/*.css`)을 import하고, 폼/상세/마이페이지는 MUI(`TextField`, `Chip`, `Stack`, `Tabs` 등)를 섞어 씀. Tailwind는 devDependency에 있지만 설정 파일도 없고 실제로 쓰이지 않음. 글 작성 에디터는 `@toast-ui/react-editor`.
 
