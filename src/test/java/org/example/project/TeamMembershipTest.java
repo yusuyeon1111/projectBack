@@ -218,6 +218,37 @@ class TeamMembershipTest {
         assertThat(jdbc.queryForObject("SELECT post_id FROM team WHERE id = ?", Long.class, teamId)).isNull();
     }
 
+    @Test
+    void 팀_상태_변경_위임_탈퇴_퇴출은_상대에게_팀_알림을_남긴다() throws Exception {
+        Member a = member("a");
+        Member b = member("b");
+        Member c = member("c");
+        PostPosition position = createPost(3).get(0);
+        accept(apply(position, a));
+        accept(apply(position, b));
+        accept(apply(position, c));
+        Long teamId = teamId();
+
+        call(post(teamUrl("/start")), author).andExpect(status().isOk());
+        call(delete(teamUrl("/members/" + c.getId())), author).andExpect(status().isOk());
+        call(put(teamUrl("/leader")).contentType(MediaType.APPLICATION_JSON).content("{\"memberId\":" + a.getId() + "}"), author)
+                .andExpect(status().isOk());
+        call(delete(teamUrl("/members/me")), b).andExpect(status().isOk());
+
+        // 대상은 모두 TEAM/팀 id이고, 행동한 사람 자신은 받지 않는다
+        assertThat(teamNotifications(author, teamId)).containsExactly("TEAM_LEFT");
+        assertThat(teamNotifications(a, teamId)).containsExactly("TEAM_STARTED", "TEAM_LEADER");
+        assertThat(teamNotifications(b, teamId)).containsExactly("TEAM_STARTED");
+        assertThat(teamNotifications(c, teamId)).containsExactly("TEAM_STARTED", "TEAM_KICKED");
+        assertThat(jdbc.queryForObject("SELECT actor FROM notification WHERE receiver = ? AND type = 'TEAM_LEFT'",
+                String.class, author.getUsername())).isEqualTo(b.getNickname() != null ? b.getNickname() : b.getUsername());
+    }
+
+    private List<String> teamNotifications(Member m, Long teamId) {
+        return jdbc.queryForList("SELECT type FROM notification WHERE receiver = ? AND target_type = 'TEAM' AND target_id = ? ORDER BY id",
+                String.class, m.getUsername(), teamId);
+    }
+
     // --- helpers ---
 
     private List<PostPosition> createPost(int... counts) {

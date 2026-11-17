@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 // 글 제목·카테고리·역할은 만든 시점의 값을 복사해 둔다. 글이 수정·삭제돼도 알림 문구가 그대로 남는다.
+// 팀 알림은 postTitle에 팀 이름을 복사해 둔다.
 @Entity
 @Table(name = "notification", indexes = @Index(name = "idx_notification_receiver_id", columnList = "receiver, id"))
 @Getter
@@ -21,8 +22,13 @@ public class Notification {
     @Column(nullable = false, length = 50)
     private String receiver; // 받는 회원의 username
 
+    @Column(nullable = false, length = 30)
+    private String type; // APPLY | ACCEPT | REJECT | TEAM_*
+
     @Column(nullable = false, length = 10)
-    private String type; // APPLY | ACCEPT | REJECT
+    private String targetType; // POST | TEAM
+
+    private Long targetId;
 
     private Long postId;
     private String postTitle;
@@ -36,8 +42,15 @@ public class Notification {
     private LocalDateTime readAt; // null이면 안 읽음. read는 MySQL 예약어라 쓰지 않는다
 
     public Notification(String receiver, String type, Long postId, String postTitle, String postCategory, String role, String actor) {
+        this(receiver, type, "POST", postId, postId, postTitle, postCategory, role, actor);
+    }
+
+    public Notification(String receiver, String type, String targetType, Long targetId,
+                        Long postId, String postTitle, String postCategory, String role, String actor) {
         this.receiver = receiver;
         this.type = type;
+        this.targetType = targetType;
+        this.targetId = targetId;
         this.postId = postId;
         this.postTitle = postTitle;
         this.postCategory = postCategory;

@@ -9,6 +9,7 @@ import org.example.project.post.entity.Post;
 import org.example.project.post.entity.PostPosition;
 import org.example.project.post.entity.PostPositionMember;
 import org.example.project.post.repositoty.PostPositionRepository;
+import org.example.project.team.entity.Team;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Limit;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,6 +20,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -37,8 +39,7 @@ public class NotificationService {
     public void notifyApply(Long positionId, Member applicant) {
         PostPosition position = postPositionRepository.findById(positionId)
                 .orElseThrow(() -> new RuntimeException("포지션이 존재하지 않습니다."));
-        String actor = applicant.getNickname() != null ? applicant.getNickname() : applicant.getUsername();
-        create(position.getPost().getAuthor(), "APPLY", position, applicant.getUsername(), actor);
+        create(position.getPost().getAuthor(), "APPLY", position, applicant.getUsername(), displayName(applicant));
     }
 
     // 승인·거절 트랜잭션에 합류해 신청 상태 변경과 함께 커밋·롤백된다. type은 처리된 신청의 상태(ACCEPT/REJECT)
@@ -52,9 +53,23 @@ public class NotificationService {
     private void create(String receiver, String type, PostPosition position, String actingUser, String actor) {
         if (receiver.equals(actingUser)) return;
         Post post = position.getPost();
-        Notification saved = notificationRepository.save(new Notification(
-                receiver, type, post.getId(), post.getTitle(), post.getCategory(), position.getRole(), actor));
-        eventPublisher.publishEvent(new NotificationCreatedEvent(receiver, NotificationDto.from(saved)));
+        save(new Notification(receiver, type, post.getId(), post.getTitle(), post.getCategory(), position.getRole(), actor));
+    }
+
+    // 팀 쓰기 트랜잭션에 합류한다. 행동한 사람 자신은 받지 않는다. actor·role은 필요한 종류만 채운다
+    @Transactional
+    public void notifyTeam(Team team, String type, Collection<String> receivers, String actingUser, String actor, String role) {
+        receivers.stream().filter(r -> !r.equals(actingUser)).forEach(r -> save(new Notification(
+                r, type, "TEAM", team.getId(), team.getPostId(), team.getName(), null, role, actor)));
+    }
+
+    public static String displayName(Member member) {
+        return member.getNickname() != null ? member.getNickname() : member.getUsername();
+    }
+
+    private void save(Notification notification) {
+        Notification saved = notificationRepository.save(notification);
+        eventPublisher.publishEvent(new NotificationCreatedEvent(saved.getReceiver(), NotificationDto.from(saved)));
     }
 
     // 연결을 먼저 등록하고 나서 놓친 알림을 조회해야 그 사이에 커밋된 알림도 받는다. 겹쳐 온 알림은 클라이언트가 id로 거른다
