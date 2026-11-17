@@ -48,6 +48,7 @@ cd /opt/teamhaeyo && sudo git pull && cd deploy && sudo docker compose up -d --b
 
 - 상태: `sudo docker compose ps`, 로그: `sudo docker compose logs -f app`
 - DB 백업: `sudo docker compose exec mysql sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" project' > backup.sql`
+- `kro.kr`은 공유 도메인이라 Let's Encrypt가 주간 한도(상위 도메인당 50장)로 거절하는 일이 잦다. `ACME_EMAIL`이 있으면 Caddy가 ZeroSSL로 넘어가 받는다. ZeroSSL 웹사이트 가입·유료 요금제는 필요 없다.
 - 인증서는 `caddy-data` 볼륨에 있다. 지우면 다시 발급받는데, Let's Encrypt는 발급 횟수 제한이 있다.
 - `docker compose down -v`는 DB까지 지운다. 내릴 때는 `-v` 없이.
 
@@ -56,7 +57,7 @@ cd /opt/teamhaeyo && sudo git pull && cd deploy && sudo docker compose up -d --b
 `DOMAIN=localhost`를 주면 Caddy가 자체 서명 인증서로 `https://localhost`를 연다. `.env` 대신 환경변수로 값을 넘기면 된다.
 ```bash
 cd deploy && MYSQL_ROOT_PASSWORD=x DB_PASSWORD=y JWT_SECRET=$(openssl rand -base64 32) KAKAO_CLIENT_ID=x \
-  REACT_APP_KAKAO_API_KEY=x AWS_S3_BUCKET_NAME=teamhaeyo-files-830283279722 DOMAIN=localhost \
+  REACT_APP_KAKAO_API_KEY=x ACME_EMAIL=x@example.com AWS_S3_BUCKET_NAME=teamhaeyo-files-830283279722 DOMAIN=localhost \
   docker compose -p teamhaeyo-rehearsal up -d --build
 # 끝나면: docker compose -p teamhaeyo-rehearsal down -v
 ```
