@@ -24,7 +24,7 @@ const typeIcon: Record<ApplyQuestionType, IconType> = {
 
 const palette: { title: string; types: ApplyQuestionType[] }[] = [
   { title: '기본 항목', types: ['TEXT', 'TEXTAREA', 'URL'] },
-  { title: '선택 항목', types: ['SELECT', 'RADIO', 'CHECKBOX'] },
+  { title: '선택 항목', types: ['SELECT', 'RADIO'] }, // 복수 선택(CHECKBOX)은 질문 카드의 토글로 바꾼다
   { title: '특수 항목', types: ['FILE'] },
 ];
 
@@ -284,6 +284,14 @@ function QuestionCard({ q, first, last, autoFocus, optionInput, setOptionInput, 
             control={<Switch size="small" checked={q.required} onChange={e => onChange({ required: e.target.checked })} />}
             label="답변 필수"
           />
+          {(q.type === 'RADIO' || q.type === 'CHECKBOX') && (
+            <FormControlLabel
+              className="fb-required"
+              control={<Switch size="small" checked={q.type === 'CHECKBOX'}
+                               onChange={e => onChange({ type: e.target.checked ? 'CHECKBOX' : 'RADIO' })} />}
+              label="복수 선택"
+            />
+          )}
           <button type="button" className="fb-icon-btn" aria-label="위로" disabled={first} onClick={() => onMove(-1)}><FiArrowUp /></button>
           <button type="button" className="fb-icon-btn" aria-label="아래로" disabled={last} onClick={() => onMove(1)}><FiArrowDown /></button>
           <button type="button" className="fb-icon-btn" aria-label="질문 복사" onClick={onCopy}><FiCopy /></button>

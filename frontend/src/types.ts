@@ -89,7 +89,7 @@ export interface ApplyQuestion {
 export const APPLY_TEXT_MAX: Partial<Record<ApplyQuestionType, number>> = { TEXT: 200, TEXTAREA: 2000, URL: 500 };
 
 export const applyQuestionTypeText: Record<ApplyQuestionType, string> = {
-  TEXT: '짧은 글', TEXTAREA: '긴 글', URL: '링크', SELECT: '드롭다운', RADIO: '하나 선택', CHECKBOX: '여러 개 선택', FILE: '파일 첨부',
+  TEXT: '짧은 글', TEXTAREA: '긴 글', URL: '링크', SELECT: '드롭다운', RADIO: '선택', CHECKBOX: '선택', FILE: '파일 첨부',
 };
 
 export const hasOptions = (type: ApplyQuestionType) => type === 'SELECT' || type === 'RADIO' || type === 'CHECKBOX';
