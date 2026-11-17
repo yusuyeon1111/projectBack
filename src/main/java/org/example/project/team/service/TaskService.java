@@ -10,14 +10,12 @@ import org.example.project.team.dto.TaskDto;
 import org.example.project.team.dto.TaskRequest;
 import org.example.project.team.entity.Task;
 import org.example.project.team.entity.TaskComment;
-import org.example.project.team.entity.Team;
 import org.example.project.team.entity.TeamActivity;
 import org.example.project.team.entity.TeamMember;
 import org.example.project.team.repository.TaskCommentRepository;
 import org.example.project.team.repository.TaskRepository;
 import org.example.project.team.repository.TeamActivityRepository;
 import org.example.project.team.repository.TeamMemberRepository;
-import org.example.project.team.repository.TeamRepository;
 import org.springframework.data.domain.Limit;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -39,7 +37,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TeamActivityRepository activityRepository;
-    private final TeamRepository teamRepository;
+    private final TeamAccess teamAccess;
     private final TeamMemberRepository teamMemberRepository;
     private final TaskCommentRepository commentRepository;
     private final MemberRepository memberRepository;
@@ -47,19 +45,19 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<TaskDto> findTasks(Long teamId, String username) {
-        TeamMember me = requireMember(teamId, username);
+        TeamMember me = teamAccess.requireMember(teamId, username);
         return taskRepository.findByTeamIdOrderByIdAsc(teamId).stream().map(t -> new TaskDto(t, me)).toList();
     }
 
     @Transactional(readOnly = true)
     public TaskDto findTask(Long teamId, Long taskId, String username) {
-        TeamMember me = requireMember(teamId, username);
+        TeamMember me = teamAccess.requireMember(teamId, username);
         return new TaskDto(requireTask(teamId, taskId), me);
     }
 
     @Transactional
     public TaskDto create(Long teamId, String username, TaskRequest request) {
-        TeamMember me = requireWritable(teamId, username);
+        TeamMember me = teamAccess.requireWritable(teamId, username);
         validate(teamId, request);
         Task task = taskRepository.save(new Task(teamId, me.getMember().getId(), request.title().strip(),
                 request.description(), request.assigneeMemberId(), request.dueDate()));
@@ -71,7 +69,7 @@ public class TaskService {
     // 받은 version이 지금 값과 다르면 그 사이 누가 고친 것이다. 읽은 뒤 저장 전에 끼어든 수정은 @Version이 막는다
     @Transactional
     public TaskDto update(Long teamId, Long taskId, String username, TaskRequest request) {
-        TeamMember me = requireWritable(teamId, username);
+        TeamMember me = teamAccess.requireWritable(teamId, username);
         if (request.version() == null) throw new IllegalArgumentException("version이 필요합니다.");
         Task task = requireTask(teamId, taskId);
         if (!request.version().equals(task.getVersion())) {
@@ -89,7 +87,7 @@ public class TaskService {
     // 조건부 UPDATE라 같은 이동을 연타해도 한 번만 바뀌고 기록도 한 줄만 남는다
     @Transactional
     public TaskDto changeStatus(Long teamId, Long taskId, String username, String from, String to) {
-        TeamMember me = requireWritable(teamId, username);
+        TeamMember me = teamAccess.requireWritable(teamId, username);
         if (!Task.STATUSES.contains(from) || !Task.STATUSES.contains(to) || from.equals(to)) {
             throw new IllegalArgumentException("바꿀 수 없는 상태입니다.");
         }
@@ -104,7 +102,7 @@ public class TaskService {
 
     @Transactional
     public void delete(Long teamId, Long taskId, String username) {
-        TeamMember me = requireWritable(teamId, username);
+        TeamMember me = teamAccess.requireWritable(teamId, username);
         Task task = requireTask(teamId, taskId);
         if (!TaskDto.deletable(task, me)) throw new AccessDeniedException("팀장이나 업무를 만든 사람만 지울 수 있습니다.");
         taskRepository.delete(task);
@@ -115,7 +113,7 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<CommentDto> findComments(Long teamId, Long taskId, String username) {
-        TeamMember me = requireMember(teamId, username);
+        TeamMember me = teamAccess.requireMember(teamId, username);
         requireTask(teamId, taskId);
         return commentRepository.findByTaskIdOrderByIdAsc(taskId).stream().map(c -> new CommentDto(c, me)).toList();
     }
@@ -123,7 +121,7 @@ public class TaskService {
     // 업무를 만든 사람과 담당자에게 알린다(쓴 사람 자신은 빼고)
     @Transactional
     public CommentDto addComment(Long teamId, Long taskId, String username, String content) {
-        TeamMember me = requireWritable(teamId, username);
+        TeamMember me = teamAccess.requireWritable(teamId, username);
         Task task = requireTask(teamId, taskId);
         if (content == null || content.isBlank()) throw new IllegalArgumentException("댓글을 입력해주세요.");
         if (content.length() > 2000) throw new IllegalArgumentException("댓글은 2000자까지 쓸 수 있습니다.");
@@ -139,7 +137,7 @@ public class TaskService {
 
     @Transactional
     public void deleteComment(Long teamId, Long taskId, Long commentId, String username) {
-        TeamMember me = requireWritable(teamId, username);
+        TeamMember me = teamAccess.requireWritable(teamId, username);
         Task task = requireTask(teamId, taskId);
         TaskComment comment = commentRepository.findByIdAndTaskId(commentId, taskId)
                 .orElseThrow(() -> new NoSuchElementException("댓글을 찾을 수 없습니다."));
@@ -150,22 +148,8 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public List<ActivityDto> findActivities(Long teamId, String username, Long cursor, Long taskId) {
-        requireMember(teamId, username);
+        teamAccess.requireMember(teamId, username);
         return activityRepository.findPage(teamId, cursor, taskId, Limit.of(ACTIVITY_PAGE)).stream().map(ActivityDto::new).toList();
-    }
-
-    private TeamMember requireMember(Long teamId, String username) {
-        return teamMemberRepository.findByTeam_IdAndMember_UsernameAndStatus(teamId, username, TeamMember.ACTIVE)
-                .orElseThrow(() -> new NoSuchElementException("팀을 찾을 수 없습니다."));
-    }
-
-    // 팀 행을 공유 잠금으로 먼저 잡는다. 완료·해산·퇴출은 팀 행을 배타 잠금하므로 업무 쓰기와 줄을 서고,
-    // 잠금 읽기는 스냅샷을 만들지 않아 그 뒤의 팀원 조회가 방금 커밋된 퇴출까지 본다
-    private TeamMember requireWritable(Long teamId, String username) {
-        Team team = teamRepository.findByIdForShare(teamId).orElseThrow(() -> new NoSuchElementException("팀을 찾을 수 없습니다."));
-        TeamMember me = requireMember(teamId, username);
-        if (!team.isOpen()) throw new IllegalStateException("완료되었거나 해산된 팀은 바꿀 수 없습니다.");
-        return me;
     }
 
     private Task requireTask(Long teamId, Long taskId) {

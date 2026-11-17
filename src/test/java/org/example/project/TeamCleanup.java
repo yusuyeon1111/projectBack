@@ -14,6 +14,7 @@ final class TeamCleanup {
         String ids = members.stream().map(m -> String.valueOf(m.getId())).collect(Collectors.joining(","));
         String teams = "SELECT id FROM team WHERE leader_member_id IN (" + ids + ")";
         jdbc.update("DELETE FROM team_activity WHERE actor_member_id IN (" + ids + ") OR team_id IN (" + teams + ")");
+        jdbc.update("DELETE FROM chat_message WHERE sender_member_id IN (" + ids + ") OR team_id IN (" + teams + ")");
         jdbc.update("DELETE FROM task_comment WHERE author_member_id IN (" + ids + ")");
         jdbc.update("DELETE FROM task WHERE creator_member_id IN (" + ids + ") OR assignee_member_id IN (" + ids + ") OR team_id IN (" + teams + ")");
         jdbc.update("DELETE FROM application_event WHERE actor_member_id IN (" + ids + ")");

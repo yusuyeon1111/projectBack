@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
-import { NotificationItem } from '../types';
+import { ChatMessage, NotificationItem, SSE_CONNECTED, TEAM_CHAT } from '../types';
 
 const API = `${process.env.REACT_APP_API_URL}/api/notifications`;
 const MAX_DELAY = 30000;
@@ -41,8 +41,15 @@ export default function useNotifications() {
         const params = new URLSearchParams({ ticket: data.ticket });
         if (lastId !== undefined) params.set('lastEventId', String(lastId));
         es = new EventSource(`${API}/subscribe?${params}`);
-        es.addEventListener('connected', () => { delay = 1000; });
+        // 연결이 (다시) 열리면 열려 있는 채팅방이 끊긴 사이의 메시지를 after 조회로 메운다
+        es.addEventListener('connected', () => {
+          delay = 1000;
+          window.dispatchEvent(new Event(SSE_CONNECTED));
+        });
         es.addEventListener('notification', e => add(JSON.parse((e as MessageEvent).data)));
+        // 채팅도 이 연결 하나로 온다(방마다 연결을 열지 않는다). 받는 쪽(TeamChat)에 브라우저 이벤트로 넘긴다
+        es.addEventListener('chat', e => window.dispatchEvent(
+          new CustomEvent<ChatMessage>(TEAM_CHAT, { detail: JSON.parse((e as MessageEvent).data) })));
         es.addEventListener('error', () => {
           es?.close();
           retry();

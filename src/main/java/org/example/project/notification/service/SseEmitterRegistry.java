@@ -45,6 +45,11 @@ public class SseEmitterRegistry {
         send(username, emitter, SseEmitter.event().name("notification").id(String.valueOf(notification.id())).data(notification));
     }
 
+    // 채팅에는 id를 붙이지 않는다. 이 연결의 Last-Event-ID는 알림 id를 이어 받는 데 쓰이므로 다른 id 공간이 섞이면 알림을 놓친다
+    public void sendChat(String username, Object message) {
+        emitters.getOrDefault(username, Set.of()).forEach(e -> send(username, e, SseEmitter.event().name("chat").data(message)));
+    }
+
     public void closeAll(String username) {
         Set<SseEmitter> closed = emitters.remove(username);
         if (closed != null) closed.forEach(SseEmitter::complete);

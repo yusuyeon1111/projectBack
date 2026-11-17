@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 const team = (leader: boolean) => (url: string) => Promise.resolve({
-  data: url.includes('/tasks') || url.includes('/activities') ? []
+  data: url.includes('/tasks') || url.includes('/activities') || url.includes('/messages') ? []
   : url.endsWith('/api/teams/my')
     ? [{ teamId: 7, postId: 1, name: '사이드 프로젝트', status: 'FORMING', leader }]
     : { teamId: 7, postId: 1, name: '사이드 프로젝트', status: 'FORMING', createdAt: '2026-11-17T10:00:00', members: [
