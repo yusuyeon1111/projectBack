@@ -54,7 +54,7 @@ CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경�
 
 **지원/수락 흐름**: 게시글 상세에서 `/api/post/apply` → 작성자가 `MyPage.tsx`에서 `/api/post/accept` 또는 `/api/post/reject`. `ApplyMemberModal.tsx`, `LoginRequiredModal.tsx`는 `isOpen`/`onClose` props를 받는 모달.
 
-**팀**: 신청이 처음 승인되면 서버가 팀을 만든다(작성자가 팀장). 마이페이지 "내 팀" 탭(`MyTeams.tsx`)이 `/api/teams/my` 목록을 보여 주고, 누르면 `/api/teams/{id}`로 팀원을 연다. 팀장은 그 창에서 시작·완료·해산·위임·퇴출을, 팀원은 탈퇴를 한다. 탈퇴한 신청은 "신청내역" 탭에서 다시 신청할 수 있다. 팀 알림은 `/myPage?tab=team`으로 보내 "내 팀" 탭을 연다(`MyPage.test.tsx`). 팀 창 아래의 업무 보드·댓글·최근 활동은 `TeamTasks.tsx`이고, 수정할 때 받은 `version`을 돌려보내며 409면 알리고 다시 읽는다. `MyTeams.test.tsx`, `TeamTasks.test.tsx`가 검증한다.
+**팀**: 신청이 처음 승인되면 서버가 팀을 만든다(작성자가 팀장). 마이페이지 "내 팀" 탭(`MyTeams.tsx`)이 `/api/teams/my` 목록을 보여 주고, 누르면 `/api/teams/{id}`로 팀원을 연다. 팀장은 그 창에서 시작·완료·해산·위임·퇴출을, 팀원은 탈퇴를 한다. 탈퇴한 신청은 "신청내역" 탭에서 다시 신청할 수 있다. 팀 알림은 `/myPage?tab=team`으로 보내 "내 팀" 탭을 연다(`MyPage.test.tsx`). 팀 창 아래의 업무 보드·댓글·최근 활동은 `TeamTasks.tsx`이고, 수정할 때 받은 `version`을 돌려보내며 409면 알리고 다시 읽는다. 팀 채팅(`TeamChat.tsx`)은 알림 SSE 연결 하나를 같이 쓴다. `useNotifications`가 `chat` 이벤트를 window의 `team-chat` 이벤트로, 연결(재연결)을 `sse-connected`로 다시 쏘고, `TeamChat`은 재연결·탭 복귀 때 마지막 id 이후를 `?after=`로 메우며 id로 중복을 거른다. `MyTeams.test.tsx`, `TeamTasks.test.tsx`, `TeamChat.test.tsx`가 검증한다.
 
 **관리자**: `components/Admin/` — `Dashboard.tsx`가 recharts로 `/api/admin/chart*` 통계, `User.tsx`가 회원 목록/승인/차단(`/api/admin/memberAll`, `acceptUser`, `banUser`), `Post.tsx`가 게시글 상태 변경.
 
