@@ -102,7 +102,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         // 리다이렉트 URL 생성
         String redirectUri = UriComponentsBuilder
-                .fromUriString("https://teamhaeyo.kro.kr/success")
+                .fromUriString("https://teamhaeyo.kro.kr/oauth2/success")
                 .queryParam("accessToken", token.getAccessToken())
                 .queryParam("refreshToken", token.getRefreshToken())
                 .queryParam("username", member.getUsername())
