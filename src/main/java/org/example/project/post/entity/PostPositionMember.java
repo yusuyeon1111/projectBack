@@ -6,8 +6,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.example.project.member.entity.Member;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "post_position_member",
@@ -41,5 +44,9 @@ public class PostPositionMember {
 
     @Column(name = "rejected_at")
     private LocalDateTime rejectedAt; // 거절 일자
+
+    // 신청서 답변. 질문 내용을 복사해 두어 글의 질문이 바뀌어도 제출 당시 그대로 보인다. 질문 없는 글이면 null.
+    @JdbcTypeCode(SqlTypes.JSON)
+    private List<ApplyAnswer> answers;
 
 }

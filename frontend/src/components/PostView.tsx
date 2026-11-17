@@ -9,6 +9,8 @@ import '../css/View.css'
 import { IoSettingsSharp } from "react-icons/io5";
 import LoginRequiredModal from './LoginRequiredModal';
 import { Post, regions, roleTextMap } from '../types';
+import ApplyFormBuilder, { applyQuestionsError } from './ApplyFormBuilder';
+import ApplyModal from './ApplyModal';
 import { errorMessage } from '../auth';
 
 // 수정 폼에서 스택 입력칸 값을 post 상태에 같이 들고 다님
@@ -23,6 +25,7 @@ function PostView() {
   const username = localStorage.getItem("username")
   const [appliedPositions, setAppliedPositions] = useState<number[]>([]);
   const [isLoginModalOpen, setLoginModalOpen] = useState(false);
+  const [applyingPositionId, setApplyingPositionId] = useState<number | null>(null); // 신청서 작성 중인 포지션
   const [like, setLike] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
@@ -76,6 +79,11 @@ function PostView() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const questionError = applyQuestionsError(post!.applyQuestions ?? []);
+    if (questionError) {
+      alert(questionError);
+      return;
+    }
     const markdown = editorRef.current!.getInstance().getMarkdown();
 
     const postData = {
@@ -99,7 +107,7 @@ function PostView() {
     }
   } catch (error) {
     console.error('등록 오류:', error);
-    alert('오류가 발생했습니다. 다시 시도해 주세요.');
+    alert(errorMessage(error, '오류가 발생했습니다. 다시 시도해 주세요.'));
   }
   };
 
@@ -111,13 +119,18 @@ function PostView() {
       navigate("/");
     } catch(error) {
       console.error('등록 오류:', error);
-      alert('오류가 발생했습니다. 다시 시도해 주세요.');
+      alert(errorMessage(error, '오류가 발생했습니다. 다시 시도해 주세요.'));
     }
   }
 
   const applyPosition = async (positionId: number) => {
     if(!username) {
       setLoginModalOpen(true);
+      return;
+    }
+    // 신청서가 있는 글은 작성 창을 띄우고, 제출은 ApplyModal이 한다
+    if (post?.applyQuestions?.length) {
+      setApplyingPositionId(positionId);
       return;
     }
     try {
@@ -157,12 +170,24 @@ function PostView() {
   return (
     <div className="view-container">
       <LoginRequiredModal isOpen={isLoginModalOpen} onClose={() => setLoginModalOpen(false)} />
+      <ApplyModal
+        open={applyingPositionId != null}
+        positionId={applyingPositionId}
+        questions={post.applyQuestions ?? []}
+        onClose={() => setApplyingPositionId(null)}
+        onApplied={id => {
+          setAppliedPositions(prev => [...prev, id]);
+          setApplyingPositionId(null);
+        }}
+      />
         {useUpdate ? <>
         <form className='form' onSubmit={handleSubmit}>
           <p className="post-info"><strong>📌 프로젝트 제목:</strong></p>
           <input
             className="post-title-input"
             value={post.title}
+            required
+            maxLength={100}
             onChange={(e) => setPost(prev => ({ ...prev!, title: e.target.value }))}
           />
           <div className="date-section">
@@ -181,6 +206,7 @@ function PostView() {
                         size="small"
                         value={post.endDate}
                         onChange={(e) => setPost(prev => ({ ...prev!, endDate: e.target.value }))}
+              inputProps={{ min: post.startDate }} // 시작일 이전 선택 불가
                         className="input"
                         InputLabelProps={{ shrink: true }}
                       />
@@ -191,7 +217,9 @@ function PostView() {
               <select
                 name="projectType"
                 value={post.projectType}
-                onChange={(e) => setPost(prev => ({ ...prev!, projectType: e.target.value }))}
+                onChange={(e) => setPost(prev => ({ ...prev!, projectType: e.target.value,
+                  // 온라인이면 지역 선택지가 사라지므로 값도 지역무관으로 되돌린다
+                  region: e.target.value === 'online' ? 'nothing' : prev!.region }))}
                 className="select"
               >
                 <option value="online">온라인</option>
@@ -244,6 +272,12 @@ function PostView() {
             initialValue={post.content}
                   />
         </div>
+        <h3 className="post-section-title">신청서</h3>
+        <p className="sub">질문을 고쳐도 이미 들어온 신청서는 제출 당시 질문 그대로 보입니다.</p>
+        <ApplyFormBuilder
+          value={post.applyQuestions ?? []}
+          onChange={questions => setPost(prev => ({ ...prev!, applyQuestions: questions }))}
+        />
         <div className='btmBtn-container'>
             <button type='submit' id='submitBtn'>수정</button>
             <button type='button' onClick={() => setUseUpdate(false)} id='cancleBtn'>취소</button>
@@ -309,7 +343,7 @@ function PostView() {
                 </>
               )}
             </dl>
-            {post.author !== username && post.positions && post.positions.length > 0 && (
+            {post.author !== username && post.postStatus !== 'END' && post.positions && post.positions.length > 0 && (
             post.positions
               .filter(pos => pos.status !== "END" && pos.count > 0)
               .map(pos => (

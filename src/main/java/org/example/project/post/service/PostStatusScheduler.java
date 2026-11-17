@@ -23,15 +23,7 @@ public class PostStatusScheduler {
     public void updatePostStatus() {
         Date today = new Date();
         List<Post> posts = postRepository.findByPostStatusNot("END");
-        for (Post post : posts) {
-            if (post.getStartDate() != null && post.getStartDate().after(today)) {
-                post.setPostStatus("SCHEDULED"); // 시작 전
-            } else if (post.getEndDate() != null && post.getEndDate().before(today)) {
-                post.setPostStatus("END"); // 종료됨
-            } else {
-                post.setPostStatus("IN_PROGRESS"); // 시작 후, 종료 전
-            }
-        }
+        posts.forEach(post -> post.refreshPostStatus(today));
         postRepository.saveAll(posts);
     }
 

@@ -2,7 +2,12 @@ package org.example.project.post.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.project.member.repository.MemberRepository;
 import org.example.project.post.dto.*;
+import org.example.project.post.entity.ApplyAnswer;
+import org.example.project.post.entity.ApplyFile;
+import org.example.project.post.entity.PostPositionMember;
+import org.example.project.post.service.ApplyFormService;
 import org.example.project.post.service.PositionService;
 import org.example.project.post.service.PostService;
 import org.springframework.data.domain.Page;
@@ -13,6 +18,7 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -22,6 +28,8 @@ public class PostController {
 
     private final PostService postService;
     private final PositionService positionService;
+    private final ApplyFormService applyFormService;
+    private final MemberRepository memberRepository;
 
     @PostMapping("/create")
     public ResponseEntity<Long> createPost(@RequestBody PostRequestDto post, Principal principal) {
@@ -91,6 +99,33 @@ public class PostController {
     public List<ApplyResponseDto> getApplyPositionList(@PathVariable Long postId, Principal principal) {
         postService.findOwnedPost(postId, principal.getName());
         return positionService.getApplyPositionList(postId);
+    }
+
+    // 신청서 답변. 글 작성자와 신청자 본인만 볼 수 있다.
+    @GetMapping("/application/{applicationId}")
+    public List<ApplyAnswer> applicationAnswers(@PathVariable Long applicationId, Principal principal) {
+        List<ApplyAnswer> answers = positionService.findReadableApplication(applicationId, principal.getName()).getAnswers();
+        return answers == null ? List.of() : answers;
+    }
+
+    // 첨부 파일 받기. 그 신청서에 실제로 붙은 파일만 짧게 유효한 URL로 내준다.
+    @GetMapping("/application/{applicationId}/file")
+    public Map<String, String> applicationFile(@PathVariable Long applicationId, @RequestParam String key, Principal principal) {
+        PostPositionMember application = positionService.findReadableApplication(applicationId, principal.getName());
+        ApplyFile file = Optional.ofNullable(application.getAnswers()).orElse(List.of()).stream()
+                .flatMap(a -> a.files().stream())
+                .filter(f -> f.key().equals(key))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("첨부 파일이 없습니다."));
+        return Map.of("url", applyFormService.issueDownloadUrl(file));
+    }
+
+    // 신청서 첨부 파일 올리기. 키는 서버가 만들고, 브라우저가 받은 URL로 S3에 직접 PUT한다.
+    @GetMapping("/apply-file/upload-url")
+    public Map<String, String> applyFileUploadUrl(@RequestParam String filename, Principal principal) {
+        Long memberId = memberRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다.")).getId();
+        return applyFormService.issueUploadUrl(memberId, filename);
     }
 
     @PostMapping("/like")

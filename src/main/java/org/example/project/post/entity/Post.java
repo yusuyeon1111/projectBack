@@ -3,6 +3,8 @@ package org.example.project.post.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -88,4 +90,20 @@ public class Post {
 
     @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostLike> likes = new ArrayList<>();
+
+    /**
+     * 시작일·마감일로 진행 상태를 정한다. 등록·수정과 PostStatusScheduler가 같은 규칙을 쓴다.
+     * 날짜는 그날 00:00으로 저장되므로 시각이 아니라 날짜로 비교해야 마감일 당일이 진행중으로 남는다.
+     */
+    public void refreshPostStatus(Date now) {
+        ZoneId seoul = ZoneId.of("Asia/Seoul");
+        LocalDate today = now.toInstant().atZone(seoul).toLocalDate();
+        if (startDate != null && startDate.toInstant().atZone(seoul).toLocalDate().isAfter(today)) {
+            postStatus = "SCHEDULED"; // 시작 전
+        } else if (endDate != null && endDate.toInstant().atZone(seoul).toLocalDate().isBefore(today)) {
+            postStatus = "END"; // 종료됨
+        } else {
+            postStatus = "IN_PROGRESS"; // 시작 후, 종료 전
+        }
+    }
 }

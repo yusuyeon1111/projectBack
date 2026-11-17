@@ -30,7 +30,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,6 +48,7 @@ public class PostService {
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final PostLikeRepository postLikeRepository;
     private final EntityManager entityManager;
+    private final ApplyFormService applyFormService;
     private final TeamService teamService;
 
     private static final int PAGES_AHEAD = 10;
@@ -53,30 +56,30 @@ public class PostService {
     // 게시글 작성
     @Transactional
     public Long createPost(PostRequestDto dto) {
+        validateNewPost(dto);
         Post post = new Post();
         String nickname = memberRepository.findNicknameByUsername(dto.getAuthor())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 닉네임을 찾을 수 없습니다."));
         post.setNickname(nickname);
-        post.setTitle(dto.getTitle());
+        post.setTitle(dto.getTitle().trim());
         post.setContent(dto.getContent());
         post.setAuthor(dto.getAuthor());
         post.setProjectType(dto.getProjectType());
-        post.setRegion(dto.getRegion());
-        post.setStatus(dto.getStatus());
+        post.setRegion(regionFor(dto.getProjectType(), dto.getRegion()));
+        post.setStatus("ING");
         post.setCreated(new Date());
         post.setCategory(dto.getCategory());
         post.setStartDate(dto.getStartDate());
         post.setEndDate(dto.getEndDate());
-        post.setPostStatus(dto.getPostStatus());
-        if(dto.getPositions() != null) {
-            for(PostRequestDto.PostPositionDto positionDto : dto.getPositions()) {
-                PostPosition position = new PostPosition();
-                position.setPost(post);
-                position.setRole(positionDto.getRole());
-                position.setCount(positionDto.getCount());
-                position.setStatus(positionDto.getStatus());
-                post.getPositions().add(position);
-            }
+        // 진행 상태는 클라이언트 값을 믿지 않고 날짜로 정한다
+        post.refreshPostStatus(new Date());
+        for (PostRequestDto.PostPositionDto positionDto : dto.getPositions()) {
+            PostPosition position = new PostPosition();
+            position.setPost(post);
+            position.setRole(positionDto.getRole());
+            position.setCount(positionDto.getCount());
+            position.setStatus("ING");
+            post.getPositions().add(position);
         }
         if(dto.getTechStacks() != null) {
             for(String techStack : dto.getTechStacks()) {
@@ -87,7 +90,66 @@ public class PostService {
             }
         }
         Post savedPost = postRepository.save(post);
+        applyFormService.replaceQuestions(savedPost, dto.getApplyQuestions());
         return savedPost.getId();
+    }
+
+    private static final ZoneId SEOUL = ZoneId.of("Asia/Seoul");
+    private static final Set<String> CATEGORIES = Set.of("project", "study");
+    private static final Set<String> PROJECT_TYPES = Set.of("online", "offline", "both");
+    // 스터디는 포지션 대신 totalCount(총 인원) 하나를 쓴다
+    private static final Set<String> ROLES = Set.of("backend", "frontend", "pm", "design", "etc", "totalCount");
+    private static final int MAX_TITLE_LENGTH = 100;
+
+    /** 등록 요청 검사. 잘못된 입력은 IllegalArgumentException(400). */
+    private static void validateNewPost(PostRequestDto dto) {
+        validateTitle(dto.getTitle());
+        if (!CATEGORIES.contains(dto.getCategory())) {
+            throw new IllegalArgumentException("카테고리가 올바르지 않습니다.");
+        }
+        if (!PROJECT_TYPES.contains(dto.getProjectType())) {
+            throw new IllegalArgumentException("진행 방식을 선택해주세요.");
+        }
+        if (dto.getStartDate() == null || dto.getEndDate() == null) {
+            throw new IllegalArgumentException("시작일과 마감일을 모두 선택해주세요.");
+        }
+        if (toLocalDate(dto.getStartDate()).isBefore(LocalDate.now(SEOUL))) {
+            throw new IllegalArgumentException("시작일은 오늘 이후로 설정해주세요.");
+        }
+        validateDateOrder(dto.getStartDate(), dto.getEndDate());
+        List<PostRequestDto.PostPositionDto> positions = dto.getPositions();
+        if (positions == null || positions.isEmpty()) {
+            throw new IllegalArgumentException("모집 인원을 입력해주세요.");
+        }
+        for (PostRequestDto.PostPositionDto p : positions) {
+            if (p == null || !ROLES.contains(p.getRole())) {
+                throw new IllegalArgumentException("모집 포지션이 올바르지 않습니다.");
+            }
+            if (p.getCount() < 1) {
+                throw new IllegalArgumentException("모집 인원은 1명 이상이어야 합니다.");
+            }
+        }
+    }
+
+    private static void validateTitle(String title) {
+        if (title == null || title.isBlank() || title.trim().length() > MAX_TITLE_LENGTH) {
+            throw new IllegalArgumentException("제목은 1~" + MAX_TITLE_LENGTH + "자로 입력해주세요.");
+        }
+    }
+
+    private static void validateDateOrder(Date start, Date end) {
+        if (start != null && end != null && end.before(start)) {
+            throw new IllegalArgumentException("마감일은 시작일 이후로 설정해주세요.");
+        }
+    }
+
+    private static LocalDate toLocalDate(Date date) {
+        return date.toInstant().atZone(SEOUL).toLocalDate();
+    }
+
+    // 온라인 글은 지역이 의미 없으므로 화면에 남은 값이 있어도 지역무관으로 저장한다
+    private static String regionFor(String projectType, String region) {
+        return "online".equals(projectType) || region == null || region.isBlank() ? "nothing" : region;
     }
 
     // 게시글 상세보기
@@ -97,14 +159,18 @@ public class PostService {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
         boolean likedByUser = postLikeRepository.findByPostIdAndMemberId(postId, member.getId()).isPresent();
-        return new PostResponseDto(post, likedByUser);
+        PostResponseDto response = new PostResponseDto(post, likedByUser);
+        response.setApplyQuestions(applyFormService.getQuestions(postId));
+        return response;
     }
 
     // 게시글 상세보기 로그인 x
     @Transactional
     public PostResponseDto selectViewById(Long postId) {
         Post post = loadAndCountView(postId);
-        return new PostResponseDto(post);
+        PostResponseDto response = new PostResponseDto(post);
+        response.setApplyQuestions(applyFormService.getQuestions(postId));
+        return response;
     }
 
     // 엔티티에 +1 해서 저장하면 동시 조회끼리 덮어쓴다. DB에서 먼저 올리고 읽어야 올린 값이 응답에 보인다
@@ -133,20 +199,26 @@ public class PostService {
             post.setContent(dto.getContent());
         }
         if (dto.getTitle() != null) {
-            post.setTitle(dto.getTitle());
+            validateTitle(dto.getTitle());
+            post.setTitle(dto.getTitle().trim());
         }
         if (dto.getProjectType() != null) {
+            if (!PROJECT_TYPES.contains(dto.getProjectType())) {
+                throw new IllegalArgumentException("진행 방식을 선택해주세요.");
+            }
             post.setProjectType(dto.getProjectType());
         }
         if (dto.getRegion() != null) {
             post.setRegion(dto.getRegion());
         }
-        if (dto.getStartDate() != null) {
-            post.setStartDate(dto.getStartDate());
-        }
-        if (dto.getEndDate() != null) {
-            post.setEndDate(dto.getEndDate());
-        }
+        post.setRegion(regionFor(post.getProjectType(), post.getRegion()));
+        // 이미 시작한 글은 시작일이 과거일 수 있으므로 수정에서는 날짜 순서만 본다
+        Date startDate = dto.getStartDate() != null ? dto.getStartDate() : post.getStartDate();
+        Date endDate = dto.getEndDate() != null ? dto.getEndDate() : post.getEndDate();
+        validateDateOrder(startDate, endDate);
+        post.setStartDate(startDate);
+        post.setEndDate(endDate);
+        post.refreshPostStatus(new Date());
         post.setUpdated(new Date());
         // 기술 스택 업데이트
         if (dto.getTechStacks() != null) {
@@ -159,10 +231,14 @@ public class PostService {
             }
         }
 
+        applyFormService.replaceQuestions(post, dto.getApplyQuestions());
+
         // 모집 포지션은 수정하지 않는다. 포지션에 신청 내역(PostPositionMember)이 cascade로 묶여 있어
         // 지우고 다시 만들면 신청 기록이 삭제되고 인원(count)도 0이 된다. 수정 화면에도 포지션 편집 UI가 없다.
 
-        return new PostResponseDto(post);
+        PostResponseDto response = new PostResponseDto(post);
+        response.setApplyQuestions(applyFormService.getQuestions(post.getId()));
+        return response;
     }
 
     // 게시글 삭제

@@ -195,12 +195,12 @@ class NotificationApiTest {
     }
 
     @Test
-    void 자기_글에_신청하면_알림을_만들지_않는다() throws Exception {
+    void 자기_글에는_신청할_수_없고_알림도_없다() throws Exception {
         PostPosition position = createPost(1); // 작성자 회원도 함께 만든다
 
         mvc.perform(post("/api/post/apply").header("Authorization", bearer(me))
                         .contentType(MediaType.APPLICATION_JSON).content("{\"positionId\":" + position.getId() + "}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isBadRequest());
 
         assertThat(notificationsOf(me)).isEmpty();
         assertThat(events.stream(NotificationCreatedEvent.class)).isEmpty();

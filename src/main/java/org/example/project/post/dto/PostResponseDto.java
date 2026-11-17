@@ -3,6 +3,7 @@ package org.example.project.post.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
+import org.example.project.post.entity.ApplyQuestion;
 import org.example.project.post.entity.Post;
 import org.example.project.post.entity.PostStack;
 
@@ -37,6 +38,8 @@ public class PostResponseDto {
     private Date endDate;
     private String postStatus;
     private boolean likedByUser;
+    // 상세 조회에서만 채운다. 목록 응답에는 싣지 않는다.
+    private List<ApplyQuestion> applyQuestions;
     public PostResponseDto(Post post) {
         this.id = post.getId();
         this.title = post.getTitle();

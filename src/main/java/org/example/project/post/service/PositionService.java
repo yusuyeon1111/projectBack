@@ -35,6 +35,7 @@ public class PositionService {
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final NotificationService notificationService;
+    private final ApplyFormService applyFormService;
     private final TeamService teamService;
 
     // 포지션 id, username으로 신청 여부 판단
@@ -48,10 +49,16 @@ public class PositionService {
     // 포지션 신청. 동시 중복 신청은 DB 유니크 제약(uk_position_member)이 막는다.
     // save가 바로 커밋되어야 제약 위반을 여기서 잡을 수 있으므로 메서드 트랜잭션을 두지 않는다.
     public ResponseEntity<String> applyPostPosition(ApplyPositionRequestDto dto) {
-        PostPosition position = postPositionRepository.findById(dto.getPositionId())
+        PostPosition position = postPositionRepository.findWithPostById(dto.getPositionId())
                 .orElseThrow(()-> new RuntimeException("포지션이 존재하지 않습니다."));
         if ("END".equals(position.getStatus())) {
             return ResponseEntity.badRequest().body("모집이 마감된 포지션입니다.");
+        }
+        if ("END".equals(position.getPost().getPostStatus())) {
+            return ResponseEntity.badRequest().body("진행 기간이 끝난 글입니다.");
+        }
+        if (dto.getUsername().equals(position.getPost().getAuthor())) {
+            return ResponseEntity.badRequest().body("내가 쓴 글에는 신청할 수 없습니다.");
         }
         Member member = memberRepository.findByUsername(dto.getUsername())
                 .orElseThrow(()-> new RuntimeException("사용자가 존재하지 않습니다."));
@@ -61,7 +68,11 @@ public class PositionService {
             return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
         }
 
+        // 신청서 질문에 맞춰 검사한 답변. S3 확인이 들어 있어 저장 직전에 한 번만 만든다.
+        var answers = applyFormService.buildAnswers(position.getPost().getId(), member.getId(), dto.getAnswers());
+
         PostPositionMember postPositionMember = new PostPositionMember();
+        postPositionMember.setAnswers(answers);
         postPositionMember.setPostPosition(position);
         postPositionMember.setMember(member);
         postPositionMember.setStatus("APPLY");
@@ -140,6 +151,18 @@ public class PositionService {
         notificationService.notifyResult(position);
         List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(position.getPostPosition().getPost().getId());
         return list;
+    }
+
+    /** 신청서 답변은 글 작성자와 신청자 본인만 본다. 관리자도 볼 수 없다. */
+    public PostPositionMember findReadableApplication(Long applicationId, String username) {
+        PostPositionMember application = postPositionMemberRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("신청 내역이 존재하지 않습니다."));
+        boolean isAuthor = application.getPostPosition().getPost().getAuthor().equals(username);
+        boolean isApplicant = application.getMember().getUsername().equals(username);
+        if (!isAuthor && !isApplicant) {
+            throw new AccessDeniedException("이 신청서를 볼 권한이 없습니다.");
+        }
+        return application;
     }
 
     private Long authorId(String username) {

@@ -1,0 +1,57 @@
+/* 신청서 질문 편집기(ApplyFormBuilder)와 입력 폼(ApplyFormRenderer) */
+.apply-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.apply-builder .sub {
+  font-size: 0.9rem;
+  color: #555;
+  margin: 0;
+}
+
+/* 선택지 "추가" 버튼이 좁아져 글자가 두 줄로 꺾이지 않게 */
+.apply-builder #graBtn {
+  flex: none;
+  white-space: nowrap;
+}
+
+.apply-builder-item {
+  padding: 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.apply-builder-preview {
+  padding: 20px;
+  border: 1px dashed #bbb;
+  border-radius: 8px;
+}
+
+.apply-required {
+  color: #e74c3c;
+}
+
+.apply-file-btn {
+  display: inline-block;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: #555;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.apply-file-btn:hover {
+  background-color: #f1f3f5;
+}
+
+/* 마이페이지 "신청서 보기" */
+.answers-link {
+  color: #1976d2;
+  cursor: pointer;
+}
