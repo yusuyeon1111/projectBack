@@ -25,7 +25,7 @@ class FakeEventSource {
 }
 
 const item = (id: number, over: Partial<NotificationItem> = {}): NotificationItem => ({
-  id, type: 'APPLY', postId: 10, postTitle: `글${id}`, postCategory: 'project',
+  id, type: 'APPLY', targetType: 'POST', targetId: 10, postId: 10, postTitle: `글${id}`, postCategory: 'project',
   role: 'backend', actor: '철수', read: false, createdAt: '2026-11-10T12:00:00', ...over,
 });
 

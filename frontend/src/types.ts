@@ -22,24 +22,41 @@ export const pageNumbers = (page: number, totalPages: number) => {
 // NotificationResponse (/api/notifications)
 export interface NotificationItem {
   id: number;
-  type: 'APPLY' | 'ACCEPT' | 'REJECT';
-  postId: number;
-  postTitle: string;
-  postCategory: 'project' | 'study';
-  role: string;
+  type: 'APPLY' | 'ACCEPT' | 'REJECT'
+    | 'TEAM_STARTED' | 'TEAM_COMPLETED' | 'TEAM_DISBANDED' | 'TEAM_LEADER' | 'TEAM_LEFT' | 'TEAM_KICKED';
+  targetType: 'POST' | 'TEAM';
+  targetId: number;
+  postId: number | null; // 팀 알림은 글이 지워졌으면 null
+  postTitle: string; // 팀 알림은 팀 이름
+  postCategory: 'project' | 'study' | null;
+  role: string | null;
   actor: string | null;
   read: boolean;
   createdAt: string;
 }
 
+const teamMessages: Partial<Record<NotificationItem['type'], string>> = {
+  TEAM_STARTED: '활동을 시작했습니다.',
+  TEAM_COMPLETED: '활동을 마쳤습니다.',
+  TEAM_DISBANDED: '해산되었습니다.',
+  TEAM_LEADER: '팀장이 되었습니다.',
+  TEAM_KICKED: '퇴출되었습니다.',
+};
+
 export const notificationMessage = (n: NotificationItem) => {
-  const target = `'${n.postTitle}' ${roleTextMap[n.role] ?? n.role} 포지션`;
+  if (n.targetType === 'TEAM') {
+    if (n.type === 'TEAM_LEFT') return `'${n.postTitle}' 팀에서 ${n.actor}님이 탈퇴했습니다.`;
+    if (n.type === 'TEAM_LEADER' || n.type === 'TEAM_KICKED') return `'${n.postTitle}' 팀에서 ${teamMessages[n.type]}`;
+    return `'${n.postTitle}' 팀이 ${teamMessages[n.type]}`;
+  }
+  const target = `'${n.postTitle}' ${roleTextMap[n.role ?? ''] ?? n.role} 포지션`;
   if (n.type === 'APPLY') return `${target}에 ${n.actor}님이 신청했습니다.`;
   return `${target} 신청이 ${n.type === 'ACCEPT' ? '승인' : '거절'}되었습니다.`;
 };
 
+// 팀 화면은 마이페이지 '내 팀' 탭에 있다. 퇴출·해산으로 팀을 못 보는 사람도 있어 팀 id로 바로 열지 않는다
 export const notificationLink = (n: NotificationItem) =>
-  `/${n.postCategory === 'study' ? 'study' : 'post'}/${n.postId}`;
+  n.targetType === 'TEAM' ? '/myPage' : `/${n.postCategory === 'study' ? 'study' : 'post'}/${n.postId}`;
 
 export const regions = [
   '서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도',
