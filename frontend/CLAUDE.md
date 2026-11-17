@@ -56,6 +56,8 @@ CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경�
 
 **팀**: 신청이 처음 승인되면 서버가 팀을 만든다(작성자가 팀장). 마이페이지 "내 팀" 탭(`MyTeams.tsx`)이 `/api/teams/my` 목록을 보여 주고, 누르면 `/api/teams/{id}`로 팀원을 연다. 팀장은 그 창에서 시작·완료·해산·위임·퇴출을, 팀원은 탈퇴를 한다. 탈퇴한 신청은 "신청내역" 탭에서 다시 신청할 수 있다. 팀 알림은 `/myPage?tab=team`으로 보내 "내 팀" 탭을 연다(`MyPage.test.tsx`). 팀 창 아래의 업무 보드·댓글·최근 활동은 `TeamTasks.tsx`이고, 수정할 때 받은 `version`을 돌려보내며 409면 알리고 다시 읽는다. 팀 채팅(`TeamChat.tsx`)은 알림 SSE 연결 하나를 같이 쓴다. `useNotifications`가 `chat` 이벤트를 window의 `team-chat` 이벤트로, 연결(재연결)을 `sse-connected`로 다시 쏘고, `TeamChat`은 재연결·탭 복귀 때 마지막 id 이후를 `?after=`로 메우며 id로 중복을 거른다. `MyTeams.test.tsx`, `TeamTasks.test.tsx`, `TeamChat.test.tsx`가 검증한다.
 
+**토스트**: 화면을 막지 않는 짧은 안내는 `components/Toast.tsx`의 `toast(문구)`를 쓴다. `<Toaster/>`가 `index.tsx`의 라우트 바깥에 하나 있어서 띄운 뒤 페이지를 옮겨도 보인다. `alert`는 브라우저를 멈추게 해서 확인이 필요 없는 안내에는 쓰지 않는다.
+
 **관리자**: `components/Admin/` — `Dashboard.tsx`가 recharts로 `/api/admin/chart*` 통계, `User.tsx`가 회원 목록/승인/차단(`/api/admin/memberAll`, `acceptUser`, `banUser`), `Post.tsx`가 게시글 상태 변경.
 
 **스타일**: 컴포넌트별 일반 CSS 파일(`src/css/*.css`, `src/css/admin/*.css`)을 import하고, 폼/상세/마이페이지는 MUI(`TextField`, `Chip`, `Stack`, `Tabs` 등)를 섞어 씀. Tailwind는 devDependency에 있지만 설정 파일도 없고 실제로 쓰이지 않음. 글 작성 에디터는 `@toast-ui/react-editor`.

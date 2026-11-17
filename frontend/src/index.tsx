@@ -21,6 +21,7 @@ import LoginRequiredModal from './components/LoginRequiredModal';
 import Admin from './components/Admin/Admin';
 import User from './components/Admin/User';
 import AdminLayout from './components/Admin/Layout';
+import { Toaster } from './components/Toast';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
@@ -43,6 +44,7 @@ root.render(
         <Route path="/admin" element={<Admin/>}/>
       </Route>
     </Routes>
+    <Toaster/>
   </BrowserRouter>
 );
 
