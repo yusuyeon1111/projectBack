@@ -1,18 +1,30 @@
 package org.example.project.config;
 
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.orm.jpa.support.OpenEntityManagerInViewInterceptor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.security.Principal;
+import java.util.Set;
 
 @Configuration
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
     private final EntityManagerFactory entityManagerFactory;
+
+    // README에 공개한 체험용 계정. 화면은 다 보되, 다른 사람에게 영향을 주거나 계정을 못 쓰게 만드는 쓰기는 막는다
+    @Value("${demo.read-only-users:}")
+    private Set<String> demoUsers;
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
@@ -32,5 +44,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
         OpenEntityManagerInViewInterceptor openInView = new OpenEntityManagerInViewInterceptor();
         openInView.setEntityManagerFactory(entityManagerFactory);
         registry.addWebRequestInterceptor(openInView).excludePathPatterns("/api/notifications/subscribe");
+
+        registry.addInterceptor(new HandlerInterceptor() {
+            @Override
+            public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+                Principal principal = request.getUserPrincipal();
+                if (!"GET".equals(request.getMethod()) && principal != null && demoUsers.contains(principal.getName())) {
+                    throw new AccessDeniedException("체험용 계정은 변경할 수 없습니다.");
+                }
+                return true;
+            }
+        }).addPathPatterns("/api/admin/**", "/api/member/update");
     }
 }

@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 // DB/Redis가 필요하다 (CLAUDE.md의 실행 환경변수 참고). JWT·외부 연동 값은 여기서 더미로 채운다.
@@ -32,6 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "spring.data.redis.usessl=false",
         "KAKAO_CLIENT_ID=test",
         "AWS_REGION=ap-northeast-2", "AWS_S3_BUCKET_NAME=test",
+        "demo.read-only-users=demo-user,demo-admin",
 })
 @AutoConfigureMockMvc
 class SecurityAccessTest {
@@ -56,6 +58,22 @@ class SecurityAccessTest {
         mvc.perform(delete("/api/post/delete/1")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/member/myPage")).andExpect(status().isUnauthorized());
         mvc.perform(get("/api/admin/memberAll")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 체험용_계정은_관리자_쓰기와_회원정보_수정을_못하고_조회는_된다() throws Exception {
+        String admin = bearer("demo-admin", "ROLE_ADMIN");
+        mvc.perform(post("/api/admin/banUser").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"memberId\":1}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("체험용 계정은 변경할 수 없습니다."));
+        mvc.perform(post("/api/admin/changePostStatus").header("Authorization", admin).contentType(MediaType.APPLICATION_JSON)
+                .content("{}")).andExpect(status().isForbidden());
+        mvc.perform(get("/api/admin/memberAll").header("Authorization", admin)).andExpect(status().isOk());
+
+        mvc.perform(post("/api/member/update").header("Authorization", bearer("demo-user", "ROLE_USER"))
+                .contentType(MediaType.APPLICATION_JSON).content("{\"password\":\"changed\"}"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
