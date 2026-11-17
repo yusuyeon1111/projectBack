@@ -290,6 +290,24 @@ class NotificationStreamTest {
         assertThat(output).doesNotContain("response is already committed", "AccessDeniedException");
     }
 
+    // --- 팀 채팅 ---
+
+    // 브라우저는 id 없는 이벤트를 받아도 마지막 이벤트 id를 그대로 둔다. 그래서 재연결 때 알림을 이어 받는 기준이 흔들리지 않는다
+    @Test
+    void 채팅은_같은_연결에_id_없는_chat_이벤트로_온다() throws Exception {
+        long application = apply(createPost(2), member("a"));
+        SseStream stream = connected(prefix + "a");
+        assertThat(accept(application)).isEqualTo(200);
+        assertThat(stream.next()).containsEntry("event", "notification");
+        Long teamId = jdbcTemplate.queryForObject("SELECT id FROM team WHERE post_id = ?", Long.class, post.getId());
+
+        assertThat(post("/api/teams/" + teamId + "/messages", accessToken(author, "ROLE_USER"), "{\"content\":\"안녕\"}")).isEqualTo(200);
+
+        Map<String, String> chat = stream.next();
+        assertThat(chat).containsEntry("event", "chat").doesNotContainKey("id");
+        assertThat(chat.get("data")).contains("\"content\":\"안녕\"", "\"teamId\":" + teamId);
+    }
+
     // --- helpers ---
 
     private SseStream connected(String username) throws Exception {
