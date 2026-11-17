@@ -51,6 +51,7 @@ class PositionConcurrencyTest {
     @AfterEach
     void cleanUp() {
         if (post != null) postRepository.findById(post.getId()).ifPresent(postRepository::delete);
+        TeamCleanup.deleteFor(jdbcTemplate, members);
         memberRepository.deleteAll(members);
         // 신청·승인 때 생기는 알림도 받는 사람이 모두 이 테스트의 회원이다
         jdbcTemplate.update("DELETE FROM notification WHERE receiver LIKE ?", prefix + "%");

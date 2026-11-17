@@ -8,6 +8,7 @@ import { IoIosSettings } from "react-icons/io";
 import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, postStatusText, roleTextMap } from '../types';
 import { errorMessage } from '../auth';
 import ApplicationAnswersDialog from './ApplicationAnswersDialog';
+import MyTeams from './MyTeams';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -336,11 +337,12 @@ function MyPage() {
       <div className="myAct-container">
         <Box sx={{ width: '100%' }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
+            <Tabs value={value} onChange={handleChange} variant="scrollable" scrollButtons="auto" aria-label="basic tabs example">
               <Tab label="작성글" {...a11yProps(0)} />
               <Tab label="신청내역" {...a11yProps(1)} />
               <Tab label="참여중" {...a11yProps(2)} />
               <Tab label="찜한글" {...a11yProps(3)} />
+              <Tab label="내 팀" {...a11yProps(4)} />
             </Tabs>
           </Box>
           <CustomTabPanel value={value} index={0}>
@@ -450,6 +452,9 @@ function MyPage() {
 
               </div>
             )): <div><p>데이터 없음.</p></div>}
+          </CustomTabPanel>
+          <CustomTabPanel value={value} index={4}>
+            <MyTeams />
           </CustomTabPanel>
         </Box>
       </div>

@@ -87,6 +87,7 @@ class ApplyFormTest {
     @AfterEach
     void cleanUp() {
         if (postId != null) postRepository.findById(postId).ifPresent(postRepository::delete);
+        TeamCleanup.deleteFor(jdbcTemplate, members);
         memberRepository.deleteAll(members);
         jdbcTemplate.update("DELETE FROM notification WHERE receiver LIKE ?", prefix + "%");
     }

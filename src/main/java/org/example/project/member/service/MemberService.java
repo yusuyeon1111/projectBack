@@ -14,6 +14,8 @@ import org.example.project.member.repository.MemberRepository;
 import org.example.project.notification.service.SseEmitterRegistry;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.security.JwtTokenProvider;
+import org.example.project.security.LoginAttemptLimiter;
+import org.example.project.security.RefreshTokenService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,6 +43,8 @@ public class MemberService {
     private final RedisTemplate<String, String> redisTemplate;
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final SseEmitterRegistry sseEmitterRegistry;
+    private final LoginAttemptLimiter loginAttemptLimiter;
+    private final RefreshTokenService refreshTokenService;
     Date date = new Date();
     @Transactional
     public Member signUp(SignUpDto signUpDto) {
@@ -80,9 +84,7 @@ public class MemberService {
 
         Authentication authentication = jwtTokenProvider.getAuthentication(accessToken);
 
-        if(redisTemplate.opsForValue().get("RT:"+authentication.getName())!=null) {
-            redisTemplate.delete("RT:"+authentication.getName());
-        }
+        refreshTokenService.revoke(authentication.getName(), jwtTokenProvider.getSid(accessToken));
 
         Long expiration = jwtTokenProvider.getExpiration(accessToken);
         redisTemplate.opsForValue().set(accessToken, "logout", expiration, TimeUnit.MILLISECONDS);
@@ -211,7 +213,7 @@ public class MemberService {
         memberRepository.save(member);
         // 이미 발급된 access token은 서명만으로 통과하므로, 남은 최대 수명 동안 필터에서 막는다
         redisTemplate.opsForValue().set("BAN:" + member.getUsername(), "ban", JwtTokenProvider.ACCESS_TIME, TimeUnit.MILLISECONDS);
-        redisTemplate.delete("RT:" + member.getUsername());
+        refreshTokenService.revokeAll(member.getUsername());
         sseEmitterRegistry.closeAll(member.getUsername());
         return "계정이 비활성화 되었습니다.";
     }
@@ -227,20 +229,17 @@ public class MemberService {
         return new MemberResponseDto(member);
     }
 
+    /**
+     * 비밀번호 확인은 AuthenticationManager(DaoAuthenticationProvider)에 맡긴다. 없는 아이디도 더미 해시와 비교해
+     * 응답 시간이 같고, 없는 아이디와 틀린 비밀번호가 같은 BadCredentialsException이 되어 아이디 존재 여부가 드러나지 않는다.
+     * 차단 회원은 CustomerUserDetailsService가 disabled로 표시해 DisabledException이 난다.
+     */
     public JwtToken signIn(@Valid SignInDto signInDto) {
-        Member member = memberRepository.findByUsernameAndDelYn(signInDto.getUsername(), "N")
-                .orElseThrow(()-> new RuntimeException("비활성화된 계정입니다."));
-        if (!passwordEncoder.matches(signInDto.getPassword(), member.getPassword())) {
-            throw new RuntimeException("비밀번호가 일치하지 않습니다.");
-        }
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword());
+        loginAttemptLimiter.acquire(signInDto.getUsername());
+        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(
+                new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword()));
+        loginAttemptLimiter.reset(signInDto.getUsername());
 
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-
-        JwtToken token = jwtTokenProvider.generateToken(authentication);
-
-        redisTemplate.opsForValue().set("RT:"+authentication.getName(), token.getRefreshToken(), token.getRefreshTokenExpiresIn(), TimeUnit.MILLISECONDS);
-
-        return token;
+        return refreshTokenService.issue(authentication);
     }
 }

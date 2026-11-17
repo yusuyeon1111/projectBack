@@ -15,6 +15,7 @@ import org.example.project.post.entity.PostPositionMember;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
 import org.example.project.post.repositoty.PostPositionRepository;
 import org.example.project.post.repositoty.PostRepository;
+import org.example.project.team.service.TeamService;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -35,6 +36,7 @@ public class PositionService {
     private final PostPositionMemberRepository postPositionMemberRepository;
     private final NotificationService notificationService;
     private final ApplyFormService applyFormService;
+    private final TeamService teamService;
 
     // 포지션 id, username으로 신청 여부 판단
     public List<Long> getAppliedPositions(Long postId, String username) {
@@ -60,6 +62,7 @@ public class PositionService {
         }
         Member member = memberRepository.findByUsername(dto.getUsername())
                 .orElseThrow(()-> new RuntimeException("사용자가 존재하지 않습니다."));
+        teamService.checkNotTeamMember(position.getPost().getId(), member.getId());
         boolean alreadyApplied = postPositionMemberRepository.existsByPostPositionAndMember(position, member);
         if(alreadyApplied) {
             return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
@@ -79,6 +82,8 @@ public class PositionService {
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.badRequest().body("이미 신청한 포지션입니다.");
         }
+        // ponytail: 신청은 일부러 트랜잭션 밖이라(위 주석) 이력 저장이 실패하면 이력 없는 신청이 남는다. 신청 이력이 감사 용도가 되면 묶는다
+        teamService.recordApplication(postPositionMember.getId(), "APPLY", member.getId());
         notificationService.notifyApply(position.getId(), member);
 
         return ResponseEntity.ok("포지션 신청이 완료되었습니다.");
@@ -125,6 +130,9 @@ public class PositionService {
         }
         position.setAcceptedAt(LocalDateTime.now());
         postPositionMemberRepository.save(position);
+        // 같은 트랜잭션이라 팀 등록이 실패하면 승인도 롤백된다
+        teamService.joinOnAccept(position);
+        teamService.recordApplication(position.getId(), "ACCEPT", authorId(username));
         notificationService.notifyResult(position);
 
         List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(post.getId());
@@ -139,6 +147,7 @@ public class PositionService {
         position.setStatus("REJECT");
         position.setRejectedAt(LocalDateTime.now());
         postPositionMemberRepository.save(position);
+        teamService.recordApplication(position.getId(), "REJECT", authorId(username));
         notificationService.notifyResult(position);
         List<ApplyMemeberDto> list = postPositionMemberRepository.findPostPositionMemberByPostId(position.getPostPosition().getPost().getId());
         return list;
@@ -154,6 +163,10 @@ public class PositionService {
             throw new AccessDeniedException("이 신청서를 볼 권한이 없습니다.");
         }
         return application;
+    }
+
+    private Long authorId(String username) {
+        return memberRepository.findByUsername(username).map(Member::getId).orElse(null);
     }
 
     // username으로 신청한 포지션 리스트 조회

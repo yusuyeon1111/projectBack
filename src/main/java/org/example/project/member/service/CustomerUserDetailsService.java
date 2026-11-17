@@ -36,6 +36,7 @@ public class CustomerUserDetailsService implements UserDetailsService {
                 .username(member.getUsername())
                 .password(member.getPassword())
                 .authorities(authorities)
+                .disabled("Y".equals(member.getDelYn())) // 차단 회원은 비밀번호가 맞아도 로그인되지 않는다
                 .build();
     }
 }
