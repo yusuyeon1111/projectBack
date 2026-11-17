@@ -74,6 +74,10 @@ spring:
       usessl: true
 
 # JWT KEY
+# 쓰기를 막을 체험용 계정(콤마 구분)
+demo:
+  read-only-users: ${DEMO_READ_ONLY_USERS:}
+
 jwt:
   secret: ${JWT_SECRET}
 

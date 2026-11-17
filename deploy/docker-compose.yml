@@ -46,6 +46,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:?}
       # 빈 문자열이면 Spring이 기동을 멈추므로(client-id must not be empty) 비었을 때도 값을 채운다
+      DEMO_READ_ONLY_USERS: ${DEMO_READ_ONLY_USERS:-}
       NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-not-configured}
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-not-configured}
       AWS_REGION: ap-northeast-2
