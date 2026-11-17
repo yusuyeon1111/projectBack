@@ -26,7 +26,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### 실행에 필요한 환경변수
 
 `application.yml`은 모든 비밀값을 환경변수로 읽는다. 프로필 분리(`application-local.yml` 등)가 없으므로 로컬에서도 전부 지정해야 한다:
-`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REDIS_HOST`, `REDIS_PORT`, `JWT_SECRET`(Base64 인코딩된 HMAC 키), `KAKAO_CLIENT_ID`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`.
+`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REDIS_HOST`, `REDIS_PORT`, `JWT_SECRET`(Base64 인코딩된 HMAC 키), `KAKAO_CLIENT_ID`, `AWS_REGION`, `AWS_S3_BUCKET_NAME`.
+
+S3 자격 증명은 설정에 없다. `S3Config`가 SDK 기본 체인을 쓰므로 운영 EC2에서는 인스턴스 역할(`teamhaeyo-ec2`)로 접근한다. 로컬에서 실제 S3가 필요하면 `aws login --profile teamhaeyo` 후 `eval "$(aws configure export-credentials --profile teamhaeyo --format env)"`로 임시 키를 환경변수에 넣고 실행한다(SDK v1은 `aws login` 프로필을 직접 읽지 못한다). 키가 없어도 기동과 테스트는 된다.
 
 - Redis 장애 정책은 fail-closed다. 필터가 토큰 폐기 여부를 확인하지 못하면 인증하지 않고 비로그인으로 넘기며, 로그인이 필요한 API는 401 대신 503을 준다(401이면 프론트가 로그아웃시킨다). Lettuce 명령·연결 타임아웃은 1초(`RedisRepositoryConfig`, 기본 60초면 요청이 멈춘다). `RedisOutageTest`(연결 거부), `RedisHangTest`(응답 없음)가 검증한다.
 - Redis는 `usessl: true`로 고정되어 있다(ElastiCache 기준). 로컬 `docker-compose.yml`(`src/main/java/org/example/project/` 아래에 있음)의 Redis는 SSL이 없으므로 로컬 실행 시 `RedisRepositoryConfig`의 `usessl` 값을 `false`로 바꿔야 연결된다.
@@ -95,7 +97,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### S3 업로드
 
-서버가 파일을 받지 않는다. 프로필 이미지는 `GET /api/member/presigned-url`이 PUT용 presigned URL과 공개 URL을 주고, 버킷명이 컨트롤러에 하드코딩되어 있다. 신청서 첨부 파일은 `ApplyFileStorage`가 `AWS_S3_BUCKET_NAME` 버킷을 쓰고 공개 URL을 주지 않는다(위 신청서 참고).
+서버가 파일을 받지 않는다. 버킷은 `AWS_S3_BUCKET_NAME` 하나이고(운영 `teamhaeyo-files-830283279722`), 경로로 나눈다. 프로필 이미지는 `GET /api/member/presigned-url`이 `uploads/{username}/…` PUT용 presigned URL과 공개 URL을 준다(버킷 정책이 `uploads/*`만 공개 읽기). 신청서 첨부 파일은 `ApplyFileStorage`가 `apply/…`에 두고 공개 URL을 주지 않는다(위 신청서 참고). S3 클라이언트는 `S3Config`의 빈 하나를 같이 쓴다.
 
 ## 커밋 메시지 규칙
 

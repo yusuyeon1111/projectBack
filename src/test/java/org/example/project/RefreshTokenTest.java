@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = {
         "jwt.secret=dGVzdC1zZWNyZXQta2V5LWZvci1zZWN1cml0eS1hY2Nlc3MtdGVzdA==",
         "spring.data.redis.usessl=false",
-        "KAKAO_CLIENT_ID=test", "AWS_ACCESS_KEY_ID=test", "AWS_SECRET_ACCESS_KEY=test",
+        "KAKAO_CLIENT_ID=test",
         "AWS_REGION=ap-northeast-2", "AWS_S3_BUCKET_NAME=test",
 })
 @AutoConfigureMockMvc

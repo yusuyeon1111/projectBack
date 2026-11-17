@@ -63,8 +63,7 @@ jwt:
 # AWS S3 설정 통합
 aws:
   s3:
-    access-key-id: ${AWS_ACCESS_KEY_ID}
-    secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+    # 키는 두지 않는다. S3Config가 SDK 기본 체인(EC2 역할·환경변수)으로 찾는다
     region: ${AWS_REGION}
     bucket-name: ${AWS_S3_BUCKET_NAME}
 

@@ -33,8 +33,6 @@ jobs:
       REDIS_PORT: 6379
       SPRING_DATA_REDIS_USESSL: 'false' # 운영(ElastiCache)은 SSL, CI의 Redis는 평문
       KAKAO_CLIENT_ID: ci-dummy
-      AWS_ACCESS_KEY_ID: ci-dummy
-      AWS_SECRET_ACCESS_KEY: ci-dummy
       AWS_REGION: ap-northeast-2
       AWS_S3_BUCKET_NAME: ci-dummy
     steps:
