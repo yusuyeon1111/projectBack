@@ -72,7 +72,7 @@
 
 .fb-top {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
@@ -89,32 +89,8 @@
   color: #007bff;
 }
 
-.fb-mode {
-  display: flex;
-  padding: 4px;
-  background-color: #f1f3f5;
-  border-radius: 8px;
-}
 
-.fb-mode button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  font-size: 14px;
-  color: #666;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
 
-.fb-mode button.on {
-  color: #007bff;
-  font-weight: 600;
-  background-color: #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
 
 .fb-actions {
   display: flex;
@@ -435,9 +411,11 @@
   background-color: #f0f7ff;
 }
 
-.fb-preview {
-  padding: 32px;
-}
+
+
+
+
+
 
 .fb-panel {
   width: 260px;
@@ -488,16 +466,8 @@
   background-color: #f0f7ff;
 }
 
-/* 좁은 화면: 위쪽 바를 두 줄로, 항목 패널은 질문 목록 위 가로 목록으로 */
+/* 좁은 화면: 항목 패널은 질문 목록 위 가로 목록으로 */
 @media (max-width: 768px) {
-  .fb-top {
-    grid-template-columns: 1fr auto;
-  }
-  .fb-mode {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    justify-self: center;
-  }
   .fb-title {
     font-size: 1rem;
   }
@@ -557,9 +527,6 @@
   .fb-empty {
     min-height: 240px;
   }
-  .fb-preview {
-    padding: 20px;
-  }
 }
 
 /* ── 입력 폼 ── */
@@ -567,23 +534,96 @@
   color: #e74c3c;
 }
 
-.apply-file-btn {
-  display: inline-block;
-  padding: 6px 12px;
-  font-size: 13px;
-  color: #555;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.apply-file-btn:hover {
-  background-color: #f1f3f5;
-}
 
 /* 마이페이지 "신청서 보기" */
 .answers-link {
   color: #1976d2;
   cursor: pointer;
+}
+
+/* 질문 하나 = 카드 하나 */
+.apply-q {
+  padding: 18px 20px;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.apply-q:focus-within {
+  border-color: #9ec5fe;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.08);
+}
+
+.apply-q-no {
+  flex: none;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  color: #fff;
+  background-color: #007bff;
+  border-radius: 6px;
+}
+
+.apply-q-tag {
+  flex: none;
+  padding: 1px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 20px;
+  color: #6b7280;
+  background-color: #f1f3f5;
+  border-radius: 999px;
+}
+
+.apply-q-tag.multi {
+  color: #007bff;
+  background-color: #f0f7ff;
+}
+
+.apply-q-tag.required {
+  color: #e74c3c;
+  background-color: #fdecea;
+}
+
+.apply-q-count {
+  margin: 4px 2px 0;
+  font-size: 12px;
+  color: #9ca3af;
+  text-align: right;
+}
+
+.apply-file-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px;
+  cursor: pointer;
+  background-color: #f9fafb;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 10px;
+  transition: all .15s;
+}
+
+.apply-file-drop:hover {
+  background-color: #f0f7ff;
+  border-color: #007bff;
+}
+
+.apply-file-icon {
+  font-size: 26px;
+  color: #007bff;
+}
+
+.apply-file-main {
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+}
+
+.apply-file-hint {
+  font-size: 12px;
+  color: #9ca3af;
 }

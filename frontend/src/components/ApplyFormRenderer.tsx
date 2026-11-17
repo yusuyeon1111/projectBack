@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { APPLY_FILE_LIMIT, APPLY_TEXT_MAX, ApplyAnswerInput, ApplyQuestion } from '../types';
 import { errorMessage } from '../auth';
+import { FiUploadCloud } from 'react-icons/fi';
 
 export type AnswerState = Record<string, ApplyAnswerInput>;
 
@@ -13,7 +14,6 @@ interface Props {
   questions: ApplyQuestion[];
   value: AnswerState;
   onChange: (value: AnswerState) => void;
-  preview?: boolean; // 작성자 미리보기: 입력은 되지만 파일은 실제로 올리지 않는다
 }
 
 const empty: ApplyAnswerInput = { values: [], files: [] };
@@ -34,8 +34,8 @@ const uploadFile = async (file: File) => {
   return { key: data.key, name: file.name, size: file.size };
 };
 
-/** 신청서 질문을 입력 폼으로 그린다. 신청 모달과 작성자 미리보기에서 같이 쓴다. */
-function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
+/** 신청서 질문을 입력 폼으로 그린다(신청 모달). */
+function ApplyFormRenderer({ questions, value, onChange }: Props) {
   const [uploading, setUploading] = useState<string | null>(null);
   const answerOf = (key: string) => value[key] ?? empty;
   const set = (key: string, patch: Partial<ApplyAnswerInput>) =>
@@ -52,9 +52,6 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
       if (!APPLY_FILE_LIMIT.extensions.includes(ext)) return alert('pdf, jpg, png, zip 파일만 올릴 수 있습니다.');
       if (f.size > APPLY_FILE_LIMIT.maxSize) return alert(`'${f.name}' 파일이 10MB를 넘습니다.`);
     }
-    if (preview) {
-      return set(q.key, { files: [...current, ...files.map(f => ({ key: f.name, name: f.name, size: f.size }))] });
-    }
     setUploading(q.key);
     try {
       const uploaded = [];
@@ -67,49 +64,62 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
     }
   };
 
+  // 고른 선택지는 파란 테두리 칸으로 보인다(라디오·체크박스)
+  const optionSx = (checked: boolean) => ({
+    m: 0, mb: 1, px: 1.5, py: 0.25, width: '100%', boxSizing: 'border-box', borderRadius: '8px', border: '1px solid',
+    '&:last-of-type': { mb: 0 },
+    borderColor: checked ? '#007bff' : '#e5e7eb', bgcolor: checked ? '#f0f7ff' : '#fff',
+    transition: 'all .15s', '&:hover': { borderColor: checked ? '#007bff' : '#9ec5fe' },
+  });
+
   return (
-    <Stack spacing={2.5}>
-      {questions.map(q => {
+    <Stack spacing={2}>
+      {questions.map((q, i) => {
         const answer = answerOf(q.key);
-        const label = (
-          <Box mb={0.75}>
-            <Typography fontWeight={600}>
-              {q.label}{q.required && <span className="apply-required"> *</span>}
-            </Typography>
-            {q.description && <Typography variant="body2" color="text.secondary" whiteSpace="pre-line">{q.description}</Typography>}
-          </Box>
-        );
         const single = answer.values[0] ?? '';
+        const max = APPLY_TEXT_MAX[q.type];
         return (
-          <Box key={q.key}>
-            {label}
+          <Box key={q.key} className="apply-q">
+            <Stack direction="row" spacing={1} alignItems="flex-start" mb={q.description ? 0.5 : 1.25}>
+              <span className="apply-q-no">Q{i + 1}</span>
+              <Typography fontWeight={700} sx={{ flex: 1, pt: '1px', wordBreak: 'break-word' }}>{q.label}</Typography>
+              {q.type === 'CHECKBOX' && <span className="apply-q-tag multi">복수 선택</span>}
+              {q.required && <span className="apply-q-tag required">필수</span>}
+            </Stack>
+            {q.description && (
+              <Typography variant="body2" color="text.secondary" whiteSpace="pre-line" mb={1.25}>{q.description}</Typography>
+            )}
             {(q.type === 'TEXT' || q.type === 'URL') && (
               <TextField size="small" fullWidth value={single}
-                         placeholder={q.type === 'URL' ? 'https://' : ''}
-                         inputProps={{ maxLength: APPLY_TEXT_MAX[q.type] }}
+                         placeholder={q.type === 'URL' ? 'https://' : '답변을 입력하세요'}
+                         inputProps={{ maxLength: max }}
                          onChange={e => set(q.key, { values: [e.target.value] })} />
             )}
             {q.type === 'TEXTAREA' && (
-              <TextField size="small" fullWidth multiline minRows={3} value={single}
-                         inputProps={{ maxLength: APPLY_TEXT_MAX.TEXTAREA }}
+              <TextField size="small" fullWidth multiline minRows={4} value={single} placeholder="답변을 입력하세요"
+                         inputProps={{ maxLength: max }}
                          onChange={e => set(q.key, { values: [e.target.value] })} />
             )}
+            {max && <p className="apply-q-count">{single.length} / {max}</p>}
             {q.type === 'SELECT' && (
               <TextField select size="small" fullWidth value={single}
+                         SelectProps={{ displayEmpty: true }}
                          onChange={e => set(q.key, { values: e.target.value ? [e.target.value] : [] })}>
-                <MenuItem value="">선택하세요</MenuItem>
+                <MenuItem value=""><span style={{ color: '#9ca3af' }}>선택하세요</span></MenuItem>
                 {q.options.map(o => <MenuItem key={o} value={o}>{o}</MenuItem>)}
               </TextField>
             )}
             {q.type === 'RADIO' && (
               <RadioGroup value={single} onChange={e => set(q.key, { values: [e.target.value] })}>
-                {q.options.map(o => <FormControlLabel key={o} value={o} control={<Radio size="small" />} label={o} />)}
+                {q.options.map(o => (
+                  <FormControlLabel key={o} value={o} control={<Radio size="small" />} label={o} sx={optionSx(single === o)} />
+                ))}
               </RadioGroup>
             )}
             {q.type === 'CHECKBOX' && (
               <FormGroup>
                 {q.options.map(o => (
-                  <FormControlLabel key={o} label={o} control={
+                  <FormControlLabel key={o} label={o} sx={optionSx(answer.values.includes(o))} control={
                     <Checkbox size="small" checked={answer.values.includes(o)}
                               onChange={e => set(q.key, {
                                 values: e.target.checked ? [...answer.values, o] : answer.values.filter(v => v !== o),
@@ -120,23 +130,22 @@ function ApplyFormRenderer({ questions, value, onChange, preview }: Props) {
             )}
             {q.type === 'FILE' && (
               <Box>
-                <Typography variant="body2" color="text.secondary" mb={1}>
-                  pdf, jpg, png, zip · 파일당 10MB · 최대 {APPLY_FILE_LIMIT.maxCount}개
-                </Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mb={1}>
-                  {answer.files.map(f => (
-                    <Chip key={f.key} size="small" label={`${f.name}${f.size ? ` (${formatSize(f.size)})` : ''}`}
-                          onDelete={() => set(q.key, { files: answer.files.filter(x => x.key !== f.key) })} />
-                  ))}
-                </Stack>
                 {answer.files.length < APPLY_FILE_LIMIT.maxCount && (
-                  <label className="apply-file-btn">
-                    {uploading === q.key ? '올리는 중...' : '파일 선택'}
+                  <label className="apply-file-drop">
+                    <FiUploadCloud className="apply-file-icon" />
+                    <span className="apply-file-main">{uploading === q.key ? '올리는 중...' : '파일 선택'}</span>
+                    <span className="apply-file-hint">pdf, jpg, png, zip · 파일당 10MB · 최대 {APPLY_FILE_LIMIT.maxCount}개</span>
                     <input type="file" hidden multiple disabled={uploading !== null}
                            accept={APPLY_FILE_LIMIT.extensions.map(e => `.${e}`).join(',')}
                            onChange={e => { handleFiles(q, e.target.files); e.target.value = ''; }} />
                   </label>
                 )}
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap mt={1}>
+                  {answer.files.map(f => (
+                    <Chip key={f.key} size="small" variant="outlined" label={`${f.name}${f.size ? ` (${formatSize(f.size)})` : ''}`}
+                          onDelete={() => set(q.key, { files: answer.files.filter(x => x.key !== f.key) })} />
+                  ))}
+                </Stack>
               </Box>
             )}
           </Box>
