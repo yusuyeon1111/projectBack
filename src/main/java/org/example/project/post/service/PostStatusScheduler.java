@@ -22,7 +22,7 @@ public class PostStatusScheduler {
     @Scheduled(cron = "0 0 0 * * ?")
     public void updatePostStatus() {
         Date today = new Date();
-        List<Post> posts = postRepository.findByPostStatusNot("END");
+        List<Post> posts = postRepository.findByPostStatusNotOrPostStatusIsNull("END");
         posts.forEach(post -> post.refreshPostStatus(today));
         postRepository.saveAll(posts);
     }

@@ -169,4 +169,22 @@ class PostSearchTest {
         saved.add(result);
         return result;
     }
+
+    @Autowired org.example.project.post.service.PostStatusScheduler statusScheduler;
+
+    @Test
+    void 상태가_비어_있는_글도_스케줄러가_채운다() {
+        Post post = postRepository.save(Post.builder()
+                .title(marker + "상태없음").author("status-owner").category("study")
+                .created(new Date()).delYn("N").likeCount(0).viewCount(0)
+                .startDate(new Date(System.currentTimeMillis() + 7 * 86_400_000L))
+                .positions(new ArrayList<>()).techStacks(new ArrayList<>()).likes(new ArrayList<>())
+                .build());
+        saved.add(post);
+        assertThat(post.getPostStatus()).isNull();
+
+        statusScheduler.updatePostStatus();
+
+        assertThat(postRepository.findById(post.getId()).orElseThrow().getPostStatus()).isEqualTo("SCHEDULED");
+    }
 }

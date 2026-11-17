@@ -40,7 +40,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     @Query("UPDATE Post p SET p.likeCount = p.likeCount + :delta WHERE p.id = :id")
     void addLikeCount(@Param("id") Long id, @Param("delta") int delta);
 
-    List<Post> findByPostStatusNot(String end);
+    // SQL의 <> 는 NULL을 빼므로 상태가 아직 없는 글도 함께 고른다
+    List<Post> findByPostStatusNotOrPostStatusIsNull(String end);
 
     @Query("""
     SELECT p FROM Post p
