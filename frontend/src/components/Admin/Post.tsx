@@ -29,6 +29,7 @@ function Post() {
     }, [filters.page, filters.size]);
 
  const changePostStatus = async (postId: number, delYn: "Y" | "N") => {
+  if (delYn === 'Y' && !window.confirm('이 글을 비공개할까요? 작성자 말고는 볼 수 없고 신청도 막힙니다.')) return;
   try {
     const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/changePostStatus`, {id: postId, delYn: delYn }, {
       headers: {
