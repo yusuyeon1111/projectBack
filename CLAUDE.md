@@ -67,7 +67,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 알림 (SSE)
 
-- 포지션 신청 → 글 작성자, 승인·거절 → 신청자에게 알림을 만든다(`NotificationService`, `notification` 테이블). 글 제목·카테고리·역할은 만든 시점 값을 복사해 둔다. 알림 행은 승인·거절과 같은 트랜잭션에서 저장되므로 409로 롤백되면 남지 않는다.
+- 포지션 신청 → 글 작성자, 승인·거절 → 신청자에게 알림을 만든다(`NotificationService`, `notification` 테이블). 글 제목·카테고리·역할은 만든 시점 값을 복사해 둔다. 팀 상태 변경·위임·탈퇴·퇴출도 `TEAM_*` 알림을 만든다(`target_type = 'TEAM'`, `post_title`에 팀 이름). 프론트는 팀 알림을 마이페이지로 보낸다. 알림 행은 승인·거절과 같은 트랜잭션에서 저장되므로 409로 롤백되면 남지 않는다.
 - 실시간 전송은 `NotificationCreatedEvent`를 `@TransactionalEventListener(AFTER_COMMIT)`로 받아 `SseEmitterRegistry`(회원별 열린 연결, 서버 메모리)로 보낸다. 커밋된 알림만 나간다. 연결이 서버 메모리에 있어 **서버가 한 대일 때만 맞다**(여러 대면 Redis Pub/Sub 필요).
 - 구독 인증: `EventSource`는 헤더를 못 붙이므로 `POST /api/notifications/ticket`(Bearer)으로 1회용 티켓을 받고 `GET /api/notifications/subscribe?ticket=`로 연다. 구독 경로는 `permitAll`이고 컨트롤러가 티켓·`BAN:` 키를 확인한다.
 - 재연결: 티켓이 1회용이라 브라우저 자동 재연결은 실패한다. 프론트(`useNotifications`)가 에러 시 직접 닫고 새 티켓 + `lastEventId` 쿼리로 다시 붙으면 서버가 그 이후 알림을 다시 보낸다. 로그아웃·차단 시 서버가 그 회원의 연결을 닫는다.

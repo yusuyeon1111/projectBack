@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.project.member.entity.Member;
 import org.example.project.member.repository.MemberRepository;
+import org.example.project.notification.service.NotificationService;
 import org.example.project.post.entity.Post;
 import org.example.project.post.entity.PostPositionMember;
 import org.example.project.post.repositoty.PostPositionMemberRepository;
@@ -36,6 +37,7 @@ public class TeamService {
     private final PostRepository postRepository;
     private final PostPositionRepository postPositionRepository;
     private final PostPositionMemberRepository applicationRepository;
+    private final NotificationService notificationService;
 
     // 승인된 신청자를 팀에 넣는다. 팀이 없으면(첫 승인) 작성자를 팀장으로 팀을 만든다.
     // 승인 트랜잭션 안에서, 글 행을 잠근 뒤에 불러야 한다. 같은 글의 승인이 글 잠금으로 줄을 서므로
@@ -109,17 +111,29 @@ public class TeamService {
 
     @Transactional
     public void start(Long teamId, String username) {
-        requireLeader(lockTeam(teamId), username).getTeam().start();
+        Team team = requireLeader(lockTeam(teamId), username).getTeam();
+        team.start();
+        notifyMembers(team, "TEAM_STARTED", username);
     }
 
     @Transactional
     public void complete(Long teamId, String username) {
-        requireLeader(lockTeam(teamId), username).getTeam().complete();
+        Team team = requireLeader(lockTeam(teamId), username).getTeam();
+        team.complete();
+        notifyMembers(team, "TEAM_COMPLETED", username);
     }
 
     @Transactional
     public void disband(Long teamId, String username) {
-        requireLeader(lockTeam(teamId), username).getTeam().disband();
+        Team team = requireLeader(lockTeam(teamId), username).getTeam();
+        team.disband();
+        notifyMembers(team, "TEAM_DISBANDED", username);
+    }
+
+    private void notifyMembers(Team team, String type, String leaderUsername) {
+        List<String> members = teamMemberRepository.findByTeam_IdAndStatusOrderByIdAsc(team.getId(), TeamMember.ACTIVE).stream()
+                .map(m -> m.getMember().getUsername()).toList();
+        notificationService.notifyTeam(team, type, members, leaderUsername, null, null);
     }
 
     @Transactional
@@ -129,6 +143,7 @@ public class TeamService {
         TeamMember target = requireActiveMember(teamId, targetMemberId);
         if (target.isLeader()) throw new IllegalArgumentException("이미 팀장입니다.");
         team.changeLeader(targetMemberId);
+        notificationService.notifyTeam(team, "TEAM_LEADER", List.of(target.getMember().getUsername()), username, null, null);
     }
 
     @Transactional
@@ -136,6 +151,9 @@ public class TeamService {
         TeamMember me = requireOpen(requireMember(lockTeam(teamId), username));
         if (me.isLeader()) throw new IllegalStateException("팀장은 다른 팀원에게 팀장을 넘긴 뒤 탈퇴할 수 있습니다.");
         release(me, TeamMember.LEFT, "WITHDRAWN", me.getMember().getId());
+        Team team = me.getTeam();
+        memberRepository.findById(team.getLeaderMemberId()).ifPresent(leader -> notificationService.notifyTeam(
+                team, "TEAM_LEFT", List.of(leader.getUsername()), username, NotificationService.displayName(me.getMember()), me.getPositionRole()));
     }
 
     @Transactional
@@ -144,6 +162,8 @@ public class TeamService {
         TeamMember target = requireActiveMember(teamId, targetMemberId);
         if (target.isLeader()) throw new IllegalArgumentException("팀장은 퇴출할 수 없습니다.");
         release(target, TeamMember.KICKED, "EXPELLED", leader.getMember().getId());
+        notificationService.notifyTeam(target.getTeam(), "TEAM_KICKED", List.of(target.getMember().getUsername()),
+                username, null, target.getPositionRole());
     }
 
     // 승인과 같은 순서(글 → 팀)로 잠가 교착을 피하고, 탈퇴와 승인이 동시에 와도 정원 계산이 줄을 선다.
