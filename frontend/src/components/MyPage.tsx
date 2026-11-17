@@ -3,7 +3,7 @@ import '../css/Mypage.css';
 import axios from 'axios';
 import { MdEdit } from "react-icons/md";
 import {Tabs, Tab, Modal,Typography, Box, TextField, Button, Stack, Chip, List, ListItem } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { IoIosSettings } from "react-icons/io";
 import { AcceptPost, ApplyMember, ApplyPost, Member, MyPageResponse, Post, applyStatusClass, applyStatusText, postStatusText, roleTextMap } from '../types';
 import { errorMessage } from '../auth';
@@ -38,6 +38,8 @@ function a11yProps(index: number) {
     'aria-controls': `simple-tabpanel-${index}`,
   };
 }
+
+const TEAM_TAB = 4;
 
 function MyPage() {
   const [open, setOpen] = useState(false);
@@ -103,6 +105,12 @@ function MyPage() {
   };
 
   const [value, setValue] = React.useState(0);
+
+  // 팀 알림이 ?tab=team으로 보낸다. 이미 마이페이지에 있어도 다시 누르면 열리게 location.key로 반응한다
+  const location = useLocation();
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get('tab') === 'team') setValue(TEAM_TAB);
+  }, [location.key, location.search]);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
@@ -352,7 +360,7 @@ function MyPage() {
               <Tab label="신청내역" {...a11yProps(1)} />
               <Tab label="참여중" {...a11yProps(2)} />
               <Tab label="찜한글" {...a11yProps(3)} />
-              <Tab label="내 팀" {...a11yProps(4)} />
+              <Tab label="내 팀" {...a11yProps(TEAM_TAB)} />
             </Tabs>
           </Box>
           <CustomTabPanel value={value} index={0}>
@@ -451,7 +459,7 @@ function MyPage() {
               </div>
             )): <div><p>데이터 없음.</p></div>}
           </CustomTabPanel>
-          <CustomTabPanel value={value} index={4}>
+          <CustomTabPanel value={value} index={TEAM_TAB}>
             <MyTeams />
           </CustomTabPanel>
         </Box>

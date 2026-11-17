@@ -23,5 +23,5 @@ test('팀 알림 문구와 링크', () => {
   expect(notificationMessage(team)).toBe("'우리 팀' 팀이 활동을 시작했습니다.");
   expect(notificationMessage({ ...team, type: 'TEAM_KICKED' })).toBe("'우리 팀' 팀에서 퇴출되었습니다.");
   expect(notificationMessage({ ...team, type: 'TEAM_LEFT', actor: '철수' })).toBe("'우리 팀' 팀에서 철수님이 탈퇴했습니다.");
-  expect(notificationLink(team)).toBe('/myPage');
+  expect(notificationLink(team)).toBe('/myPage?tab=team');
 });
