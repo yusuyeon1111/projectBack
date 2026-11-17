@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 
 import javax.naming.AuthenticationException;
 import java.util.Map;
@@ -53,6 +54,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(java.util.NoSuchElementException.class)
     public ResponseEntity<Map<String, String>> handleNotFound(java.util.NoSuchElementException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error(ex));
+    }
+
+    // SSE 연결이 시간 초과로 끝날 때 온다. 아래 RuntimeException 처리(403)가 가로채면 이미 열린 SSE 응답에
+    // JSON을 쓰려다 실패한다. 받은 예외를 그대로 다시 던지면 Spring 기본 처리(DefaultHandlerExceptionResolver)로 넘어간다
+    @ExceptionHandler(AsyncRequestTimeoutException.class)
+    public void passAsyncTimeout(AsyncRequestTimeoutException ex) {
+        throw ex;
     }
 
     @ExceptionHandler(RuntimeException.class)
