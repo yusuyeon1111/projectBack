@@ -235,13 +235,13 @@ class TeamMembershipTest {
                 .andExpect(status().isOk());
         call(delete(teamUrl("/members/me")), b).andExpect(status().isOk());
 
-        // 대상은 모두 TEAM/팀 id이고, 행동한 사람 자신은 받지 않는다
-        assertThat(teamNotifications(author, teamId)).containsExactly("TEAM_LEFT");
-        assertThat(teamNotifications(a, teamId)).containsExactly("TEAM_STARTED", "TEAM_LEADER");
+        // 대상은 모두 TEAM/팀 id이고, 행동한 사람 자신은 받지 않는다. 탈퇴 알림은 위임받은 지금 팀장(a)에게 간다
+        assertThat(teamNotifications(author, teamId)).isEmpty();
+        assertThat(teamNotifications(a, teamId)).containsExactly("TEAM_STARTED", "TEAM_LEADER", "TEAM_LEFT");
         assertThat(teamNotifications(b, teamId)).containsExactly("TEAM_STARTED");
         assertThat(teamNotifications(c, teamId)).containsExactly("TEAM_STARTED", "TEAM_KICKED");
         assertThat(jdbc.queryForObject("SELECT actor FROM notification WHERE receiver = ? AND type = 'TEAM_LEFT'",
-                String.class, author.getUsername())).isEqualTo(b.getNickname() != null ? b.getNickname() : b.getUsername());
+                String.class, a.getUsername())).isEqualTo(b.getNickname() != null ? b.getNickname() : b.getUsername());
     }
 
     private List<String> teamNotifications(Member m, Long teamId) {
