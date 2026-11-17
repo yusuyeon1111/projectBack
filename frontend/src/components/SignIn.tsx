@@ -41,9 +41,11 @@ function Signin() {
         localStorage.setItem("accessToken", response.data.accessToken);
         localStorage.setItem("refreshToken", response.data.refreshToken);
         localStorage.setItem("username",username)
-        localStorage.setItem("role", response.data.roles[0]);
+        // 권한 목록은 순서가 정해져 있지 않아 첫 값이 아니라 포함 여부로 본다
+        const isAdmin = response.data.roles.includes('ROLE_ADMIN');
+        localStorage.setItem("role", isAdmin ? 'ROLE_ADMIN' : response.data.roles[0]);
         toast("로그인이 완료되었습니다!");
-        if(response.data.roles[0] === 'ROLE_ADMIN') {
+        if(isAdmin) {
           nav("/admin");
         } else {
           nav("/"); 
