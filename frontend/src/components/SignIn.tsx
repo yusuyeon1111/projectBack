@@ -101,8 +101,8 @@ function Signin() {
       </div>
 
       <div className="oauth-buttons">
-        <img src={kakao} className='kakao-login' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/kakao`;}}/>
-        <img src={naver} className='naver-login' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/naver`;}}/>
+        <img src={kakao} alt='카카오로 로그인' className='kakao-login' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/kakao`;}}/>
+        <img src={naver} alt='네이버로 로그인' className='naver-login' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/naver`;}}/>
       </div>
     </div>
 

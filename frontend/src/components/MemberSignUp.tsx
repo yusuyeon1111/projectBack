@@ -141,8 +141,8 @@ function MemberSignUp() {
       <h2>회원가입</h2>
       <div className='oauth-container'>
         <span>소셜로 간편하게 로그인하세요</span>
-        <img src={kakao} id='kakaoImg' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/kakao`;}}/>
-        <img src={naver} id='naverImg' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/naver`;}}/>
+        <img src={kakao} alt='카카오로 로그인' id='kakaoImg' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/kakao`;}}/>
+        <img src={naver} alt='네이버로 로그인' id='naverImg' onClick={()=>{window.location.href = `${process.env.REACT_APP_API_URL}/oauth2/authorization/naver`;}}/>
       </div>
 
       <form className='auth-form' onSubmit={handleSubmit(onsubmit)}>

@@ -24,28 +24,28 @@ function Admin() {
           <h2>메뉴</h2>
           <ul>
             <li>
-              <a 
+              <button type="button"
                 className={selectedMenu === "dashboard" ? "active" : ""} 
                 onClick={() => setSelectedMenu("dashboard")}
               >
                 🏠 대시보드
-              </a>
+              </button>
             </li>
             <li>
-              <a 
+              <button type="button"
                 className={selectedMenu === "user" ? "active" : ""} 
                 onClick={() => setSelectedMenu("user")}
               >
                 👤 회원 관리
-              </a>
+              </button>
             </li>
             <li>
-              <a 
+              <button type="button"
                 className={selectedMenu === "posts" ? "active" : ""} 
                 onClick={() => setSelectedMenu("posts")}
               >
                 📕 게시글 관리
-              </a>
+              </button>
             </li>
           </ul>
         </div>
