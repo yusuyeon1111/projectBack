@@ -29,7 +29,7 @@ description: 작업한 변경을 브랜치 → 커밋 → PR → CI 통과까지
 - PR 링크
 - 무엇을 왜 바꿨는지
 - CI 결과
-- 배포 필요 여부(app/web/없음)와 예상 시간
+- 병합하면 자동 배포되는 서비스(`deploy/target.sh main HEAD`로 확인)와 예상 시간
 
 이전 PR에서 받은 승인은 다음 PR에 쓰지 않는다.
 
@@ -39,4 +39,4 @@ description: 작업한 변경을 브랜치 → 커밋 → PR → CI 통과까지
    - Squash는 쓰지 않는다. 분리해 둔 `fix:` 커밋이 묻히기 때문이다.
    - 스택 PR이면 위 PR의 base를 먼저 main으로 바꾼다.
 2. `git checkout main && git pull`, 로컬 브랜치를 지운다.
-3. 배포가 필요하면 deploy 스킬로 반영하고, smoke 결과까지 보고한다.
+3. 배포는 CI의 `deploy` 잡이 자동으로 한다(병합 승인 = 배포 승인). `gh run watch`로 main의 CI 실행을 끝까지 보고, 배포 대상(app/web/none)과 smoke 결과를 보고한다. 실패해서 롤백됐으면 로그를 그대로 보여 주고 원인을 조사한다.

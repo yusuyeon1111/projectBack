@@ -39,10 +39,14 @@ S3 키는 어디에도 넣지 않는다. 앱이 인스턴스 역할로 접근한
 
 ## 업데이트
 
-```bash
-cd /opt/teamhaeyo && sudo git pull && cd deploy && sudo docker compose up -d --build
-```
-스키마 변경은 앱이 뜰 때 Flyway가 적용한다.
+**자동**: main에 병합되면 CI(`.github/workflows/ci.yml`)가 backend·frontend·e2e를 통과한 뒤 `deploy` 잡이 배포한다.
+- 바뀐 파일로 서비스를 정한다(`deploy/target.sh`: 앱 코드 → app, `frontend/` → web, compose → all, 문서만 → 배포 안 함)
+- GitHub OIDC로 IAM 역할 `teamhaeyo-github-deploy`(main 브랜치만, 이 인스턴스에 SSM 명령만)를 받는다. 저장소에 AWS 키는 없다
+- 서버를 테스트한 커밋으로 맞추고(`git checkout --detach <sha>`) smoke를 돌린다. 실패하면 이전 커밋으로 되돌리고 잡은 실패로 끝나 메일이 온다
+
+**수동**: GitHub Actions에서 CI를 `Run workflow`(서비스 선택)하거나, 로컬에서 `AWS_PROFILE=teamhaeyo deploy/deploy.sh app|web|all`(`DEPLOY_REF`로 커밋 지정, 실패 시 자동 롤백). 서버에서 `git pull`하지 않는다(서버는 배포한 커밋에 detached 상태다).
+
+`.github/workflows/health.yml`이 30분마다 운영에 smoke를 돌린다. 스키마 변경은 앱이 뜰 때 Flyway가 적용한다. 롤백은 코드만 되돌리므로, 컬럼을 지우는 마이그레이션은 이전 앱이 쓰지 않게 된 뒤에 따로 배포한다.
 
 ## 확인·운영
 

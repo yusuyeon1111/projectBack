@@ -1,0 +1,19 @@
+# 운영 사이트를 30분마다 확인한다. 실패하면 GitHub이 워크플로 실패 메일을 보낸다.
+# 공개 저장소에 60일 동안 활동이 없으면 GitHub이 예약 실행을 멈춘다.
+name: Health
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: deploy/smoke.sh
+          sparse-checkout-cone-mode: false
+      - name: smoke (실패하면 1분 뒤 한 번 더)
+        run: deploy/smoke.sh || { sleep 60; deploy/smoke.sh; }

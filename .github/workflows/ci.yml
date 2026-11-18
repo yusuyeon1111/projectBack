@@ -4,6 +4,12 @@ on:
   pull_request: # base를 가리지 않는다. 앞 PR 브랜치 위에 쌓은 PR에서도 돈다
   push:
     branches: [main]
+  workflow_dispatch: # 수동 재배포: 테스트를 다시 돈 뒤 고른 서비스를 배포한다
+    inputs:
+      service:
+        description: 다시 띄울 서비스
+        type: choice
+        options: [app, web, all]
 
 jobs:
   backend:
@@ -125,3 +131,32 @@ jobs:
           path: |
             e2e/playwright-report
             e2e/test-results
+
+  # main에 들어온 커밋을 세 잡이 통과한 뒤 운영에 배포한다. smoke가 실패하면 deploy.sh가 이전 커밋으로 되돌리고 실패로 끝난다
+  deploy:
+    needs: [backend, frontend, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency: { group: production, cancel-in-progress: false }
+    permissions:
+      id-token: write # GitHub OIDC 토큰으로 AWS 역할을 받는다(저장소에 AWS 키 없음)
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: 다시 띄울 서비스 판단
+        id: target
+        run: |
+          if [ -n "${{ inputs.service }}" ]; then svc="${{ inputs.service }}"; else svc=$(deploy/target.sh "${{ github.event.before }}" "$GITHUB_SHA"); fi
+          echo "svc=$svc" >> "$GITHUB_OUTPUT"
+          echo "배포 대상: $svc"
+      - if: steps.target.outputs.svc != 'none'
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4.3.1. 배포 역할을 받는 서드파티 액션이라 태그가 아닌 커밋으로 고정
+        with:
+          role-to-assume: arn:aws:iam::830283279722:role/teamhaeyo-github-deploy
+          aws-region: ap-northeast-2
+      - name: 배포와 smoke
+        if: steps.target.outputs.svc != 'none'
+        env:
+          DEPLOY_REF: ${{ github.sha }}
+        run: deploy/deploy.sh "${{ steps.target.outputs.svc }}"
