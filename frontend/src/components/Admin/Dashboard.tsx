@@ -1,5 +1,5 @@
 import axios from 'axios';
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, Cell, DefaultLegendContent, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import "../../css/admin/Admin.css";
 import { AdminChart, CategoryStats, MonthlyStats, PositionStats } from "../../types";
@@ -9,16 +9,64 @@ interface Row {
   total: number;
   [category: string]: string | number;
 }
+// 순수 함수라 컴포넌트 밖에 둔다(fetchPosts의 의존성이 되지 않게)
+const mergeChartData = (postStatus: MonthlyStats[], CategoryStatus: CategoryStats[]): Row[] => {
+  const base: Record<string, Row> = {};
+  postStatus.forEach(item => {
+    base[item.name] = {
+      name: item.name,
+      total: item.count,
+      project: 0,
+      study: 0,
+    }
+  })
+  CategoryStatus.forEach(item => {
+    if(!base[item.name]) {
+      base[item.name] = {name:item.name, total:0, project:0, study:0};
+    }
+    base[item.name][item.category] = item.count;
+  })
+  return Object.values(base);
+}
+
+  const memberChartData = (totalStatus: MonthlyStats[], categoryStatus: CategoryStats[]): Row[] => {
+    const base: Record<string, Row> = {};
+
+    totalStatus.forEach(item => {
+      base[item.name] = {
+        name: item.name,
+        total: item.count,
+        backend: 0,
+        frontend: 0,
+        pm: 0,
+        design: 0,
+        etc: 0
+      };
+    });
+
+    categoryStatus.forEach(item => {
+      if (!base[item.name]) {
+        base[item.name] = {
+          name: item.name,
+          total: 0, 
+          backend: 0,
+          frontend: 0,
+          pm: 0,
+          design: 0,
+          etc: 0
+        };
+      }
+      base[item.name][item.category] = item.count;
+    });
+    return Object.values(base);
+  };
+
 function Dashboard() {
   const [memberData , setMemberData] = useState<Row[]>([]);
   const [statusData , setStatusData] = useState<MonthlyStats[]>([]);
   const [positionData, setPositionData] = useState<PositionStats[]>([]);
   const [chartData, setChartData] = useState<Row[]>([]);
-  useEffect(() => {
-    fetchPosts();
-  },[])
-
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     const year = new Date().getFullYear();
     try {
       const res = await axios.get<AdminChart>(`${process.env.REACT_APP_API_URL}/api/admin/chartAll`, {
@@ -58,58 +106,11 @@ function Dashboard() {
     } catch (error) {
       console.error(error);
     }
-  };
+  }, []);
 
-  const mergeChartData = (postStatus: MonthlyStats[], CategoryStatus: CategoryStats[]): Row[] => {
-    const base: Record<string, Row> = {};
-    postStatus.forEach(item => {
-      base[item.name] = {
-        name: item.name,
-        total: item.count,
-        project: 0,
-        study: 0,
-      }
-    })
-    CategoryStatus.forEach(item => {
-      if(!base[item.name]) {
-        base[item.name] = {name:item.name, total:0, project:0, study:0};
-      }
-      base[item.name][item.category] = item.count;
-    })
-    return Object.values(base);
-  }
-
-    const memberChartData = (totalStatus: MonthlyStats[], categoryStatus: CategoryStats[]): Row[] => {
-      const base: Record<string, Row> = {};
-
-      totalStatus.forEach(item => {
-        base[item.name] = {
-          name: item.name,
-          total: item.count,
-          backend: 0,
-          frontend: 0,
-          pm: 0,
-          design: 0,
-          etc: 0
-        };
-      });
-
-      categoryStatus.forEach(item => {
-        if (!base[item.name]) {
-          base[item.name] = {
-            name: item.name,
-            total: 0, 
-            backend: 0,
-            frontend: 0,
-            pm: 0,
-            design: 0,
-            etc: 0
-          };
-        }
-        base[item.name][item.category] = item.count;
-      });
-      return Object.values(base);
-    };
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   return (
   <div className='status-container'>

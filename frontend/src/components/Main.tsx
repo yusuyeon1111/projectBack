@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import '../css/Main.css'
 import { FiSearch } from "react-icons/fi";
 import { FaFilter } from "react-icons/fa";
@@ -42,7 +42,7 @@ function Main() {
     stackKeyword:""
   });
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const res = await axios.post<PageResponse<Post>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
       setProjectList(res.data.content);
@@ -52,7 +52,7 @@ function Main() {
       console.error(error);
       setLoadError(true);
     }
-  };
+  }, [filters]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -62,9 +62,9 @@ function Main() {
     }));
 };
 
-    useEffect(() => {
-      fetchPosts();
-  }, [filters]);
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   return (
     <div className='main-container'>
