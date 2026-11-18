@@ -42,6 +42,8 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - name: Claude Code hook 테스트
+        run: python3 .claude/hooks/test_hooks.py
       - name: JWT 테스트 키 생성
         run: echo "JWT_SECRET=$(openssl rand -base64 32)" >> "$GITHUB_ENV"
       - name: Test
