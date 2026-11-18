@@ -37,7 +37,7 @@ CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경�
 
 **타입**: 백엔드 DTO와 1:1로 맞춘 도메인 타입(`Post`, `Member`, `ApplyMember` 등)과 공용 상수(`regions`, `roleTextMap`)는 모두 `src/types.ts`에 있음. API 응답은 `axios.get<T>()` 제네릭으로 받는다. Kakao Maps 전역은 `src/global.d.ts`에서 `window.kakao: any`로 선언.
 
-**라우팅**: `src/index.tsx`가 진입점이자 라우트 테이블. `src/App.tsx`는 사용되지 않는 잔재(렌더되지 않음). 라우트는 세 그룹:
+**라우팅**: `src/index.tsx`가 진입점이자 라우트 테이블. 라우트는 세 그룹:
 - `<Layout/>`(Header + Outlet) 아래: `/`, `/myPage`, `/postform`, `/studyform`, `/post/:postId`, `/study/:postId`
 - 레이아웃 없음: `/signin`, `/membersignup`, `/oauth2/success`
 - `<AdminLayout/>`(`components/Admin/Layout.tsx`) 아래: `/admin`

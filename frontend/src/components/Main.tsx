@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react'
-import KakaoMap from './KakaoMap'
 import '../css/Main.css'
 import { FiSearch } from "react-icons/fi";
 import { FaFilter } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
-import PostList from './PostList'
 import axios from 'axios';
 import { IoLocationSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +25,8 @@ function Main() {
   const navigate = useNavigate();
   const [projectList, setProjectList] = useState<Post[]>([]);
   const [loadError, setLoadError] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [type, setType] = useState('');
+  const [type] = useState('');
   const [filterClick, setFilterClick] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     category: "",

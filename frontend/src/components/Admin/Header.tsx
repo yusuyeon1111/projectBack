@@ -10,7 +10,6 @@ function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showMenu, setShowMenu] = useState(false);
-  const [showEditMenu, setShowEditMenu] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>("");
 
   const menuRef = useRef<HTMLDivElement>(null); // 메뉴 영역 ref
@@ -22,7 +21,6 @@ function Header() {
   // 경로가 바뀌면 메뉴 닫기
   useEffect(() => {
     setShowMenu(false);
-    setShowEditMenu(false);
   }, [location.pathname]);
 
   // 외부 클릭 시 메뉴 닫기
@@ -30,7 +28,6 @@ function Header() {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false);
-        setShowEditMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -40,17 +37,7 @@ function Header() {
   }, []);
 
   const toggleMenu = () => {
-    setShowMenu(prev => {
-      if (!prev) setShowEditMenu(false);
-      return !prev;
-    });
-  };
-
-  const editMenu = () => {
-    setShowEditMenu(prev => {
-      if (!prev) setShowMenu(false);
-      return !prev;
-    });
+    setShowMenu(prev => !prev);
   };
 
   const goToLogout = async () => {

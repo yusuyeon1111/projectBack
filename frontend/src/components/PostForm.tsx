@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { TextField, Button, Box, MenuItem, Chip, Stack } from '@mui/material';
+import React, { useState, useRef } from 'react';
+import { TextField, Chip, Stack } from '@mui/material';
 import { Editor } from '@toast-ui/react-editor';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import '../css/PostForm.css'
@@ -60,7 +60,6 @@ function PostForm() {
   const [stackList, setStackList] = useState<string[]>([]);
   const [type, setType] = useState('online');
   const [region, setRegion] = useState('nothing');
-  const [showEditor, setShowEditor] = useState(false);
   const [applyQuestions, setApplyQuestions] = useState<ApplyQuestion[]>([]);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -70,10 +69,6 @@ function PostForm() {
   const [positions, setPositions] = useState<PositionInput[]>([
     { id: Date.now(), role: "backend", count: 1 },
   ]);
-
-  useEffect(() => {
-    setTimeout(() => setShowEditor(true), 0);
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
