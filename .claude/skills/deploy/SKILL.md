@@ -7,6 +7,8 @@ description: 팀해요 운영 서버(EC2)에 main을 반영하고 smoke test로 
 
 운영은 EC2 한 대의 Docker Compose(app·mysql·redis·web)다. 서버 접속은 SSM만 쓴다. 구성은 `deploy/README.md`.
 
+평소 배포는 main 병합 후 CI `deploy` 잡이 자동으로 한다. 이 스킬은 **수동 재배포·롤백**(자동 배포가 실패했거나, 사용자가 특정 커밋을 다시 올려 달라고 할 때)에 쓴다. 특정 커밋은 `DEPLOY_REF=<sha>`로 지정한다. smoke가 실패하면 스크립트가 이전 커밋으로 스스로 되돌린다.
+
 1. **무엇을 다시 띄울지 정한다.** 병합된 변경 파일로 판단한다.
    - `src/`·`build.gradle`·`application.yml` → `app`
    - `frontend/` → `web` (빌드 10분쯤)
