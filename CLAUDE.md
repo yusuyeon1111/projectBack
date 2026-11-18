@@ -23,6 +23,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 배포는 `deploy/`(EC2 한 대에 Docker Compose로 앱·MySQL·Redis·Caddy, 절차는 `deploy/README.md`)에 있다. 반영은 `deploy/deploy.sh app|web|all`(SSM으로 서버에서 pull·재기동 후 `deploy/smoke.sh`로 확인)로 한다. 반복 절차는 프로젝트 스킬로 정해 두었다: 커밋·PR·병합은 `.claude/skills/ship`, 운영 반영은 `.claude/skills/deploy`. 아래 커밋·브랜치 규칙 중 main 직접 커밋, 커밋 제목 형식, squash·rebase 병합, force push는 hook(`.claude/hooks/guard_git.py`)이 실행 전에 막고, 엔티티를 고쳤는데 새 Flyway 파일이 없으면 `flyway_reminder.py`가 알린다. hook을 고치면 `python3 .claude/hooks/test_hooks.py`(CI에서도 돈다)를 함께 고친다. 운영 Redis는 이 compose 안의 SSL 없는 Redis라 `SPRING_DATA_REDIS_USESSL=false`로 띄운다.
 
+브라우저 E2E는 `e2e/`(Playwright)에 있다. 계정·글은 API로 만들고 로그인, 비로그인 열람, 신청 → 승인 → 팀 생성을 화면에서 누른다. 로컬은 개발 서버(프론트 3000, 백엔드 8080)를 띄운 뒤 `cd e2e && npx playwright test`, CI는 `deploy/docker-compose.yml`을 `https://localhost`로 띄워 같은 테스트를 돌린다(`E2E_BASE_URL`). 화면 흐름을 바꾸면 해당 테스트도 고친다.
+
 목록 검색 성능 측정은 `perf/`에 있다(더미 데이터 `seed.sql`, k6 시나리오, 결과 기록 `perf/README.md`). 측정은 `project_perf` 스키마와 8081 포트의 별도 앱으로 하고, 개선할 때마다 같은 시나리오로 다시 재서 README에 전후를 남긴다.
 
 ### 실행에 필요한 환경변수
