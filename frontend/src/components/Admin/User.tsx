@@ -1,6 +1,6 @@
 import { toast } from '../Toast';
 import axios from 'axios';
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { AdminMember, PageResponse } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
@@ -10,7 +10,7 @@ const [members, setMembers] = useState<AdminMember[]>([]);
   const [filters, setFilters] = useState({ page: 0, size: 10 }); // 현재 페이지와 페이지 크기
   const [totalPages, setTotalPages] = useState(0);
 
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
   try {
     const res = await axios.get<PageResponse<AdminMember>>(`${process.env.REACT_APP_API_URL}/api/admin/memberAll?page=${filters.page}&size=${filters.size}`, {
       headers: {
@@ -22,11 +22,11 @@ const [members, setMembers] = useState<AdminMember[]>([]);
   } catch (error) {
     console.error(error);
   }
-};
+}, [filters.page, filters.size]);
 
 useEffect(() => {
   fetchMembers();
-}, [filters.page, filters.size]);
+}, [fetchMembers]);
 
 const acceptUser = async (memberId: number) => {
   try {

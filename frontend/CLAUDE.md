@@ -20,7 +20,7 @@ npm test -- -t "모두 읽음"              # 단일 테스트 이름
 npx tsc --noEmit                       # 타입 체크만 (빌드보다 빠름)
 ```
 
-CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경고를 오류로 처리하는데, 기존 코드에 경고(안 쓰는 import 등)가 남아 있기 때문이다. 경고를 정리하면 CI에서 `CI=false`를 지운다. 알림 기능 테스트는 `src/types.test.ts`, `src/components/NotificationBell.test.tsx`에 있다(axios와 `EventSource`를 가짜로 바꿔 끼운다). react-router-dom 7을 jest 27이 못 읽어서 `package.json`의 `jest.moduleNameMapper`로 CJS 파일을 직접 가리킨다.
+CI는 `CI=true npm run build`로 빌드해서 ESLint 경고(안 쓰는 import, hook 의존성, 접근성)도 실패로 본다. 경고 없이 커밋한다. 운영 Docker 빌드(`Dockerfile`)는 배포가 경고로 막히지 않게 `CI=false`로 둔다. 알림 기능 테스트는 `src/types.test.ts`, `src/components/NotificationBell.test.tsx`에 있다(axios와 `EventSource`를 가짜로 바꿔 끼운다). react-router-dom 7을 jest 27이 못 읽어서 `package.json`의 `jest.moduleNameMapper`로 CJS 파일을 직접 가리킨다.
 
 ## 환경 변수
 
@@ -37,7 +37,7 @@ CI는 `CI=false npm run build`로 빌드한다. CRA는 `CI=true`면 ESLint 경�
 
 **타입**: 백엔드 DTO와 1:1로 맞춘 도메인 타입(`Post`, `Member`, `ApplyMember` 등)과 공용 상수(`regions`, `roleTextMap`)는 모두 `src/types.ts`에 있음. API 응답은 `axios.get<T>()` 제네릭으로 받는다. Kakao Maps 전역은 `src/global.d.ts`에서 `window.kakao: any`로 선언.
 
-**라우팅**: `src/index.tsx`가 진입점이자 라우트 테이블. `src/App.tsx`는 사용되지 않는 잔재(렌더되지 않음). 라우트는 세 그룹:
+**라우팅**: `src/index.tsx`가 진입점이자 라우트 테이블. 라우트는 세 그룹:
 - `<Layout/>`(Header + Outlet) 아래: `/`, `/myPage`, `/postform`, `/studyform`, `/post/:postId`, `/study/:postId`
 - 레이아웃 없음: `/signin`, `/membersignup`, `/oauth2/success`
 - `<AdminLayout/>`(`components/Admin/Layout.tsx`) 아래: `/admin`

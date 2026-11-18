@@ -3,7 +3,6 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import './App.css'; // 공용 버튼·폰트. App.tsx는 렌더되지 않아 거기서의 import는 번들에 안 들어간다
 import './auth';
-import App from './App';
 import SignIn from './components/SignIn';
 import OAuth2Success from './components/OAuth2Success';
 import {BrowserRouter, Route, Routes} from "react-router-dom"
@@ -17,7 +16,6 @@ import PostForm from './components/PostForm';
 import StudyForm from './components/StudyForm';
 import PostView from './components/PostView';
 import StudyView from './components/StudyView';
-import LoginRequiredModal from './components/LoginRequiredModal';
 import Admin from './components/Admin/Admin';
 import User from './components/Admin/User';
 import AdminLayout from './components/Admin/Layout';

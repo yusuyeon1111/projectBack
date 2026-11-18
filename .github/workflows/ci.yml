@@ -74,8 +74,8 @@ jobs:
         run: npm test -- --watchAll=false
         env:
           CI: true
-      # ponytail: 기존 코드의 ESLint 경고 때문에 CI=true면 빌드가 실패한다. 경고를 정리하면 이 env를 지운다
+      # CI=true라서 ESLint 경고도 빌드 실패로 본다
       - name: Build
         run: npm run build
         env:
-          CI: false
+          CI: true

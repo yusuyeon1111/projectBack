@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import KakaoMap from './KakaoMap'
+import React, { useCallback, useEffect, useState } from 'react'
 import '../css/Main.css'
 import { FiSearch } from "react-icons/fi";
 import { FaFilter } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
-import PostList from './PostList'
 import axios from 'axios';
 import { IoLocationSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
@@ -27,9 +25,8 @@ function Main() {
   const navigate = useNavigate();
   const [projectList, setProjectList] = useState<Post[]>([]);
   const [loadError, setLoadError] = useState(false);
-  const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [type, setType] = useState('');
+  const [type] = useState('');
   const [filterClick, setFilterClick] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     category: "",
@@ -45,7 +42,7 @@ function Main() {
     stackKeyword:""
   });
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async () => {
     try {
       const res = await axios.post<PageResponse<Post>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
       setProjectList(res.data.content);
@@ -55,7 +52,7 @@ function Main() {
       console.error(error);
       setLoadError(true);
     }
-  };
+  }, [filters]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -65,9 +62,9 @@ function Main() {
     }));
 };
 
-    useEffect(() => {
-      fetchPosts();
-  }, [filters]);
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   return (
     <div className='main-container'>

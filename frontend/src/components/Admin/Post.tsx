@@ -1,6 +1,6 @@
 import { toast } from '../Toast';
 import axios from 'axios';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Post as PostType, PageResponse, pageNumbers } from "../../types";
 import { FiRefreshCw } from "react-icons/fi";
 import { MdDelete } from "react-icons/md";
@@ -14,7 +14,7 @@ function Post() {
         sortType: "latest",
     });
 
-    const fetchPosts = async () => {
+    const fetchPosts = useCallback(async () => {
         try {
         const res = await axios.post<PageResponse<PostType>>(`${process.env.REACT_APP_API_URL}/api/post/list`, filters);
         setPosts(res.data.content);
@@ -23,11 +23,11 @@ function Post() {
         } catch (error) {
         console.error(error);
         }
-    };
+    }, [filters]);
 
     useEffect(() => {
     fetchPosts();
-    }, [filters.page, filters.size]);
+    }, [fetchPosts]);
 
  const changePostStatus = async (postId: number, delYn: "Y" | "N") => {
   if (delYn === 'Y' && !window.confirm('이 글을 비공개할까요? 작성자 말고는 볼 수 없고 신청도 막힙니다.')) return;
